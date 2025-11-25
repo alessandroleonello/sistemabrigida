@@ -1310,12 +1310,13 @@
         // Configuração do Firebase (para uso local/pessoal)
         // Como você não vai publicar, pode colocar os dados aqui.
         const firebaseConfig = {
-            apiKey: "AIzaSyAyr32EibUO6RE4yp5ezEaRW1xtLq3UquI",
-            authDomain: "brigida-semijoias.firebaseapp.com",
-            projectId: "brigida-semijoias",
-            storageBucket: "brigida-semijoias.firebasestorage.app",
-            messagingSenderId: "350076180515",
-            appId: "1:350076180515:web:7b970020eaaf9eeaf43996"
+         apiKey: "AIzaSyAyr32EibUO6RE4yp5ezEaRW1xtLq3UquI",
+  authDomain: "brigida-semijoias.firebaseapp.com",
+  databaseURL: "https://brigida-semijoias-default-rtdb.firebaseio.com",
+  projectId: "brigida-semijoias",
+  storageBucket: "brigida-semijoias.firebasestorage.app",
+  messagingSenderId: "350076180515",
+  appId: "1:350076180515:web:7b970020eaaf9eeaf43996"
         };
 
         // Pega o appId da configuração para usar nos caminhos do banco de dados
@@ -1398,6 +1399,7 @@
         let currentSaleItems = []; // "Carrinho" da venda atual
         let allUserPeople = []; // Cache global de pessoas
         let personCadastroRedirect = 'page-vendas'; // NOVO: Para onde voltar após salvar pessoa
+        let selectedLabelsState = {}; // Armazena os produtos e quantidades selecionados para etiquetas
 
 
         /**
@@ -1568,31 +1570,40 @@
          * 3. Atualiza a lista de SELEÇÃO DE PRODUTOS na aba "Gerar Etiquetas"
          */
         function renderLabelList(productsToRender) {
-            const labelProductList = document.getElementById('label-product-list');
+            const labelProductList = document.getElementById('label-product-list'); // Renomeado para 'label-product-list'
             if (!labelProductList) return;
 
             labelProductList.innerHTML = '';
 
             if (productsToRender.length === 0) {
-                labelProductList.innerHTML = '<li class="text-gray-500 text-sm p-1">Nenhum produto encontrado com esse filtro.</li>';
+                labelProductList.innerHTML = '<div class="text-gray-500 text-sm p-1">Nenhum produto encontrado com esse filtro.</div>';
                 return;
             }
 
             productsToRender.forEach(prod => {
+                // Verifica no estado se este produto está selecionado
+                const isSelected = selectedLabelsState.hasOwnProperty(prod.id);
+                const savedQty = isSelected ? selectedLabelsState[prod.id] : 1;
+
                 const labelItem = document.createElement('div');
                 labelItem.className = 'flex items-center justify-between space-x-2 p-1 hover:bg-gray-50 rounded-md';
                 labelItem.innerHTML = `
             <label class="flex items-center space-x-2 cursor-pointer flex-grow overflow-hidden">
-                <input type="checkbox" class="rounded label-product-checkbox" data-id="${prod.id}">
+                <input 
+                    type="checkbox" 
+                    class="rounded label-product-checkbox" 
+                    data-id="${prod.id}"
+                    ${isSelected ? 'checked' : ''}
+                >
                 <span class="text-sm truncate" title="${prod.ref} - ${prod.nome}">${prod.ref} - ${prod.nome}</span>
             </label>
             <input 
                 type="number" 
-                value="1" 
+                value="${savedQty}" 
                 min="1" 
-                class="label-product-qty w-16 px-2 py-1 text-sm border rounded-md bg-gray-100" 
+                class="label-product-qty w-16 px-2 py-1 text-sm border rounded-md ${isSelected ? '' : 'bg-gray-100'}" 
                 data-id="${prod.id}" 
-                disabled
+                ${isSelected ? '' : 'disabled'}
             >
         `;
                 labelProductList.appendChild(labelItem);
@@ -1828,12 +1839,18 @@
             const activePage = document.getElementById(pageId);
             if (activePage) {
                 activePage.classList.add('active'); // Apenas torna a div da página visível
+
+                // Se a página de vendas for ativada, redesenha os itens do carrinho
+                if (pageId === 'page-vendas') {
+                    renderSaleItems();
+                    updateSaleTotals();
+                }
+
                 lucide.createIcons(); // Recria ícones para a página ativa
             } else {
                 console.error(`Página com ID ${pageId} NÃO encontrada!`);
             }
 
-            // 3. Atualiza o link ativo no menu (igual a antes)
             sidebarLinks.forEach(link => {
                 link.classList.remove('active');
                 if (link.dataset.page === pageId) {
@@ -5480,26 +5497,46 @@ function showBatchBillEditModal(ids) {
         }
         // --- LÓGICA DE ATIVAÇÃO DOS CAMPOS DE QTD DAS ETIQUETAS ---
         const labelProductListContainer = document.getElementById('label-product-list');
-
+        
         if (labelProductListContainer) {
-            labelProductListContainer.addEventListener('change', (e) => {
-                // Verifica se o evento foi em um checkbox de produto
-                if (e.target.classList.contains('label-product-checkbox')) {
-                    const checkbox = e.target;
-                    const productId = checkbox.dataset.id;
+            // Usamos 'input' para capturar tanto a mudança do checkbox quanto a digitação na quantidade
+            labelProductListContainer.addEventListener('input', (e) => {
+                const target = e.target;
+                const productId = target.dataset.id;
+        
+                if (!productId) return;
+        
+                // Caso 1: O Checkbox foi alterado
+                if (target.classList.contains('label-product-checkbox')) {
                     const qtyInput = labelProductListContainer.querySelector(`.label-product-qty[data-id="${productId}"]`);
-
-                    if (qtyInput) {
-                        qtyInput.disabled = !checkbox.checked; // Ativa/desativa
-
-                        if (checkbox.checked) {
-                            qtyInput.classList.remove('bg-gray-100'); // Fundo branco
-                            qtyInput.focus();
-                            qtyInput.select(); // Seleciona o texto "1"
-                        } else {
-                            qtyInput.classList.add('bg-gray-100'); // Fundo cinza
-                            qtyInput.value = 1; // Reseta para 1
-                        }
+        
+                    if (target.checked) {
+                        // Adiciona ao estado
+                        const qty = parseInt(qtyInput.value) || 1;
+                        selectedLabelsState[productId] = qty;
+        
+                        // Atualiza a UI
+                        qtyInput.disabled = false;
+                        qtyInput.classList.remove('bg-gray-100');
+                        qtyInput.focus();
+                        qtyInput.select();
+                    } else {
+                        // Remove do estado
+                        delete selectedLabelsState[productId];
+        
+                        // Atualiza a UI
+                        qtyInput.disabled = true;
+                        qtyInput.classList.add('bg-gray-100');
+                        qtyInput.value = 1; // Reseta o valor na UI
+                    }
+                }
+        
+                // Caso 2: A Quantidade foi alterada
+                if (target.classList.contains('label-product-qty')) {
+                    const newQty = parseInt(target.value) || 1;
+                    // Atualiza o estado apenas se o produto já estiver selecionado
+                    if (selectedLabelsState.hasOwnProperty(productId)) {
+                        selectedLabelsState[productId] = newQty;
                     }
                 }
             });
@@ -7137,8 +7174,8 @@ function renderBillsTab(entries) {
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Venda (R$)</label>
-                            <input type="text" id="edit-prod-venda" readonly class="w-full px-3 py-2 mt-1 bg-gray-100 border rounded-md" value="${product.venda.toFixed(2).replace('.', ',')}">
-                        </div>
+                            <input type="number" id="edit-prod-venda" step="0.01" class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.venda.toFixed(2)}">
+                        </div>                        
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Descrição</label>
@@ -7195,12 +7232,30 @@ function renderBillsTab(entries) {
                 const editMargem = document.getElementById('edit-prod-margem');
                 const editVenda = document.getElementById('edit-prod-venda');
 
+                let isEditCalculating = false;
+
                 function calcularEditPrecoVenda() {
+                    if (isEditCalculating) return;
+                    isEditCalculating = true;
                     const custo = parseFloat(editCusto.value) || 0;
                     const margem = parseFloat(editMargem.value) || 100;
                     const venda = custo * (1 + (margem / 100));
-                    editVenda.value = venda.toFixed(2).replace('.', ',');
+                    editVenda.value = venda.toFixed(2);
+                    isEditCalculating = false;
                 }
+
+                function calcularEditMargem() {
+                    if (isEditCalculating) return;
+                    isEditCalculating = true;
+                    const custo = parseFloat(editCusto.value) || 0;
+                    const venda = parseFloat(editVenda.value) || 0;
+                    if (custo > 0 && venda >= custo) {
+                        const margem = (((venda / custo) - 1) * 100);
+                        editMargem.value = margem.toFixed(0);
+                    }
+                    isEditCalculating = false;
+                }
+
                 editCusto.addEventListener('input', calcularEditPrecoVenda);
                 editMargem.addEventListener('input', calcularEditPrecoVenda);
 
@@ -7256,7 +7311,7 @@ function renderBillsTab(entries) {
                             nome: document.getElementById('edit-prod-nome').value,
                             custo: parseFloat(editCusto.value) || 0,
                             margem: parseFloat(editMargem.value) || 0,
-                            venda: parseFloat(editVenda.value.replace(',', '.')) || 0,
+                            venda: parseFloat(editVenda.value) || 0,
                             categoria: document.getElementById('edit-prod-categoria').value,
                             fornecedor: document.getElementById('edit-prod-fornecedor').value,
                             ref: document.getElementById('edit-prod-ref').value,
@@ -7278,6 +7333,7 @@ function renderBillsTab(entries) {
                         saveBtn.innerHTML = 'Atualizar Produto';
                     }
                 };
+
 
             } catch (error) {
                 console.error("Erro ao buscar produto para edição: ", error);
@@ -7715,6 +7771,10 @@ async function drawTotalReportPDF(reportData, options) {
             initialDueDateInput.value = getFutureDateString(30);
         }
     </script>
+
+</body>
+
+</html>cript>
 
 </body>
 
