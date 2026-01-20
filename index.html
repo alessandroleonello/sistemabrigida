@@ -2864,6 +2864,14 @@
                     return; // Encerra
                 }
 
+                // --- AÇÃO: Exportar Consignação para Excel (NOVO) ---
+                const exportConsignBtn = e.target.closest('.btn-export-consign-excel');
+                if (exportConsignBtn && exportConsignBtn.dataset.id) {
+                    const consignmentId = exportConsignBtn.dataset.id;
+                    exportConsignmentToExcel(consignmentId);
+                    return;
+                }
+
                 // --- AÇÃO: Excluir Venda (do Histórico) ---
                 const deleteSaleBtn = e.target.closest('.btn-delete-sale');
                 if (deleteSaleBtn && deleteSaleBtn.dataset.id) {
@@ -5352,6 +5360,59 @@ function showBatchBillEditModal(ids) {
         }
 
         /**
+         * Exporta os itens de uma consignação para Excel (.xlsx)
+         */
+        function exportConsignmentToExcel(consignmentId) {
+            const sale = allSales.find(s => s.id === consignmentId);
+            if (!sale) {
+                showModal("Erro", "Consignação não encontrada.");
+                return;
+            }
+
+            if (!sale.items || sale.items.length === 0) {
+                showModal("Aviso", "Esta consignação não possui itens para exportar.");
+                return;
+            }
+
+            // Prepara os dados
+            const dataToExport = sale.items.map(item => {
+                // Tenta encontrar a categoria no cache de produtos se não estiver no item
+                let categoria = item.categoria || "";
+                if (!categoria) {
+                    const productInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
+                    if (productInCache) {
+                        categoria = productInCache.categoria;
+                    } else {
+                        categoria = "N/D";
+                    }
+                }
+
+                return {
+                    "Nome": item.nome,
+                    "Código": item.ref,
+                    "Categoria": categoria,
+                    "Quantidade": item.quantity || 1,
+                    "Preço": item.venda
+                };
+            });
+
+            // Cria a planilha
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+            // Cria o workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Itens Consignados");
+
+            // Nome do arquivo
+            const clientName = (sale.clientId || "Cliente").replace(/[^a-z0-9]/gi, '_');
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `Consignacao_${clientName}_${dateStr}.xlsx`;
+
+            // Download
+            XLSX.writeFile(wb, filename);
+        }
+
+        /**
         * Gera um Comprovante de Retirada de Consignação em PDF
         * (CORRIGIDO com quebra de linha dinâmica para o NOME DO CLIENTE no CABEÇALHO e na ASSINATURA)
         */
@@ -5913,6 +5974,10 @@ function loadFinancialHistory(resolve) {
                 
                 <button class="btn-print-consign-report text-gray-500 hover:text-gray-800" data-id="${c.id}" title="Imprimir Comprovante">
                     <i data-lucide="printer" class="w-5 h-5 pointer-events-none"></i>
+                </button>
+                
+                <button class="btn-export-consign-excel text-green-600 hover:text-green-800" data-id="${c.id}" title="Exportar Excel">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5 pointer-events-none"></i>
                 </button>
                 
                 <button class="btn-settle-consignment px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700" data-id="${c.id}" title="Realizar Acerto">Acertar</button>
