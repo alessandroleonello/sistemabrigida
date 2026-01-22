@@ -112,50 +112,67 @@
     <!-- =========== APLICAÇÃO PRINCIPAL (Escondida até o login) =========== -->
     <div id="page-main-app" class="hidden">
         <div class="flex h-screen">
+            <!-- Overlay para Mobile -->
+            <div id="mobile-overlay" class="fixed inset-0 z-20 hidden bg-black bg-opacity-50 md:hidden" onclick="toggleMobileSidebar()"></div>
+
             <!-- Menu Lateral (Sidebar) -->
-            <nav id="sidebar" class="flex flex-col w-64 text-white bg-gray-800">
-                <div class="flex items-center justify-center h-16 px-4 border-b border-gray-700">
-                    <h1 class="text-xl font-bold">Sistema Brígida</h1>
+            <nav id="sidebar" class="fixed inset-y-0 left-0 z-30 flex flex-col w-64 text-white transition-all duration-300 transform -translate-x-full bg-gray-800 md:relative md:translate-x-0">
+                <div class="flex items-center justify-between h-16 px-4 border-b border-gray-700">
+                    <!-- Botão de Recolher (Desktop) -->
+                    <button id="btn-collapse-desktop" class="hidden pt-2 mt-4 text-gray-400  md:flex items-center justify-center hover:text-white" onclick="toggleDesktopSidebar()">
+                        <i data-lucide="chevron-left" id="collapse-icon"></i>
+                    </button>
+                    <h1 id="sidebar-title" class="text-xl font-bold whitespace-nowrap overflow-hidden">Sistema Brígida</h1>
+                    <button class="text-gray-400 md:hidden hover:text-white" onclick="toggleMobileSidebar()">
+                        <i data-lucide="x"></i>
+                    </button>
                 </div>
                 <div class="flex-1 p-4 space-y-2 overflow-y-auto">
                     <a href="#" data-page="page-dashboard"
-                        class="sidebar-link active flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700">
-                        <i data-lucide="layout-dashboard"></i>
-                        <span>Dashboard</span>
+                        class="sidebar-link active flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
+                        <i data-lucide="layout-dashboard" class="flex-shrink-0"></i>
+                        <span class="sidebar-text whitespace-nowrap">Dashboard</span>
                     </a>
                     <a href="#" data-page="page-produtos"
-                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700">
-                        <i data-lucide="package"></i>
-                        <span>Produtos</span>
+                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
+                        <i data-lucide="package" class="flex-shrink-0"></i>
+                        <span class="sidebar-text whitespace-nowrap">Produtos</span>
                     </a>
                     <a href="#" data-page="page-vendas"
-                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700">
-                        <i data-lucide="shopping-cart"></i>
-                        <span>Vendas</span>
+                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
+                        <i data-lucide="shopping-cart" class="flex-shrink-0"></i>
+                        <span class="sidebar-text whitespace-nowrap">Vendas</span>
                     </a>
                     <a href="#" data-page="page-pessoas"
-                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700">
-                        <i data-lucide="users"></i>
-                        <span>Pessoas</span>
+                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
+                        <i data-lucide="users" class="flex-shrink-0"></i>
+                        <span class="sidebar-text whitespace-nowrap">Pessoas</span>
                     </a>
                     <a href="#" data-page="page-financeiro"
-                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700">
-                        <i data-lucide="dollar-sign"></i>
-                        <span>Financeiro</span>
+                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
+                        <i data-lucide="dollar-sign" class="flex-shrink-0"></i>
+                        <span class="sidebar-text whitespace-nowrap">Financeiro</span>
                     </a>
                 </div>
                 <div class="p-4 border-t border-gray-700">
-                    <div id="user-info" class="mb-2 text-sm text-gray-400">Carregando</div>
+                    <div id="user-info" class="mb-2 text-sm text-gray-400 whitespace-nowrap overflow-hidden">Carregando</div>
                     <button id="btn-logout"
                         class="flex items-center justify-center w-full px-3 py-2 space-x-2 text-white bg-red-600 rounded-md hover:bg-red-700">
-                        <i data-lucide="log-out"></i>
-                        <span>Sair</span>
+                        <i data-lucide="log-out" class="flex-shrink-0"></i>
+                        <span class="sidebar-text whitespace-nowrap">Sair</span>
                     </button>
+                    
                 </div>
             </nav>
 
             <!-- Conteúdo Principal -->
             <main class="flex-1 p-6 overflow-y-auto bg-gray-100 md:p-10">
+                <!-- Botão Menu Mobile -->
+                <div class="mb-4 md:hidden">
+                    <button onclick="toggleMobileSidebar()" class="p-2 text-gray-600 bg-white rounded-md shadow hover:text-gray-900">
+                        <i data-lucide="menu"></i>
+                    </button>
+                </div>
 
                 <!-- =========== PÁGINA: DASHBOARD (COM LINKS) =========== -->
                 <div id="page-dashboard" class="page active">
@@ -5192,6 +5209,56 @@ function showBatchBillEditModal(ids) {
         // --- FIM DA GERAÇÃO DE RELATÓRIO DE VENDA ---
         // --- LÓGICA DE GERAR ETIQUETAS (PDF) ---
 
+        // --- LÓGICA DO MENU LATERAL (SIDEBAR) ---
+        let isDesktopCollapsed = false;
+
+        window.toggleDesktopSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const texts = document.querySelectorAll('.sidebar-text');
+            const title = document.getElementById('sidebar-title');
+            const userInfo = document.getElementById('user-info');
+            const collapseIcon = document.getElementById('collapse-icon');
+            const logoutBtn = document.getElementById('btn-logout');
+
+            isDesktopCollapsed = !isDesktopCollapsed;
+
+            if (isDesktopCollapsed) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-20');
+                
+                texts.forEach(t => t.classList.add('hidden'));
+                title.classList.add('hidden');
+                userInfo.classList.add('hidden');
+                
+                // Ajusta botão de sair
+                logoutBtn.classList.remove('space-x-2', 'px-3');
+                logoutBtn.classList.add('px-0');
+                
+                collapseIcon.setAttribute('data-lucide', 'chevron-right');
+            } else {
+                sidebar.classList.add('w-64');
+                sidebar.classList.remove('w-20');
+                
+                texts.forEach(t => t.classList.remove('hidden'));
+                title.classList.remove('hidden');
+                userInfo.classList.remove('hidden');
+                
+                logoutBtn.classList.add('space-x-2', 'px-3');
+                logoutBtn.classList.remove('px-0');
+                
+                collapseIcon.setAttribute('data-lucide', 'chevron-left');
+            }
+            lucide.createIcons();
+        };
+
+        window.toggleMobileSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        };
+
         // Definições de layout das etiquetas PIMACO (em mm)
         // Convertido de cm (valor * 10)
         // Definições de layout das etiquetas PIMACO (em mm)
@@ -7345,6 +7412,10 @@ function renderBillsTab(entries) {
                             ${supplierSelectHTML}
                         </select>
                     </div>
+                     <div>
+                        <label class="block text-sm font-medium">Qtd. em Estoque</label>
+                        <input type="number" id="edit-prod-estoque" class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.estoque || 0}">
+                    </div>
                     <div>
                         <label class="block text-sm font-medium">Cód. Referência</label>
                         <div class="flex space-x-2">
@@ -7358,10 +7429,7 @@ function renderBillsTab(entries) {
                         <label class="block text-sm font-medium">2ª Referência (Opcional)</label>
                         <input type="text" id="edit-prod-ref2" class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.ref2 || ''}">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium">Qtd. em Estoque</label>
-                        <input type="number" id="edit-prod-estoque" class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.estoque || 0}">
-                    </div>
+                   
                     <div class="p-4 border rounded-md">
                         <h4 class="font-medium text-center">Código de Barras</h4>
                         <svg id="edit-barcode-preview" class="w-full h-auto mt-2"></svg>
