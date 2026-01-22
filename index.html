@@ -464,8 +464,13 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium">Código de Referência</label>
-                                    <input type="text" id="prod-ref" required
-                                        class="w-full px-3 py-2 mt-1 border rounded-md">
+                                    <div class="flex space-x-2">
+                                        <input type="text" id="prod-ref" required
+                                            class="w-full px-3 py-2 mt-1 border rounded-md">
+                                        <button type="button" id="btn-gen-ref" class="px-3 py-2 mt-1 text-white bg-gray-500 rounded-md hover:bg-gray-600" title="Gerar Código Automático">
+                                            <i data-lucide="wand-2" class="w-5 h-5"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium">2ª Referência (Opcional)</label>
@@ -2041,9 +2046,74 @@
             }
         }
 
+        // Função para gerar código aleatório
+        function generateRandomRef() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Função para gerar código ÚNICO (verifica no banco)
+        async function generateUniqueRef() {
+            if (!userId) throw new Error("Usuário não logado");
+            
+            let isUnique = false;
+            let newRef = "";
+            let attempts = 0;
+            const maxAttempts = 5;
+
+            while (!isUnique && attempts < maxAttempts) {
+                newRef = generateRandomRef();
+                // Verifica no Firestore
+                const collectionPath = `artifacts/${appId}/users/${userId}/produtos`;
+                const q = query(collection(db, collectionPath), where("ref", "==", newRef));
+                const snapshot = await getDocs(q);
+                
+                if (snapshot.empty) isUnique = true;
+                attempts++;
+            }
+
+            if (!isUnique) throw new Error("Não foi possível gerar um código único automaticamente.");
+            return newRef;
+        }
+
+        // Listener para o botão de gerar código (Cadastro)
+        document.getElementById('btn-gen-ref').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-gen-ref');
+            const originalHtml = btn.innerHTML;
+
+            if (prodRef.value.trim() !== '') {
+                if (!confirm('Já existe um código digitado. Deseja gerar um novo e sobrescrever?')) {
+                    return;
+                }
+            }
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full"></i>';
+                
+                const uniqueRef = await generateUniqueRef();
+                prodRef.value = uniqueRef;
+                gerarBarcodePreview();
+            } catch (error) {
+                console.error(error);
+                showModal("Erro", "Falha ao gerar código: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        });
+
         prodCusto.addEventListener('input', calcularPrecoVenda);
         prodMargem.addEventListener('input', calcularPrecoVenda);
         prodRef.addEventListener('input', gerarBarcodePreview);
+        // Evita salvar automaticamente ao usar leitor de código de barras (Enter)
+        prodRef.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') e.preventDefault();
+        });
         prodVenda.addEventListener('input', calcularMargem);
 
         // Salvar produto (Versão simplificada, sem foto)
@@ -7277,7 +7347,12 @@ function renderBillsTab(entries) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Cód. Referência</label>
-                        <input type="text" id="edit-prod-ref" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.ref}">
+                        <div class="flex space-x-2">
+                            <input type="text" id="edit-prod-ref" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.ref}">
+                            <button type="button" id="btn-gen-edit-ref" class="px-3 py-2 mt-1 text-white bg-gray-500 rounded-md hover:bg-gray-600" title="Gerar Código Automático">
+                                <i data-lucide="wand-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium">2ª Referência (Opcional)</label>
@@ -7354,6 +7429,38 @@ function renderBillsTab(entries) {
                     }
                 }
                 editRef.addEventListener('input', gerarEditBarcodePreview);
+                // Evita salvar automaticamente ao usar leitor de código de barras (Enter) na edição
+                editRef.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') e.preventDefault();
+                });
+                
+                // Listener para o botão de gerar código (Edição)
+                document.getElementById('btn-gen-edit-ref').onclick = async () => {
+                    const btn = document.getElementById('btn-gen-edit-ref');
+                    const originalHtml = btn.innerHTML;
+
+                    if (editRef.value.trim() !== '') {
+                        if (!confirm('Já existe um código digitado. Deseja gerar um novo e sobrescrever?')) {
+                            return;
+                        }
+                    }
+                    
+                    try {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full"></i>';
+                        
+                        const uniqueRef = await generateUniqueRef();
+                        editRef.value = uniqueRef;
+                        gerarEditBarcodePreview();
+                    } catch (error) {
+                        console.error(error);
+                        showModal("Erro", "Falha ao gerar código: " + error.message);
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                };
+
                 gerarEditBarcodePreview(); // Gera o barcode inicial
 
                 // 6. Adicionar listeners aos botões do Modal
