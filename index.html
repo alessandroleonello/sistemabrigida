@@ -181,6 +181,8 @@
                     <!-- CARDS COM ATALHOS -->
                     <div class="grid grid-cols-1 gap-6 mt-6 md:grid-cols-2 lg:grid-cols-4">
 
+                        
+
                         <!-- Card de Avisos (Não clicável, apenas informa) -->
                         <div class="p-6 bg-white rounded-lg shadow-md">
                             <div class="flex items-center justify-between">
@@ -245,7 +247,32 @@
 
                     <!-- WIDGETS COM ATALHOS -->
                     <div class="grid grid-cols-1 gap-6 mt-8 lg:grid-cols-3">
-
+<!-- Card de Ações Rápidas -->
+                        <div class="p-6 bg-white rounded-lg shadow-md">
+                            <p class="text-sm font-medium text-gray-500 uppercase mb-3">Ações Rápidas</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button class="dashboard-action-btn flex flex-col items-center justify-center p-3 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                                    data-target-page="page-produtos" data-target-tab="tab-produtos-add">
+                                    <i data-lucide="plus-circle" class="w-6 h-6 mb-1"></i>
+                                    Novo Produto
+                                </button>
+                                <button class="dashboard-action-btn flex flex-col items-center justify-center p-3 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                                    data-target-page="page-vendas" data-target-tab="tab-vendas-new">
+                                    <i data-lucide="shopping-cart" class="w-6 h-6 mb-1"></i>
+                                    Nova Venda
+                                </button>
+                                <button class="dashboard-action-btn flex flex-col items-center justify-center p-3 text-xs font-medium text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                                    data-target-page="page-pessoas" data-target-tab="tab-pessoas-add">
+                                    <i data-lucide="user-plus" class="w-6 h-6 mb-1"></i>
+                                    Nova Pessoa
+                                </button>
+                                <button class="dashboard-action-btn flex flex-col items-center justify-center p-3 text-xs font-medium text-orange-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+                                    data-target-page="page-produtos" data-target-tab="tab-produtos-labels">
+                                    <i data-lucide="tag" class="w-6 h-6 mb-1"></i>
+                                    Gerar Etiquetas
+                                </button>
+                            </div>
+                        </div>
                         <!-- Lista de Avisos (Itens clicáveis) -->
                         <div class="p-6 bg-white rounded-lg shadow-md lg:col-span-2">
                             <h3 class="text-lg font-medium">Avisos Importantes</h3>
@@ -4164,6 +4191,8 @@ function showBatchBillEditModal(ids) {
 
                 // 2. Verifica clique nos AVISOS (<li>)
                 const warningLi = e.target.closest('#dashboard-warnings-list li[data-target-page]');
+                // 3. Verifica clique nos botões de AÇÃO RÁPIDA
+                const actionBtn = e.target.closest('.dashboard-action-btn');
 
                 if (cardVendas) {
                     targetPage = 'page-vendas';
@@ -4177,6 +4206,9 @@ function showBatchBillEditModal(ids) {
                 } else if (warningLi) {
                     targetPage = warningLi.dataset.targetPage;
                     targetTab = warningLi.dataset.targetTab;
+                } else if (actionBtn) {
+                    targetPage = actionBtn.dataset.targetPage;
+                    targetTab = actionBtn.dataset.targetTab;
                 }
 
                 // 3. Executa a navegação
