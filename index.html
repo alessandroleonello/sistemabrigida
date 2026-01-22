@@ -1495,7 +1495,7 @@
             <td class="px-6 py-4"><input type="checkbox" class="rounded product-checkbox" data-id="${prod.id}"></td>
             <td class="px-6 py-4 min-w-[150px] break-words"> 
                 <div class="font-medium">${prod.nome}</div>
-                <div class="text-sm text-gray-500">${prod.ref}</div>
+                <div class="text-sm text-gray-500">${prod.ref}${prod.ref2 ? ' / ' + prod.ref2 : ''}</div>
             </td>
             <td class="px-6 py-4 break-words">${prod.categoria}</td>
             <td class="px-6 py-4 whitespace-nowrap">
@@ -1627,6 +1627,7 @@
                 return (
                     (prod.nome && prod.nome.toLowerCase().includes(term)) ||
                     (prod.ref && prod.ref.toLowerCase().includes(term)) ||
+                    (prod.ref2 && prod.ref2.toLowerCase().includes(term)) ||
                     (prod.categoria && prod.categoria.toLowerCase().includes(term))
                 );
             });
@@ -5712,6 +5713,7 @@ function showBatchBillEditModal(ids) {
                 filtered = filtered.filter(prod =>
                     (prod.nome && prod.nome.toLowerCase().includes(searchTerm)) ||
                     (prod.ref && prod.ref.toLowerCase().includes(searchTerm)) ||
+                    (prod.ref2 && prod.ref2.toLowerCase().includes(searchTerm)) ||
                     (prod.categoria && prod.categoria.toLowerCase().includes(searchTerm))
                 );
             }
