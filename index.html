@@ -467,6 +467,10 @@
                                     <input type="text" id="prod-ref" required
                                         class="w-full px-3 py-2 mt-1 border rounded-md">
                                 </div>
+                                <div>
+                                    <label class="block text-sm font-medium">2ª Referência (Opcional)</label>
+                                    <input type="text" id="prod-ref2" class="w-full px-3 py-2 mt-1 border rounded-md">
+                                </div>
                                 <div class="p-4 border rounded-md">
                                     <h4 class="font-medium text-center">Código de Barras</h4>
                                     <svg id="barcode-preview" class="w-full h-auto mt-2"></svg>
@@ -2088,6 +2092,7 @@
                     categoria: document.getElementById('prod-categoria').value,
                     fornecedor: document.getElementById('prod-fornecedor').value,
                     ref: prodRef.value,
+                    ref2: document.getElementById('prod-ref2').value.trim(),
                     estoque: parseInt(document.getElementById('prod-estoque').value) || 0,
                     descricao: document.getElementById('prod-desc').value,
                     // fotoUrl: null, // Não precisamos mais deste campo
@@ -5343,7 +5348,13 @@ function showBatchBillEditModal(ids) {
 
                     // Trunca o nome do produto para não ficar muito longo
                     const nomeTruncado = product.nome.length > 20 ? product.nome.substring(0, 20) + '...' : product.nome;
-                    const refText = `Ref: ${product.ref} | ${nomeTruncado}`;
+                    
+                    let displayRef = product.ref;
+                    if (product.ref2) {
+                        displayRef += ` / ${product.ref2}`;
+                    }
+
+                    const refText = `Ref: ${displayRef} | ${nomeTruncado}`;
 
                     doc.text(refText, x + labelW / 2, yPos_BottomText, { align: 'center', maxWidth: labelW - padding });
 
@@ -7267,6 +7278,10 @@ function renderBillsTab(entries) {
                         <input type="text" id="edit-prod-ref" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.ref}">
                     </div>
                     <div>
+                        <label class="block text-sm font-medium">2ª Referência (Opcional)</label>
+                        <input type="text" id="edit-prod-ref2" class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.ref2 || ''}">
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium">Qtd. em Estoque</label>
                         <input type="number" id="edit-prod-estoque" class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.estoque || 0}">
                     </div>
@@ -7380,6 +7395,7 @@ function renderBillsTab(entries) {
                             categoria: document.getElementById('edit-prod-categoria').value,
                             fornecedor: document.getElementById('edit-prod-fornecedor').value,
                             ref: document.getElementById('edit-prod-ref').value,
+                            ref2: document.getElementById('edit-prod-ref2').value.trim(),
                             estoque: parseInt(document.getElementById('edit-prod-estoque').value) || 0,
                             descricao: document.getElementById('edit-prod-desc').value,
                             // Não mexemos na fotoUrl aqui, ela permanece a mesma
