@@ -5469,24 +5469,39 @@ function showBatchBillEditModal(ids) {
 
                     const labelH = def.height;
                     const labelW = def.width;
-                    const padding = 2; // 2mm margem interna
+                    
+                    // Ajuste para etiquetas pequenas (altura < 20mm) para evitar sobreposição
+                    const isSmallLabel = labelH < 20;
+                    const padding = isSmallLabel ? 1 : 2; 
 
                     // --- LAYOUT EM 3 ZONAS (TOPO, MEIO, BASE) ---
 
                     // ZONA 1: PREÇO (Topo)
-                    // Define o Y do Preço (ex: 3mm abaixo do topo da etiqueta)
-                    const yPos_Price = y + padding + 1;
+                    // Se for pequena, reduz o espaço do topo
+                    const yPos_Price = y + padding + (isSmallLabel ? 2 : 1);
 
                     // ZONA 3: NOME/REF (Base)
-                    // Define o Y do Texto da Base (ex: 1.5mm acima da base da etiqueta)
-                    const yPos_BottomText = y + labelH - padding - 1.5;
+                    // Se for pequena, reduz a margem inferior para aproveitar mais espaço
+                    const yPos_BottomText = y + labelH - padding - (isSmallLabel ? 1 : 1.5);
 
                     // ZONA 2: BARCODE (Meio)
                     // O barcode ocupa o espaço entre o Preço e o Nome/Ref
-                    const barcodeAreaStartY = yPos_Price + 3; // 3mm abaixo do preço
-                    const barcodeAreaEndY = yPos_BottomText - 2; // 2mm acima do texto base
-                    let barcodeDisplayHeight = Math.max(5, barcodeAreaEndY - barcodeAreaStartY); // Altura mínima de 5mm
-                    let yPos_Barcode = barcodeAreaStartY; // Posição Y do barcode
+                    const gapTop = isSmallLabel ? 1 : 3;
+                    const gapBottom = isSmallLabel ? 2.5 : 2;
+                    
+                    const barcodeAreaStartY = yPos_Price + gapTop;
+                    const barcodeAreaEndY = yPos_BottomText - gapBottom;
+                    
+                    let availableH = barcodeAreaEndY - barcodeAreaStartY;
+                    const minBarcodeH = isSmallLabel ? 3 : 5;
+                    
+                    let barcodeDisplayHeight = Math.max(minBarcodeH, availableH);
+                    let yPos_Barcode = barcodeAreaStartY;
+                    
+                    // Ajuste de segurança para não invadir o texto em etiquetas muito pequenas
+                    if (isSmallLabel && availableH < minBarcodeH) {
+                         yPos_Barcode = barcodeAreaEndY - barcodeDisplayHeight;
+                    }
 
                     // --- DESENHA OS ELEMENTOS ---
 
