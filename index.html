@@ -633,6 +633,16 @@
                                 </select>
                                 <!-- Fim do bloco NOVO -->
                                 <!-- ***** FIM DA SEÇÃO MODIFICADA ***** -->
+                                <div class="grid grid-cols-2 gap-4 mt-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600">Linha Inicial</label>
+                                        <input type="number" id="label-start-row" value="1" min="1" class="w-full px-3 py-2 mt-1 text-sm border rounded-md">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600">Coluna Inicial</label>
+                                        <input type="number" id="label-start-col" value="1" min="1" class="w-full px-3 py-2 mt-1 text-sm border rounded-md">
+                                    </div>
+                                </div>
                                 <button id="btn-generate-labels"
                                     class="w-full px-4 py-2 mt-4 font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
                                     Gerar PDF para Impressão
@@ -5387,8 +5397,12 @@ function showBatchBillEditModal(ids) {
                     // 4. Buscar dados completos dos produtos (passando o novo array)
                     const productsWithData = await fetchProductsByIds(productsToPrint);
 
+                    // Ler opções de início (para reutilizar folhas)
+                    const startRow = parseInt(document.getElementById('label-start-row').value) || 1;
+                    const startCol = parseInt(document.getElementById('label-start-col').value) || 1;
+
                     // 5. Gerar o PDF (passando o novo array)
-                    await generateLabelPDF(productsWithData, definition);
+                    await generateLabelPDF(productsWithData, definition, { startRow, startCol });
 
                     hideModal(); // Esconde o "Carregando"
 
@@ -5441,7 +5455,7 @@ function showBatchBillEditModal(ids) {
  /**
   * Função principal que desenha o PDF (Layout: Preço, Barcode, Nome/Ref)
   */
-        async function generateLabelPDF(productsWithData, def) {
+        async function generateLabelPDF(productsWithData, def, startOptions = {}) {
             const { jsPDF } = window.jspdf;
 
             const doc = new jsPDF({
@@ -5458,8 +5472,15 @@ function showBatchBillEditModal(ids) {
             const gapH = (def.cols > 1) ? (pageW - def.marginLeft - def.marginRight - (def.cols * def.width)) / (def.cols - 1) : 0;
             const gapV = (def.rows > 1) ? (pageH - def.marginTop - def.marginBottom - (def.rows * def.height)) / (def.rows - 1) : 0;
 
-            let col = 0;
-            let row = 0;
+            // Configura posição inicial (baseado no input do usuário)
+            let col = (startOptions.startCol || 1) - 1;
+            let row = (startOptions.startRow || 1) - 1;
+
+            // Validações básicas para evitar erros de índice
+            if (col < 0) col = 0;
+            if (row < 0) row = 0;
+            while (col >= def.cols) { col -= def.cols; row++; } // Wrap se coluna exceder
+            if (row >= def.rows) { row = 0; col = 0; } // Reseta se linha exceder (nova página)
 
             for (const product of productsWithData) {
                 for (let i = 0; i < product.qtyToPrint; i++) {
