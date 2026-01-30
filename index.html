@@ -5549,11 +5549,13 @@ function showBatchBillEditModal(ids) {
                     }
 
                     // 3. Nome e Referência (EMBAIXO, EM LINHA ÚNICA)
-                    doc.setFontSize(6); // Fonte pequena
+                    const fontSize = isSmallLabel ? 5 : 6;
+                    doc.setFontSize(fontSize); // Fonte ajustada
                     doc.setFont(undefined, 'normal');
 
                     // Trunca o nome do produto para não ficar muito longo
-                    const nomeTruncado = product.nome.length > 20 ? product.nome.substring(0, 20) + '...' : product.nome;
+                    const maxNameChars = isSmallLabel ? 12 : 20;
+                    const nomeTruncado = product.nome.length > maxNameChars ? product.nome.substring(0, maxNameChars) + '...' : product.nome;
                     
                     let displayRef = product.ref;
                     if (product.ref2) {
