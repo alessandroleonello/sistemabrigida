@@ -5595,20 +5595,23 @@ function showBatchBillEditModal(ids) {
 
             // Prepara os dados
             const dataToExport = sale.items.map(item => {
-                // Tenta encontrar a categoria no cache de produtos se não estiver no item
                 let categoria = item.categoria || "";
-                if (!categoria) {
+                let ref2 = item.ref2 || "";
+
+                if (!categoria || !ref2) {
                     const productInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
                     if (productInCache) {
-                        categoria = productInCache.categoria;
-                    } else {
-                        categoria = "N/D";
+                        if (!categoria) categoria = productInCache.categoria;
+                        if (!ref2) ref2 = productInCache.ref2;
                     }
                 }
+                
+                if (!categoria) categoria = "N/D";
 
                 return {
                     "Nome": item.nome,
                     "Código": item.ref,
+                    "Ref. 2": ref2 || "",
                     "Categoria": categoria,
                     "Quantidade": item.quantity || 1,
                     "Preço": item.venda
