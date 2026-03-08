@@ -5308,7 +5308,7 @@ function showBatchBillEditModal(ids) {
         const LABEL_DEFINITIONS = {
             // --- Folha A4 (210 x 297 mm) ---
             "A4048": { pageFormat: 'a4', width: 33, height: 17, marginTop: 12.5, marginLeft: 7, cols: 6, rows: 16 },
-            "A4049": { pageFormat: 'a4', width: 28, height: 15, marginTop: 13.5, marginLeft: 8, cols: 7, rows: 18 },
+            "A4049": { pageFormat: 'a4', width: 28, height: 15, marginTop: 13.5, marginLeft: 8, cols: 7, rows: 18, padding: 3 },
             "A4050": { pageFormat: 'a4', width: 101.6, height: 55.8, marginTop: 9, marginLeft: 4.7, cols: 2, rows: 5 },
             "A4051": { pageFormat: 'a4', width: 40.7, height: 21.2, marginTop: 10.7, marginLeft: 4.5, cols: 5, rows: 13 },
             "A4054": { pageFormat: 'a4', width: 101.6, height: 25.4, marginTop: 8.8, marginLeft: 4.7, cols: 2, rows: 11 },
@@ -5493,8 +5493,8 @@ function showBatchBillEditModal(ids) {
                     
                     // Ajuste para etiquetas pequenas (altura < 20mm) para evitar sobreposição
                     const isSmallLabel = labelH < 20;
-                    const padding = isSmallLabel ? 1 : 2; 
-
+                    // Use o padding da definição, ou o padrão se não existir
+                    const padding = def.padding !== undefined ? def.padding : (isSmallLabel ? 1 : 2);
                     // --- LAYOUT EM 3 ZONAS (TOPO, MEIO, BASE) ---
 
                     // ZONA 1: PREÇO (Topo)
@@ -5539,8 +5539,8 @@ function showBatchBillEditModal(ids) {
                             fontSize: 10, margin: 0, displayValue: false
                         });
                         const barcodeDataUrl = canvas.toDataURL('image/png');
-                        const barcodePdfWidth = labelW * 0.9; // Ocupa 90% da largura
-                        const barcodePdfX = x + (labelW * 0.05); // Centralizado
+                        const barcodePdfWidth = labelW - (padding * 2); // Ocupa a largura com padding
+                        const barcodePdfX = x + padding; // Centralizado com padding
 
                         doc.addImage(barcodeDataUrl, 'PNG', barcodePdfX, yPos_Barcode, barcodePdfWidth, barcodeDisplayHeight);
                     } catch (e) {
@@ -5564,7 +5564,7 @@ function showBatchBillEditModal(ids) {
 
                     const refText = `Ref: ${displayRef} | ${nomeTruncado}`;
 
-                    doc.text(refText, x + labelW / 2, yPos_BottomText, { align: 'center', maxWidth: labelW - padding });
+                    doc.text(refText, x + labelW / 2, yPos_BottomText, { align: 'center', maxWidth: labelW - (padding * 2) });
 
                     // --- Avança para a próxima etiqueta ---
                     col++;
