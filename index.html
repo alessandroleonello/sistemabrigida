@@ -585,7 +585,7 @@
                                 <select id="label-format" class="w-full px-3 py-2 mt-1 border rounded-md">
                                     <optgroup label="PIMACO - Folha A4 (21,0 x 29,7 cm)">
                                         <option value="A4048">A4048 (3,30 x 1,70 cm)</option>
-                                        <option value="A4049">A4049 (2,80 x 1,50 cm)</option>
+                                        <option value="A4049">A4049 (2,60 x 1,50 cm)</option>
                                         <option value="A4050">A4050 (10,16 x 5,58 cm)</option>
                                         <option value="A4051">A4051 (4,07 x 2,12 cm)</option>
                                         <option value="A4054">A4054 (10,16 x 2,54 cm)</option>
@@ -5308,7 +5308,7 @@ function showBatchBillEditModal(ids) {
         const LABEL_DEFINITIONS = {
             // --- Folha A4 (210 x 297 mm) ---
             "A4048": { pageFormat: 'a4', width: 33, height: 17, marginTop: 12.5, marginLeft: 7, cols: 6, rows: 16 },
-            "A4049": { pageFormat: 'a4', width: 28, height: 15, marginTop: 13.5, marginLeft: 8, cols: 7, rows: 18, padding: 3 },
+            "A4049": { pageFormat: 'a4', width: 26, height: 15, marginTop: 13.5, marginLeft: 8, cols: 7, rows: 18, padding: 1 },
             "A4050": { pageFormat: 'a4', width: 101.6, height: 55.8, marginTop: 9, marginLeft: 4.7, cols: 2, rows: 5 },
             "A4051": { pageFormat: 'a4', width: 40.7, height: 21.2, marginTop: 10.7, marginLeft: 4.5, cols: 5, rows: 13 },
             "A4054": { pageFormat: 'a4', width: 101.6, height: 25.4, marginTop: 8.8, marginLeft: 4.7, cols: 2, rows: 11 },
@@ -5503,7 +5503,7 @@ function showBatchBillEditModal(ids) {
 
                     // ZONA 3: NOME/REF (Base)
                     // Se for pequena, reduz a margem inferior para aproveitar mais espaço
-                    const yPos_BottomText = y + labelH - padding - (isSmallLabel ? 1 : 1.5);
+                    const yPos_BottomText = y + labelH - padding - (isSmallLabel ? 3.5 : 2.5);
 
                     // ZONA 2: BARCODE (Meio)
                     // O barcode ocupa o espaço entre o Preço e o Nome/Ref
