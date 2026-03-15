@@ -153,6 +153,14 @@
                         <i data-lucide="dollar-sign" class="flex-shrink-0"></i>
                         <span class="sidebar-text whitespace-nowrap">Financeiro</span>
                     </a>
+
+                    <!-- Imagens do Logotipo / Favicon -->
+                    <div class="mt-8 pb-4 flex justify-center items-center">
+                        <!-- Substitua a URL no 'src' abaixo pela URL do seu Logotipo -->
+                        <img id="sidebar-logo" src="https://i.ibb.co/bgh1LJbj/Green-and-Brown-Minimalist-Studio-Logo-Design-Template.png" alt="Logotipo da Empresa" class="max-h-40 w-auto transition-opacity duration-300">
+                        <!-- Substitua a URL no 'src' abaixo pela URL do seu Favicon -->
+                        <img id="sidebar-favicon" src="https://i.ibb.co/Z6XQpZzQ/Green-and-Brown-Minimalist-Studio-Logo-Design-Template-1.png" alt="Favicon da Empresa" class="max-h-8 w-auto hidden transition-opacity duration-300">
+                    </div>
                 </div>
                 <div class="p-4 border-t border-gray-700">
                     <div id="user-info" class="mb-2 text-sm text-gray-400 whitespace-nowrap overflow-hidden">Carregando</div>
@@ -5324,6 +5332,10 @@ function showBatchBillEditModal(ids) {
             const userInfo = document.getElementById('user-info');
             const collapseIcon = document.getElementById('collapse-icon');
             const logoutBtn = document.getElementById('btn-logout');
+            
+            // Elementos de Imagem (Logo e Favicon)
+            const sidebarLogo = document.getElementById('sidebar-logo');
+            const sidebarFavicon = document.getElementById('sidebar-favicon');
 
             isDesktopCollapsed = !isDesktopCollapsed;
 
@@ -5340,6 +5352,10 @@ function showBatchBillEditModal(ids) {
                 logoutBtn.classList.add('px-0');
                 
                 collapseIcon.setAttribute('data-lucide', 'chevron-right');
+                
+                // Troca para o Favicon
+                if (sidebarLogo) sidebarLogo.classList.add('hidden');
+                if (sidebarFavicon) sidebarFavicon.classList.remove('hidden');
             } else {
                 sidebar.classList.add('w-64');
                 sidebar.classList.remove('w-20');
@@ -5352,6 +5368,10 @@ function showBatchBillEditModal(ids) {
                 logoutBtn.classList.remove('px-0');
                 
                 collapseIcon.setAttribute('data-lucide', 'chevron-left');
+                
+                // Troca para o Logo
+                if (sidebarLogo) sidebarLogo.classList.remove('hidden');
+                if (sidebarFavicon) sidebarFavicon.classList.add('hidden');
             }
             lucide.createIcons();
         };
