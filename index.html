@@ -4900,8 +4900,10 @@ function showBatchBillEditModal(ids) {
                 errorP.textContent = '';
                 if (!refCode) return;
 
-                // Procura o item na lista 'itemsToSettle' (que está desempacotada)
-                const itemIndex = itemsToSettle.findIndex(item => item.ref === refCode);
+                const lowerRefCode = refCode.toLowerCase();
+
+                // Procura o item na lista 'itemsToSettle' ignorando maiúsculas/minúsculas
+                const itemIndex = itemsToSettle.findIndex(item => item.ref && item.ref.toLowerCase() === lowerRefCode);
 
                 if (itemIndex > -1) {
                     // Achou!
@@ -6688,20 +6690,13 @@ function renderBillsTab(entries) {
             saleItemRefInput.focus();
         }
         async function findProductByRef(refCode) {
-            if (!userId) return null;
-            const collectionPath = `artifacts/${appId}/users/${userId}/produtos`;
-            const q = query(
-                collection(db, collectionPath),
-                where("ref", "==", refCode),
-                where("ownerId", "==", userId)
-            );
-            const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) {
-                return null;
-            } else {
-                const doc = querySnapshot.docs[0];
-                return { id: doc.id, ...doc.data() };
-            }
+            if (!userId || !refCode) return null;
+            
+            // Busca ignorando maiúsculas/minúsculas no cache local de produtos
+            const lowerRefCode = refCode.toLowerCase();
+            const product = allUserProducts.find(p => p.ref && p.ref.toLowerCase() === lowerRefCode);
+            
+            return product || null;
         }
 
         /**
