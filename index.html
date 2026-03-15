@@ -4725,28 +4725,49 @@ function showBatchBillEditModal(ids) {
 
             // --- Variáveis de ESTADO do Modal (COM LÓGICA DE "UNPACK") ---
 
-            // itemsToSettle agora é uma lista "desempacotada" (flat list)
-            // Ex: Se 1 item tinha quantity: 3, a lista terá 3 cópias desse item
             let itemsToSettle = [];
-            if (consignment.items) {
-                consignment.items.forEach(item => {
-                    const qty = item.quantity || 1; // Garante que a quantidade seja pelo menos 1
-                    for (let i = 0; i < qty; i++) {
-                        // Adiciona uma cópia do item para cada unidade de quantidade
-                        // É importante copiar para não ter referências de objeto
-                        // Removemos 'quantity' do item individual desempacotado
-                        const singleItem = { ...item };
-                        delete singleItem.quantity;
-                        itemsToSettle.push(singleItem);
-                    }
-                });
+            let itemsReturned = [];
+            let savedCommission = 0;
+
+            const draftKey = `settlementDraft_${consignmentId}`;
+            const draftData = localStorage.getItem(draftKey);
+
+            // Tenta recuperar o estado salvo no LocalStorage
+            if (draftData) {
+                try {
+                    const parsedDraft = JSON.parse(draftData);
+                    itemsToSettle = parsedDraft.itemsToSettle || [];
+                    itemsReturned = parsedDraft.itemsReturned || [];
+                    savedCommission = parsedDraft.commissionPercent || 0;
+                } catch (e) {
+                    console.error("Erro ao ler rascunho salvo:", e);
+                    localStorage.removeItem(draftKey);
+                }
             }
 
-            // itemsReturned também será uma lista "desempacotada"
-            let itemsReturned = [];
+            // Se não houver rascunho, inicia com os dados originais
+            if (itemsToSettle.length === 0 && itemsReturned.length === 0 && !draftData) {
+                if (consignment.items) {
+                    consignment.items.forEach(item => {
+                        const qty = item.quantity || 1;
+                        for (let i = 0; i < qty; i++) {
+                            const singleItem = { ...item };
+                            delete singleItem.quantity;
+                            itemsToSettle.push(singleItem);
+                        }
+                    });
+                }
+            }
+
+            function saveSettlementDraft() {
+                const commissionInput = document.getElementById('settle-commission');
+                const commission = commissionInput ? parseFloat(commissionInput.value) || 0 : savedCommission;
+                const draft = { itemsToSettle, itemsReturned, commissionPercent: commission };
+                localStorage.setItem(draftKey, JSON.stringify(draft));
+            }
 
             // 2. Montar o HTML do Modal (idêntico ao anterior)
-            modalTitle.textContent = 'Realizar Acerto de Consignação';
+            modalTitle.innerHTML = `Realizar Acerto de Consignação <button type="button" id="btn-reset-draft" class="ml-4 text-xs font-normal text-red-600 hover:underline inline-block focus:outline-none" title="Limpar tudo e começar do zero">Recomeçar do zero</button>`;
             modalBody.innerHTML = `
     <div class="grid grid-cols-2 gap-6">
         <div>
@@ -4792,7 +4813,7 @@ function showBatchBillEditModal(ids) {
                 </div>
                 <div class="flex items-center justify-between">
                     <label for="settle-commission" class="text-sm font-medium">Comissão do Revendedor (%):</label>
-                    <input type="number" id="settle-commission" value="0" class="w-24 px-3 py-2 text-sm border rounded-md">
+                    <input type="number" id="settle-commission" value="${savedCommission}" class="w-24 px-3 py-2 text-sm border rounded-md">
                 </div>
                 <div class="flex justify-between font-bold text-lg text-green-600">
                     <span>VALOR A PAGAR:</span>
@@ -4915,6 +4936,18 @@ function showBatchBillEditModal(ids) {
                 finalAmountSpan.textContent = `R$ ${finalAmount.toFixed(2).replace('.', ',')}`;
             }
 
+            // "Ligar" botão de reiniciar rascunho
+            const btnResetDraft = document.getElementById('btn-reset-draft');
+            if (btnResetDraft) {
+                btnResetDraft.onclick = () => {
+                    if(confirm("Tem certeza que deseja apagar o progresso deste acerto e começar do zero?")) {
+                        localStorage.removeItem(draftKey);
+                        hideModal();
+                        showConsignmentSettlementModal(consignmentId); // Recarrega o modal limpo
+                    }
+                };
+            }
+
             // "Ligar" botão de Devolver Item (LÓGICA INALTERADA, MAS FUNCIONA CORRETAMENTE AGORA)
             document.getElementById('btn-return-item').onclick = () => {
                 const refCode = refInput.value.trim();
@@ -4934,6 +4967,7 @@ function showBatchBillEditModal(ids) {
 
                     refInput.value = ''; // Limpa o input
                     redrawListsAndCalculate(); // Atualiza a UI
+                    saveSettlementDraft(); // Salva o estado localmente
                 } else {
                     // Não achou (ou já foi devolvido)
                     errorP.textContent = 'Ref. não encontrada ou já devolvida.';
@@ -4945,7 +4979,10 @@ function showBatchBillEditModal(ids) {
             });
 
             // "Ligar" input de comissão
-            commissionInput.addEventListener('input', redrawListsAndCalculate);
+            commissionInput.addEventListener('input', () => {
+                redrawListsAndCalculate();
+                saveSettlementDraft();
+            });
 
             // "Ligar" botões de fechar
             document.getElementById('btn-cancel-settle').onclick = hideModal;
@@ -5026,6 +5063,9 @@ function showBatchBillEditModal(ids) {
 
                     // --- 3. Executar o Lote ---
                     await batch.commit();
+
+                    // Limpa o rascunho salvo, pois foi finalizado com sucesso
+                    localStorage.removeItem(draftKey);
 
                     // --- 4. Gerar o Relatório ---
                     const settlementData = {
