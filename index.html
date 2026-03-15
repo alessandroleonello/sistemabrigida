@@ -5834,7 +5834,15 @@ function showBatchBillEditModal(ids) {
         const productClearFilters = document.getElementById('product-clear-filters');
 
         // "Ligar" os listeners para chamar a função de filtro unificada
-        if (productSearchInput) productSearchInput.addEventListener('input', applyProductViewFilters);
+        if (productSearchInput) {
+            productSearchInput.addEventListener('input', applyProductViewFilters);
+            productSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    productSearchInput.value = ''; // Limpa o campo sem atualizar a tabela
+                }
+            });
+        }
         if (productDateStart) productDateStart.addEventListener('change', applyProductViewFilters);
         if (productDateEnd) productDateEnd.addEventListener('change', applyProductViewFilters);
 
@@ -5902,6 +5910,12 @@ function showBatchBillEditModal(ids) {
 
         if (peopleSearchInput) {
             peopleSearchInput.addEventListener('input', applyPeopleFilters);
+            peopleSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    peopleSearchInput.value = '';
+                }
+            });
         }
         // NOVO BLOCO (para ligar o dropdown)
         const peopleTypeFilter = document.getElementById('people-type-filter');
@@ -5998,7 +6012,15 @@ function showBatchBillEditModal(ids) {
         }
 
         // "Ligar" os listeners
-        if (labelSearchInput) labelSearchInput.addEventListener('input', applyLabelFilters);
+        if (labelSearchInput) {
+            labelSearchInput.addEventListener('input', applyLabelFilters);
+            labelSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    labelSearchInput.value = ''; // Limpa o campo sem atualizar a tabela
+                }
+            });
+        }
         if (labelDateStart) labelDateStart.addEventListener('change', applyLabelFilters);
         if (labelDateEnd) labelDateEnd.addEventListener('change', applyLabelFilters);
 
