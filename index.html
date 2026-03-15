@@ -4759,11 +4759,17 @@ function showBatchBillEditModal(ids) {
             </div>
             <p id="settle-error" class="text-xs text-red-600 mt-1 h-4"></p>
             
-            <h5 class="font-medium mt-4 mb-2">Itens Consignados (Originais):</h5>
+            <div class="flex justify-between items-end mt-4 mb-2">
+                <h5 class="font-medium">Itens Consignados (Originais):</h5>
+                <span id="count-consigned" class="text-sm font-bold text-gray-500">0 un.</span>
+            </div>
             <ul id="settle-list-consigned" class="h-32 overflow-y-auto space-y-1 p-2 border rounded-md bg-gray-50">
                 </ul>
             
-            <h5 class="font-medium mt-4 mb-2">Itens Devolvidos (Voltando ao Estoque):</h5>
+            <div class="flex justify-between items-end mt-4 mb-2">
+                <h5 class="font-medium">Itens Devolvidos (Voltando ao Estoque):</h5>
+                <span id="count-returned" class="text-sm font-bold text-red-500">0 un.</span>
+            </div>
             <ul id="settle-list-returned" class="h-32 overflow-y-auto space-y-1 p-2 border rounded-md bg-gray-50">
                 </ul>
         </div>
@@ -4772,8 +4778,11 @@ function showBatchBillEditModal(ids) {
             <h4 class="text-lg font-medium">Acerto Financeiro</h4>
             <p class="text-sm text-gray-500">Itens vendidos e cálculo de comissão.</p>
             
-            <h5 class="font-medium mt-4 mb-2">Itens Vendidos (Não devolvidos):</h5>
-            <div id="settle-list-sold" class="mt-4 p-2 border rounded-md bg-gray-50 h-48 overflow-y-auto">
+            <div class="flex justify-between items-end mt-4 mb-2">
+                <h5 class="font-medium">Itens Vendidos (Não devolvidos):</h5>
+                <span id="count-sold" class="text-sm font-bold text-green-600">0 un.</span>
+            </div>
+            <div id="settle-list-sold" class="mt-2 p-2 border rounded-md bg-gray-50 h-48 overflow-y-auto">
                 </div>
             
             <div class="space-y-3 mt-4">
@@ -4827,6 +4836,9 @@ function showBatchBillEditModal(ids) {
                 listSold.innerHTML = '';
 
                 let totalSold = 0;
+                let countSold = 0;
+                let countReturned = 0;
+                let countConsigned = 0;
 
                 // --- 1. Lista de VENDIDOS (itemsToSettle) ---
                 // Agrupa os itens restantes (vendidos) para exibição limpa
@@ -4838,6 +4850,7 @@ function showBatchBillEditModal(ids) {
                     soldGroups[item.ref].count += 1;
                     soldGroups[item.ref].totalValue += item.venda;
                     totalSold += item.venda; // Adiciona ao total
+                    countSold++;
                 });
 
                 if (Object.keys(soldGroups).length === 0) {
@@ -4860,6 +4873,7 @@ function showBatchBillEditModal(ids) {
                         returnedGroups[item.ref] = { ...item, count: 0 };
                     }
                     returnedGroups[item.ref].count += 1;
+                    countReturned++;
                 });
 
                 if (Object.keys(returnedGroups).length === 0) {
@@ -4879,11 +4893,18 @@ function showBatchBillEditModal(ids) {
                     listConsigned.innerHTML = '<p class="text-sm text-gray-500 p-1">Nenhum item nesta consignação.</p>';
                 } else {
                     consignment.items.forEach(item => {
+                        const qty = item.quantity || 1;
+                        countConsigned += qty;
                         listConsigned.innerHTML += `<li class="text-sm p-1 text-gray-700">
-                    ${item.nome} (${item.ref}) x ${item.quantity || 1}
+                    ${item.nome} (${item.ref}) x ${qty}
                 </li>`;
                     });
                 }
+
+                // --- Atualiza os Contadores na Interface ---
+                document.getElementById('count-sold').textContent = `${countSold} un.`;
+                document.getElementById('count-returned').textContent = `${countReturned} un.`;
+                document.getElementById('count-consigned').textContent = `${countConsigned} un.`;
 
                 // --- 4. Cálculo Financeiro (inalterado) ---
                 const commissionPercent = parseFloat(commissionInput.value) || 0;
