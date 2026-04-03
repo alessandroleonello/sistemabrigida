@@ -4739,6 +4739,8 @@ function showBatchBillEditModal(ids) {
             let itemsToSettle = [];
             let itemsReturned = [];
             let savedCommission = 0;
+            let savedDiscount = 0;
+            let savedDiscountReason = "";
 
             const draftKey = `settlementDraft_${consignmentId}`;
             const draftData = localStorage.getItem(draftKey);
@@ -4750,6 +4752,8 @@ function showBatchBillEditModal(ids) {
                     itemsToSettle = parsedDraft.itemsToSettle || [];
                     itemsReturned = parsedDraft.itemsReturned || [];
                     savedCommission = parsedDraft.commissionPercent || 0;
+                    savedDiscount = parsedDraft.discount || 0;
+                    savedDiscountReason = parsedDraft.discountReason || "";
                 } catch (e) {
                     console.error("Erro ao ler rascunho salvo:", e);
                     localStorage.removeItem(draftKey);
@@ -4772,8 +4776,13 @@ function showBatchBillEditModal(ids) {
 
             function saveSettlementDraft() {
                 const commissionInput = document.getElementById('settle-commission');
+                const discountInput = document.getElementById('settle-discount');
+                const discountReasonInput = document.getElementById('settle-discount-reason');
                 const commission = commissionInput ? parseFloat(commissionInput.value) || 0 : savedCommission;
-                const draft = { itemsToSettle, itemsReturned, commissionPercent: commission };
+                const discount = discountInput ? parseFloat(discountInput.value) || 0 : savedDiscount;
+                const discountReason = discountReasonInput ? discountReasonInput.value : savedDiscountReason;
+                
+                const draft = { itemsToSettle, itemsReturned, commissionPercent: commission, discount, discountReason };
                 localStorage.setItem(draftKey, JSON.stringify(draft));
             }
 
@@ -4826,7 +4835,15 @@ function showBatchBillEditModal(ids) {
                     <label for="settle-commission" class="text-sm font-medium">Comissão do Revendedor (%):</label>
                     <input type="number" id="settle-commission" value="${savedCommission}" class="w-24 px-3 py-2 text-sm border rounded-md">
                 </div>
-                <div class="flex justify-between font-bold text-lg text-green-600">
+                <div class="flex items-center justify-between mt-2">
+                    <label for="settle-discount" class="text-sm font-medium">Desconto (R$):</label>
+                    <input type="number" id="settle-discount" value="${savedDiscount}" step="0.01" class="w-24 px-3 py-2 text-sm border rounded-md">
+                </div>
+                <div class="flex flex-col mt-2 mb-4">
+                    <label for="settle-discount-reason" class="text-sm font-medium">Motivo do Desconto:</label>
+                    <input type="text" id="settle-discount-reason" value="${savedDiscountReason}" placeholder="Opcional" class="w-full px-3 py-2 mt-1 text-sm border rounded-md">
+                </div>
+                <div class="flex justify-between font-bold text-lg text-green-600 mt-4">
                     <span>VALOR A PAGAR:</span>
                     <span id="settle-final-amount">R$ 0,00</span>
                 </div>
@@ -4857,6 +4874,8 @@ function showBatchBillEditModal(ids) {
             const listSold = document.getElementById('settle-list-sold');
             const totalSoldSpan = document.getElementById('settle-total-sold');
             const commissionInput = document.getElementById('settle-commission');
+            const discountInput = document.getElementById('settle-discount');
+            const discountReasonInput = document.getElementById('settle-discount-reason');
             const finalAmountSpan = document.getElementById('settle-final-amount');
             const refInput = document.getElementById('settle-ref-input');
             const errorP = document.getElementById('settle-error');
@@ -4938,10 +4957,11 @@ function showBatchBillEditModal(ids) {
                 document.getElementById('count-returned').textContent = `${countReturned} un.`;
                 document.getElementById('count-consigned').textContent = `${countConsigned} un.`;
 
-                // --- 4. Cálculo Financeiro (inalterado) ---
+                // --- 4. Cálculo Financeiro (atualizado) ---
                 const commissionPercent = parseFloat(commissionInput.value) || 0;
+                const discountValue = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
                 const commissionAmount = totalSold * (commissionPercent / 100);
-                const finalAmount = totalSold - commissionAmount;
+                const finalAmount = totalSold - commissionAmount - discountValue;
 
                 totalSoldSpan.textContent = `R$ ${totalSold.toFixed(2).replace('.', ',')}`;
                 finalAmountSpan.textContent = `R$ ${finalAmount.toFixed(2).replace('.', ',')}`;
@@ -4982,6 +5002,11 @@ function showBatchBillEditModal(ids) {
                 } else {
                     // Não achou (ou já foi devolvido)
                     errorP.textContent = 'Ref. não encontrada ou já devolvida.';
+                    
+                    // Toca o som de erro
+                    const audio = new Audio('erro.mp3');
+                    audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
+                    
                 }
                 refInput.focus();
             };
@@ -4994,6 +5019,17 @@ function showBatchBillEditModal(ids) {
                 redrawListsAndCalculate();
                 saveSettlementDraft();
             });
+            if (discountInput) {
+                discountInput.addEventListener('input', () => {
+                    redrawListsAndCalculate();
+                    saveSettlementDraft();
+                });
+            }
+            if (discountReasonInput) {
+                discountReasonInput.addEventListener('input', () => {
+                    saveSettlementDraft();
+                });
+            }
 
             // "Ligar" botões de fechar
             document.getElementById('btn-cancel-settle').onclick = hideModal;
@@ -5021,8 +5057,10 @@ function showBatchBillEditModal(ids) {
 
                     // --- 1b. Calcular dados financeiros ---
                     const commissionPercent = parseFloat(commissionInput.value) || 0;
+                    const discountAmountValue = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
+                    const discountReasonValue = discountReasonInput ? discountReasonInput.value.trim() : "";
                     const commissionAmount = totalSold * (commissionPercent / 100);
-                    const finalAmountPaid = totalSold - commissionAmount;
+                    const finalAmountPaid = totalSold - commissionAmount - discountAmountValue;
                     const paymentMethod = document.getElementById('settle-payment').value;
 
                     // --- 2. Preparar o Lote (Batch) ---
@@ -5052,6 +5090,8 @@ function showBatchBillEditModal(ids) {
                             totalSold: totalSold,
                             commissionPercent: commissionPercent,
                             commissionAmount: commissionAmount,
+                            discountAmount: discountAmountValue,
+                            discountReason: discountReasonValue,
                             finalAmountPaid: finalAmountPaid,
                             settledAt: serverTimestamp()
                         }
@@ -5083,6 +5123,8 @@ function showBatchBillEditModal(ids) {
                         totalSold: totalSold,
                         commissionPercent: commissionPercent,
                         commissionAmount: commissionAmount,
+                        discountAmount: discountAmountValue,
+                        discountReason: discountReasonValue,
                         finalAmountPaid: finalAmountPaid,
                         paymentMethod: paymentMethod
                     };
@@ -5222,7 +5264,7 @@ function showBatchBillEditModal(ids) {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
-            // --- 4. Resumo Financeiro (inalterado) ---
+            // --- 4. Resumo Financeiro (atualizado) ---
             doc.setFontSize(14);
             doc.setFont(undefined, 'bold');
             doc.text('Resumo Financeiro', leftMargin, currentY);
@@ -5234,6 +5276,19 @@ function showBatchBillEditModal(ids) {
             currentY += 7;
             doc.text(`Comissão (${settlementData.commissionPercent}%): - ${formatCurrency(settlementData.commissionAmount)}`, 20, currentY);
             currentY += 7;
+            
+            if (settlementData.discountAmount && settlementData.discountAmount > 0) {
+                doc.text(`Desconto: - ${formatCurrency(settlementData.discountAmount)}`, 20, currentY);
+                currentY += 5;
+                if (settlementData.discountReason) {
+                    doc.setFontSize(10);
+                    doc.text(`Motivo: ${settlementData.discountReason}`, 25, currentY);
+                    currentY += 5;
+                    doc.setFontSize(12);
+                }
+                currentY += 2;
+            }
+
             doc.text(`Forma de Pagamento: ${settlementData.paymentMethod}`, 20, currentY);
             currentY += 7;
 
@@ -5308,6 +5363,16 @@ function showBatchBillEditModal(ids) {
             if (sale.type === 'consignacao' && sale.settlement) {
                 currentY += 7;
                 doc.text(`Comissão (${sale.settlement.commissionPercent}%): - ${formatCurrency(sale.settlement.commissionAmount)}`, 20, currentY);
+                if (sale.settlement.discountAmount && sale.settlement.discountAmount > 0) {
+                    currentY += 7;
+                    doc.text(`Desconto (Acerto): - ${formatCurrency(sale.settlement.discountAmount)}`, 20, currentY);
+                    if (sale.settlement.discountReason) {
+                        currentY += 5;
+                        doc.setFontSize(10);
+                        doc.text(`Motivo: ${sale.settlement.discountReason}`, 25, currentY);
+                        doc.setFontSize(12);
+                    }
+                }
             }
 
             currentY += 7;
