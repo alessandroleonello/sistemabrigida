@@ -4960,8 +4960,6 @@ function showBatchBillEditModal(ids) {
                 // --- 4. Cálculo Financeiro (atualizado) ---
                 const commissionPercent = parseFloat(commissionInput.value) || 0;
                 const discountValue = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
-                const commissionAmount = totalSold * (commissionPercent / 100);
-                const finalAmount = totalSold - commissionAmount - discountValue;
                 const baseAmount = totalSold - discountValue;
                 const commissionAmount = (baseAmount > 0 ? baseAmount : 0) * (commissionPercent / 100);
                 const finalAmount = baseAmount - commissionAmount;
@@ -5062,8 +5060,6 @@ function showBatchBillEditModal(ids) {
                     const commissionPercent = parseFloat(commissionInput.value) || 0;
                     const discountAmountValue = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
                     const discountReasonValue = discountReasonInput ? discountReasonInput.value.trim() : "";
-                    const commissionAmount = totalSold * (commissionPercent / 100);
-                    const finalAmountPaid = totalSold - commissionAmount - discountAmountValue;
                     const baseAmount = totalSold - discountAmountValue;
                     const commissionAmount = (baseAmount > 0 ? baseAmount : 0) * (commissionPercent / 100);
                     const finalAmountPaid = baseAmount - commissionAmount;
