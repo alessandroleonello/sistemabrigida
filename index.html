@@ -4962,6 +4962,9 @@ function showBatchBillEditModal(ids) {
                 const discountValue = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
                 const commissionAmount = totalSold * (commissionPercent / 100);
                 const finalAmount = totalSold - commissionAmount - discountValue;
+                const baseAmount = totalSold - discountValue;
+                const commissionAmount = (baseAmount > 0 ? baseAmount : 0) * (commissionPercent / 100);
+                const finalAmount = baseAmount - commissionAmount;
 
                 totalSoldSpan.textContent = `R$ ${totalSold.toFixed(2).replace('.', ',')}`;
                 finalAmountSpan.textContent = `R$ ${finalAmount.toFixed(2).replace('.', ',')}`;
@@ -5061,6 +5064,9 @@ function showBatchBillEditModal(ids) {
                     const discountReasonValue = discountReasonInput ? discountReasonInput.value.trim() : "";
                     const commissionAmount = totalSold * (commissionPercent / 100);
                     const finalAmountPaid = totalSold - commissionAmount - discountAmountValue;
+                    const baseAmount = totalSold - discountAmountValue;
+                    const commissionAmount = (baseAmount > 0 ? baseAmount : 0) * (commissionPercent / 100);
+                    const finalAmountPaid = baseAmount - commissionAmount;
                     const paymentMethod = document.getElementById('settle-payment').value;
 
                     // --- 2. Preparar o Lote (Batch) ---
@@ -5289,6 +5295,9 @@ function showBatchBillEditModal(ids) {
                 currentY += 2;
             }
 
+            doc.text(`Comissão (${settlementData.commissionPercent}%): - ${formatCurrency(settlementData.commissionAmount)}`, 20, currentY);
+            currentY += 7;
+
             doc.text(`Forma de Pagamento: ${settlementData.paymentMethod}`, 20, currentY);
             currentY += 7;
 
@@ -5373,6 +5382,8 @@ function showBatchBillEditModal(ids) {
                         doc.setFontSize(12);
                     }
                 }
+                currentY += 7;
+                doc.text(`Comissão (${sale.settlement.commissionPercent}%): - ${formatCurrency(sale.settlement.commissionAmount)}`, 20, currentY);
             }
 
             currentY += 7;
