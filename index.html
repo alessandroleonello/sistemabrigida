@@ -583,7 +583,16 @@
                                 </div>
                                 <!-- FIM DO NOVO FILTRO -->
 
-                                <label class="block text-sm font-medium">Selecionar Produtos (Filtrados)</label>
+                                <div class="flex items-center justify-between mt-4 mb-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="label-select-all" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-sm font-medium">Selecionar Todos</span>
+                                    </label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="number" id="label-batch-qty" min="1" value="1" class="w-16 px-2 py-1 text-sm border rounded-md" placeholder="Qtd">
+                                        <button type="button" id="btn-apply-batch-qty" class="px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700">Aplicar Qtd.</button>
+                                    </div>
+                                </div>
                                 <div id="label-product-list"
                                     class="w-full h-64 p-3 mt-1 overflow-y-auto border rounded-md">
                                     <!-- JS popula o resto -->
@@ -1657,7 +1666,9 @@
             productsToRender.forEach(prod => {
                 // Verifica no estado se este produto está selecionado
                 const isSelected = selectedLabelsState.hasOwnProperty(prod.id);
-                const savedQty = isSelected ? selectedLabelsState[prod.id] : 1;
+                // Se não estiver selecionado, usa o estoque (mínimo 1 para evitar campos zerados na geração)
+                const defaultQty = Math.max(1, prod.estoque || 0);
+                const savedQty = isSelected ? selectedLabelsState[prod.id] : defaultQty;
 
                 const labelItem = document.createElement('div');
                 labelItem.className = 'flex items-center justify-between space-x-2 p-1 hover:bg-gray-50 rounded-md';
@@ -1669,7 +1680,9 @@
                     data-id="${prod.id}"
                     ${isSelected ? 'checked' : ''}
                 >
-                <span class="text-sm truncate" title="${prod.ref} - ${prod.nome}">${prod.ref} - ${prod.nome}</span>
+                <span class="text-sm truncate" title="${prod.ref} - ${prod.nome} (Estoque: ${prod.estoque || 0})">
+                    ${prod.ref} - ${prod.nome} <span class="text-gray-500 font-medium ml-1">(${prod.estoque || 0} no estoque)</span>
+                </span>
             </label>
             <input 
                 type="number" 
@@ -1677,6 +1690,7 @@
                 min="1" 
                 class="label-product-qty w-16 px-2 py-1 text-sm border rounded-md ${isSelected ? '' : 'bg-gray-100'}" 
                 data-id="${prod.id}" 
+                data-estoque="${defaultQty}"
                 ${isSelected ? '' : 'disabled'}
             >
         `;
@@ -5302,7 +5316,9 @@ function showBatchBillEditModal(ids) {
             doc.text(`VALOR TOTAL A PAGAR: ${formatCurrency(settlementData.finalAmountPaid)}`, 20, currentY);
 
             // --- 5. Abrir o PDF ---
-            doc.output('dataurlnewwindow');
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
         }
         // --- FIM DA GERAÇÃO DE RELATÓRIO ---
         /**
@@ -5392,7 +5408,9 @@ function showBatchBillEditModal(ids) {
             doc.text(`VALOR TOTAL PAGO: ${formatCurrency(finalTotal)}`, 20, currentY);
 
             // --- 4. Abrir o PDF ---
-            doc.output('dataurlnewwindow');
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
         }
         // --- FIM DA GERAÇÃO DE RELATÓRIO DE VENDA ---
         // --- LÓGICA DE GERAR ETIQUETAS (PDF) ---
@@ -5640,8 +5658,14 @@ function showBatchBillEditModal(ids) {
             while (col >= def.cols) { col -= def.cols; row++; } // Wrap se coluna exceder
             if (row >= def.rows) { row = 0; col = 0; } // Reseta se linha exceder (nova página)
 
+        // Conta o total de etiquetas para não criar uma página extra em branco no final
+        let totalLabels = 0;
+        productsWithData.forEach(p => totalLabels += p.qtyToPrint);
+        let labelsPrinted = 0;
+
             for (const product of productsWithData) {
                 for (let i = 0; i < product.qtyToPrint; i++) {
+                labelsPrinted++;
 
                     const x = def.marginLeft + (col * (def.width + gapH));
                     const y = def.marginTop + (row * (def.height + gapV));
@@ -5727,13 +5751,21 @@ function showBatchBillEditModal(ids) {
                     // --- Avança para a próxima etiqueta ---
                     col++;
                     if (col >= def.cols) { col = 0; row++; }
-                    if (row >= def.rows) { col = 0; row = 0; doc.addPage(); }
+                    if (row >= def.rows) { 
+                        col = 0; 
+                        row = 0; 
+                        if (labelsPrinted < totalLabels) {
+                            doc.addPage(); 
+                        }
+                    }
 
                 } // --- Fim do loop INTERNO (quantidade) ---
 
             } // --- Fim do loop EXTERNO (produto) ---
 
-            doc.output('dataurlnewwindow');
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
         }
 
         /**
@@ -5934,7 +5966,9 @@ function showBatchBillEditModal(ids) {
             doc.text(declarationText, declarationXPos, declarationYPos, { maxWidth: declarationMaxWidth });
 
             // --- 4. Abrir o PDF ---
-            doc.output('dataurlnewwindow');
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
         }
         // --- LÓGICA DE ATIVAÇÃO DOS CAMPOS DE QTD DAS ETIQUETAS ---
         const labelProductListContainer = document.getElementById('label-product-list');
@@ -5980,6 +6014,56 @@ function showBatchBillEditModal(ids) {
                         selectedLabelsState[productId] = newQty;
                     }
                 }
+            });
+        }
+        
+        // --- LÓGICA DE SELECIONAR TODOS E APLICAR QTD EM LOTE ---
+        const labelSelectAllBtn = document.getElementById('label-select-all');
+        const btnApplyBatchQty = document.getElementById('btn-apply-batch-qty');
+        const labelBatchQty = document.getElementById('label-batch-qty');
+        
+        if (labelSelectAllBtn) {
+            labelSelectAllBtn.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                const checkboxes = document.querySelectorAll('#label-product-list .label-product-checkbox');
+                
+                checkboxes.forEach(cb => {
+                    if (cb.checked !== isChecked) {
+                        cb.checked = isChecked;
+                        // Dispara o evento de input para o listener do container atualizar o estado e a UI
+                        cb.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                });
+            });
+        }
+        
+        if (btnApplyBatchQty) {
+            btnApplyBatchQty.addEventListener('click', (e) => {
+                e.preventDefault();
+                const newQty = parseInt(labelBatchQty.value);
+                
+                if (isNaN(newQty) || newQty < 1) {
+                    showModal("Erro", "Insira uma quantidade válida maior que zero.");
+                    return;
+                }
+                
+                const selectedCheckboxes = document.querySelectorAll('#label-product-list .label-product-checkbox:checked');
+                
+                if (selectedCheckboxes.length === 0) {
+                    showModal("Atenção", "Selecione pelo menos um produto na lista para aplicar a quantidade.");
+                    return;
+                }
+
+                selectedCheckboxes.forEach(cb => {
+                    const productId = cb.dataset.id;
+                    const qtyInput = document.querySelector(`.label-product-qty[data-id="${productId}"]`);
+                    
+                    if (qtyInput) {
+                        qtyInput.value = newQty;
+                        // Dispara o evento para atualizar o estado interno 'selectedLabelsState'
+                        qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                });
             });
         }
         // --- FIM DA LÓGICA DE ATIVAÇÃO ---
@@ -8260,7 +8344,9 @@ async function drawTotalReportPDF(reportData, options) {
     }
 
     // --- Fim do Documento ---
-    doc.output('dataurlnewwindow');
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
 }
         // --- INICIALIZAÇÃO FINAL ---
 
@@ -8278,6 +8364,46 @@ async function drawTotalReportPDF(reportData, options) {
 
 </body>
 
+</html>cript>
+
+</body>
+
+</html>
+</html>cript>
+
+</body>
+
+</html>
+</html>cript>
+
+</body>
+
+</html>
+</html>cript>
+
+</body>
+
+</html>
+</html>cript>
+
+</body>
+
+</html>
+</html>cript>
+
+</body>
+
+</html>
+</html>cript>
+
+</body>
+
+</html>
+</html>cript>
+
+</body>
+
+</html>
 </html>cript>
 
 </body>
