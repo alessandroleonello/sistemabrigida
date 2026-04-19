@@ -2242,6 +2242,13 @@
         function getBase64FromImage(url) {
             return new Promise((resolve) => {
                 if (!url) { resolve(null); return; }
+                
+                // Contorna o bloqueio de CORS do Google Drive usando um proxy público
+                let fetchUrl = url;
+                if (url.includes('drive.google.com')) {
+                    fetchUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(url);
+                }
+
                 const img = new Image();
                 img.crossOrigin = "Anonymous"; // Permite contornar proteções básicas de CORS
                 img.onload = () => {
@@ -2257,8 +2264,11 @@
                         resolve(null);
                     }
                 };
-                img.onerror = () => resolve(null); // Se falhar por bloqueio de CORS, retorna vazio sem travar
-                img.src = url;
+                img.onerror = () => {
+                    console.warn("Falha ao carregar imagem via proxy (link quebrado ou bloqueado):", fetchUrl);
+                    resolve(null); // Se falhar, retorna vazio e não trava a geração
+                };
+                img.src = fetchUrl;
             });
         }
 
@@ -6079,9 +6089,11 @@ function showBatchBillEditModal(ids) {
                 if (includeImages) {
                     autoTableConfig.bodyStyles = { minCellHeight: 12 };
                     autoTableConfig.didDrawCell = function (data) {
-                        if (data.section === 'body' && data.column.index === 1 && data.row.index < itemsToPrint.length) {
-                            const imgBase64 = itemsToPrint[data.row.index].base64;
-                            if (imgBase64) {
+                        if (data.section === 'body' && data.column.index === 1) {
+                            const itemRow = itemsToPrint[data.row.index];
+                            // Verificação segura para evitar o "TypeError" caso o index não exista ou seja nulo
+                            if (itemRow && itemRow.base64) {
+                                const imgBase64 = itemRow.base64;
                                 const dim = 10;
                                 const x = data.cell.x + (data.cell.width - dim) / 2;
                                 const y = data.cell.y + (data.cell.height - dim) / 2;
