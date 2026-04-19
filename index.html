@@ -5283,17 +5283,21 @@ function showBatchBillEditModal(ids) {
 
                 // ATUALIZADO: Cabeçalho com Quantidade e Total
                 const soldHead = [['Qtd.', 'Ref.', 'Produto Vendido', 'Valor Unit. (R$)', 'Valor Total (R$)']];
-                const soldBody = itemsSoldGrouped.map(item => [
-                    item.quantity, // Adiciona a quantidade
-                    item.ref,
-                    item.nome,
-                    item.venda.toFixed(2),
-                    (item.venda * item.quantity).toFixed(2) // Calcula o total da linha
-                ]);
+                let totalSoldQty = 0;
+                const soldBody = itemsSoldGrouped.map(item => {
+                    totalSoldQty += item.quantity;
+                    return [
+                        item.quantity, // Adiciona a quantidade
+                        item.ref,
+                        item.nome,
+                        item.venda.toFixed(2),
+                        (item.venda * item.quantity).toFixed(2) // Calcula o total da linha
+                    ];
+                });
 
                 // Linha de Resumo (agora usa colSpan 4)
                 soldBody.push([
-                    { content: 'Total Vendido:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+                    { content: `Total de Peças: ${totalSoldQty} un. | Total Vendido:`, colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
                     { content: settlementData.totalSold.toFixed(2), styles: { fontStyle: 'bold', halign: 'right' } }
                 ]);
 
@@ -5331,10 +5335,19 @@ function showBatchBillEditModal(ids) {
                 currentY += 7;
 
                 const returnedHead = [['Qtd.', 'Ref.', 'Produto Devolvido']]; // Cabeçalho com Qtd
-                const returnedBody = returnedBodyData.map(item => [
-                    item.count, // A quantidade devolvida
-                    item.ref,
-                    item.nome
+                let totalReturnedQty = 0;
+                const returnedBody = returnedBodyData.map(item => {
+                    totalReturnedQty += item.count;
+                    return [
+                        item.count, // A quantidade devolvida
+                        item.ref,
+                        item.nome
+                    ];
+                });
+
+                returnedBody.push([
+                    { content: 'Total Devolvido:', colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' } },
+                    { content: `${totalReturnedQty} un.`, styles: { fontStyle: 'bold', halign: 'center' } }
                 ]);
 
                 doc.autoTable({
@@ -5415,25 +5428,33 @@ function showBatchBillEditModal(ids) {
             let currentY = 55;
 
             // --- 2. Tabela de Itens Vendidos ---
+            let totalQty = 0;
             if (sale.items && sale.items.length > 0) {
                 doc.setFontSize(14);
                 doc.setFont(undefined, 'bold');
                 doc.text('Itens Vendidos', 15, currentY);
                 currentY += 7;
 
-                const soldHead = [['Ref.', 'Produto', 'Valor Unit. (R$)']];
-                const soldBody = sale.items.map(item => [
-                    item.ref,
-                    item.nome,
-                    item.venda.toFixed(2)
-                ]);
+                const soldHead = [['Qtd.', 'Ref.', 'Produto', 'Valor Unit. (R$)', 'Total (R$)']];
+                const soldBody = sale.items.map(item => {
+                    const qty = parseInt(item.quantity) || 1;
+                    totalQty += qty;
+                    return [
+                        qty,
+                        item.ref,
+                        item.nome,
+                        item.venda.toFixed(2),
+                        (item.venda * qty).toFixed(2)
+                    ];
+                });
 
                 doc.autoTable({
                     startY: currentY,
                     head: soldHead,
                     body: soldBody,
                     theme: 'striped',
-                    headStyles: { fillColor: [41, 128, 185] } // Cor Azul
+                    headStyles: { fillColor: [41, 128, 185] }, // Cor Azul
+                    columnStyles: { 0: { halign: 'center' }, 3: { halign: 'right' }, 4: { halign: 'right' } }
                 });
                 currentY = doc.lastAutoTable.finalY + 10;
             }
@@ -5446,6 +5467,8 @@ function showBatchBillEditModal(ids) {
 
             doc.setFontSize(12);
             doc.setFont(undefined, 'normal');
+            doc.text(`Total de Peças: ${totalQty} un.`, 20, currentY);
+            currentY += 7;
             doc.text(`Subtotal: ${formatCurrency(sale.subtotal)}`, 20, currentY);
             currentY += 7;
             doc.text(`Desconto (${sale.discountPercent}%): - ${formatCurrency(sale.discountAmount)}`, 20, currentY);
@@ -6028,9 +6051,11 @@ function showBatchBillEditModal(ids) {
                     ? [['Qtd.', 'Imagem', 'Ref.', 'Produto', 'Valor Unit. (R$)', 'Valor Total (R$)']]
                     : [['Qtd.', 'Ref.', 'Produto', 'Valor Unit. (R$)', 'Valor Total (R$)']];
 
+                let totalQty = 0;
                 const tableBody = itemsToPrint.map(item => {
                     const venda = parseFloat(item.venda) || 0;
                     const qtd = parseInt(item.quantity) || 1;
+                    totalQty += qtd;
                     const row = [
                         qtd,
                         item.ref || '',
@@ -6047,7 +6072,7 @@ function showBatchBillEditModal(ids) {
 
                 tableBody.push([
                     {
-                        content: 'Valor Total Consignado:',
+                        content: `Total de Peças: ${totalQty} un. | Valor Total Consignado:`,
                         colSpan: includeImages ? 5 : 4,
                         styles: { halign: 'right', fontStyle: 'bold', fontSize: 11, fillColor: [240, 240, 240] }
                     },
