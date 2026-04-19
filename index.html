@@ -2245,12 +2245,17 @@
                 const img = new Image();
                 img.crossOrigin = "Anonymous"; // Permite contornar proteções básicas de CORS
                 img.onload = () => {
-                    const canvas = document.createElement("canvas");
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL("image/jpeg"));
+                    try {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL("image/jpeg"));
+                    } catch (err) {
+                        console.error("Erro no Canvas ao processar imagem:", err);
+                        resolve(null);
+                    }
                 };
                 img.onerror = () => resolve(null); // Se falhar por bloqueio de CORS, retorna vazio sem travar
                 img.src = url;
@@ -3072,11 +3077,8 @@
                             dueDateString = formatDateToYYYYMMDD(new Date()); // Usa hoje como fallback
                         }
 
-                        const includeImages = confirm("Deseja gerar o comprovante COM as fotos dos produtos?\n(Pode demorar alguns segundos a mais para baixar as imagens)");
-
-                        // 3. Chamar a função de gerar PDF
-                        // (Parâmetros: saleData, saleId, dueDateString)
-                        generateConsignmentOpeningReport(sale, sale.id, dueDateString, includeImages);
+                        // 3. Mostra o modal de escolha de impressão
+                        showPrintConsignConfirmation(sale, dueDateString, false);
 
                     } else {
                         showModal("Erro", "Não foi possível encontrar os dados da consignação para imprimir.");
@@ -4773,23 +4775,15 @@ function showBatchBillEditModal(ids) {
                     // 4. Executar o Batch
                     await batch.commit();
 
-                    // 5. Gerar o novo relatório PDF
-                    try {
-                        const updatedSaleDataForPDF = {
-                            clientId: originalConsignment.clientId,
-                            items: editConsignmentItems,
-                            total: newSubtotal
-                        };
-                        const includeImages = confirm("A consignação foi atualizada.\nDeseja gerar o novo comprovante COM as fotos dos produtos?");
-                        await generateConsignmentOpeningReport(updatedSaleDataForPDF, consignmentId, newDueDate, includeImages);
-                    } catch (pdfError) {
-                        console.error("Erro ao gerar o PDF de atualização:", pdfError);
-                        showModal("Aviso", "Consignação atualizada, mas houve um erro ao gerar o novo PDF.");
-                    }
-
-                    // 6. Sucesso
+                    // 5. Sucesso e opções de impressão do novo PDF
                     hideModal();
-                    showModal("Sucesso!", "Consignação atualizada. Estoque ajustado.");
+                    const updatedSaleDataForPDF = {
+                        id: consignmentId,
+                        clientId: originalConsignment.clientId,
+                        items: editConsignmentItems,
+                        total: newSubtotal
+                    };
+                    showPrintConsignConfirmation(updatedSaleDataForPDF, newDueDate, true);
 
                 } catch (error) {
                     console.error("Erro ao atualizar consignação:", error);
@@ -5894,6 +5888,50 @@ function showBatchBillEditModal(ids) {
         }
 
         /**
+         * Exibe um modal customizado para perguntar se o usuário quer imprimir com ou sem fotos
+         */
+        function showPrintConsignConfirmation(saleData, dueDateString, isUpdate = false) {
+            modalTitle.textContent = isUpdate ? 'Consignação Atualizada' : 'Opções de Impressão';
+            modalBody.innerHTML = `
+                <p class="text-lg font-medium mb-2 text-gray-800">${isUpdate ? 'A consignação foi atualizada com sucesso!' : 'Gerar Comprovante'}</p>
+                <p class="text-gray-600">Deseja gerar o comprovante de consignação <strong>COM</strong> ou <strong>SEM</strong> as fotos dos produtos?</p>
+                <p class="text-sm text-gray-500 mt-3 bg-gray-50 p-3 rounded border border-gray-200">
+                    <i data-lucide="info" class="w-4 h-4 inline mr-1 text-indigo-500"></i>
+                    A opção <strong>"Com Fotos"</strong> pode demorar alguns segundos a mais para carregar e inserir as imagens no arquivo PDF.
+                </p>
+                <div class="mt-6 text-right space-x-2">
+                    <button type="button" id="btn-print-cancel" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200">Não Imprimir</button>
+                    <button type="button" id="btn-print-without-photos" class="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200">Imprimir SEM Fotos</button>
+                    <button type="button" id="btn-print-with-photos" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Imprimir COM Fotos</button>
+                </div>
+            `;
+            modalContainer.style.display = 'flex';
+            lucide.createIcons();
+
+            document.getElementById('btn-print-cancel').onclick = hideModal;
+
+            document.getElementById('btn-print-without-photos').onclick = async () => {
+                hideModal();
+                try {
+                    await generateConsignmentOpeningReport(saleData, saleData.id, dueDateString, false);
+                } catch(e) {
+                    console.error("Erro ao gerar PDF:", e);
+                    showModal("Erro", "Houve um problema ao gerar o PDF sem fotos.");
+                }
+            };
+
+            document.getElementById('btn-print-with-photos').onclick = async () => {
+                hideModal();
+                try {
+                    await generateConsignmentOpeningReport(saleData, saleData.id, dueDateString, true);
+                } catch(e) {
+                    console.error("Erro ao gerar PDF:", e);
+                    showModal("Erro", "Houve um problema ao gerar o PDF com fotos.");
+                }
+            };
+        }
+
+        /**
         * Gera um Comprovante de Retirada de Consignação em PDF
         * (CORRIGIDO com quebra de linha dinâmica para o NOME DO CLIENTE no CABEÇALHO e na ASSINATURA)
         */
@@ -5981,12 +6019,14 @@ function showBatchBillEditModal(ids) {
                     : [['Qtd.', 'Ref.', 'Produto', 'Valor Unit. (R$)', 'Valor Total (R$)']];
 
                 const tableBody = itemsToPrint.map(item => {
+                    const venda = parseFloat(item.venda) || 0;
+                    const qtd = parseInt(item.quantity) || 1;
                     const row = [
-                        item.quantity,
-                        item.ref,
-                        item.nome,
-                        item.venda.toFixed(2).replace('.', ','),
-                        (item.venda * (item.quantity || 1)).toFixed(2).replace('.', ',')
+                        qtd,
+                        item.ref || '',
+                        item.nome || '',
+                        venda.toFixed(2).replace('.', ','),
+                        (venda * qtd).toFixed(2).replace('.', ',')
                     ];
                     // Adiciona uma coluna vazia como "placeholder" para desenhar a imagem por cima
                     if (includeImages) {
@@ -6019,33 +6059,43 @@ function showBatchBillEditModal(ids) {
                     columnStyles[4] = { halign: 'right' };
                 }
 
-                doc.autoTable({
-                    startY: currentY, // Inicia a tabela na posição Y dinâmica
+                let autoTableConfig = {
+                    startY: currentY,
                     head: tableHead,
                     body: tableBody,
                     theme: 'striped',
                     headStyles: { fillColor: [79, 70, 229] },
                     columnStyles: columnStyles,
-                    bodyStyles: { minCellHeight: includeImages ? 12 : undefined }, // Dá espaço na linha para caber a foto
                     didParseCell: function (data) {
                         if (data.row.index === tableBody.length - 1) {
                             data.cell.styles.fillColor = [224, 231, 255];
                             data.cell.styles.textColor = [0, 0, 0];
                         }
-                    },
-                    // didDrawCell executa imediatamente após desenhar uma célula da tabela
-                    didDrawCell: function (data) {
-                        if (includeImages && data.section === 'body' && data.column.index === 1 && data.row.index < itemsToPrint.length) {
+                    }
+                };
+
+                // A propriedade bodyStyles só é injetada se includeImages for verdadeiro
+                // Isso evita passar 'undefined' e causar sobreposição de linhas
+                if (includeImages) {
+                    autoTableConfig.bodyStyles = { minCellHeight: 12 };
+                    autoTableConfig.didDrawCell = function (data) {
+                        if (data.section === 'body' && data.column.index === 1 && data.row.index < itemsToPrint.length) {
                             const imgBase64 = itemsToPrint[data.row.index].base64;
                             if (imgBase64) {
-                                const dim = 10; // Tamanho da imagem no PDF (10x10 mm)
+                                const dim = 10;
                                 const x = data.cell.x + (data.cell.width - dim) / 2;
                                 const y = data.cell.y + (data.cell.height - dim) / 2;
-                                doc.addImage(imgBase64, 'JPEG', x, y, dim, dim);
+                                try {
+                                    doc.addImage(imgBase64, 'JPEG', x, y, dim, dim);
+                                } catch (e) {
+                                    console.error("Erro ao desenhar imagem no PDF:", e);
+                                }
                             }
                         }
-                    }
-                });
+                    };
+                }
+
+                doc.autoTable(autoTableConfig);
                 currentY = doc.lastAutoTable.finalY + 15; // Atualiza o Y para depois da tabela
             }
 
