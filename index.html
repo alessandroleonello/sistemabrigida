@@ -480,6 +480,10 @@
                                 </div>
                                 <!-- FIM DO NOVO BLOCO -->
                                 <div>
+                                    <label class="block text-sm font-medium">URL da Imagem (Opcional)</label>
+                                    <input type="url" id="prod-foto" placeholder="https://exemplo.com/imagem.jpg" class="w-full px-3 py-2 mt-1 border rounded-md">
+                                </div>
+                                <div>
                                     <label class="block text-sm font-medium">Descrição</label>
                                     <textarea id="prod-desc" rows="4"
                                         class="w-full px-3 py-2 mt-1 border rounded-md"></textarea>
@@ -775,6 +779,10 @@
                                     <button type="button" id="btn-add-sale-item"
                                         class="px-4 py-2 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600">Adicionar</button>
                                 </div>
+                                <div class="mt-4 flex justify-between items-center bg-gray-50 p-2 rounded-md border">
+                                    <span class="text-sm font-medium text-gray-600 hidden sm:inline">Buscar na lista:</span>
+                                    <input type="search" id="sale-item-search" placeholder="Pesquisar item adicionado (Nome ou Ref)" class="w-full sm:w-2/3 px-3 py-1.5 text-sm border rounded-md">
+                                </div>
                                 <div class="mt-4 overflow-x-auto">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead>
@@ -846,6 +854,12 @@
                                             <label class="block text-sm font-medium">Data do Acerto</label>
                                             <input type="date" id="sale-due-date"
                                                 class="w-full px-3 py-2 mt-1 border rounded-md">
+                                        </div>
+                                        <div class="mt-4">
+                                            <label class="flex items-center">
+                                                <input type="checkbox" id="sale-include-images" class="text-indigo-600 focus:ring-indigo-500 rounded">
+                                                <span class="ml-2 text-sm font-medium">Incluir fotos dos produtos no comprovante em PDF</span>
+                                            </label>
                                         </div>
                                     </div>
 
@@ -1570,11 +1584,28 @@
             products.forEach(prod => {
                 const tr = document.createElement('tr');
                 tr.dataset.id = prod.id;
+                
+                const imgSrc = prod.fotoUrl ? prod.fotoUrl : 'https://placehold.co/40x40/e2e8f0/adb5bd?text=Sem+Foto';
+                const previewSrc = prod.fotoUrl ? prod.fotoUrl : 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Sem+Foto';
+
                 tr.innerHTML = `
             <td class="px-6 py-4"><input type="checkbox" class="rounded product-checkbox" data-id="${prod.id}"></td>
             <td class="px-6 py-4 min-w-[150px] break-words"> 
                 <div class="font-medium">${prod.nome}</div>
                 <div class="text-sm text-gray-500">${prod.ref}${prod.ref2 ? ' / ' + prod.ref2 : ''}</div>
+            <td class="px-6 py-4 min-w-[200px] break-words"> 
+                <div class="flex items-center space-x-3">
+                    <div class="relative group">
+                        <img src="${imgSrc}" alt="Foto" class="w-10 h-10 rounded-md object-cover border border-gray-200 cursor-pointer" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
+                        <div class="absolute z-[100] left-12 top-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-xl pointer-events-none w-48 h-48">
+                            <img src="${previewSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="font-medium">${prod.nome}</div>
+                        <div class="text-sm text-gray-500">${prod.ref}${prod.ref2 ? ' / ' + prod.ref2 : ''}</div>
+                    </div>
+                </div>
             </td>
             <td class="px-6 py-4 break-words">${prod.categoria}</td>
             <td class="px-6 py-4 whitespace-nowrap">
@@ -2195,6 +2226,37 @@
         });
         prodVenda.addEventListener('input', calcularMargem);
 
+        // Função para formatar o link de imagem do Google Drive como link direto
+        function formatImageUrl(url) {
+            if (!url) return null;
+            const driveRegex = /(?:https?:\/\/)?(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|docs\.google\.com\/uc\?id=)([a-zA-Z0-9_-]+)/;
+            const match = url.match(driveRegex);
+            if (match && match[1]) {
+                // Usa o endpoint de miniatura, que o Google Drive ainda permite em outros sites
+                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+            }
+            return url;
+        }
+
+        // Função Helper para converter a imagem em Base64 (Necessário para desenhar no PDF)
+        function getBase64FromImage(url) {
+            return new Promise((resolve) => {
+                if (!url) { resolve(null); return; }
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; // Permite contornar proteções básicas de CORS
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL("image/jpeg"));
+                };
+                img.onerror = () => resolve(null); // Se falhar por bloqueio de CORS, retorna vazio sem travar
+                img.src = url;
+            });
+        }
+
         // Salvar produto (Versão simplificada, sem foto)
         document.getElementById('form-add-product').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -2246,6 +2308,7 @@
                     estoque: parseInt(document.getElementById('prod-estoque').value) || 0,
                     descricao: document.getElementById('prod-desc').value,
                     // fotoUrl: null, // Não precisamos mais deste campo
+                    fotoUrl: formatImageUrl(document.getElementById('prod-foto').value.trim()),
                     createdAt: serverTimestamp(),
                     ownerId: userId
                 };
@@ -3009,9 +3072,11 @@
                             dueDateString = formatDateToYYYYMMDD(new Date()); // Usa hoje como fallback
                         }
 
+                        const includeImages = confirm("Deseja gerar o comprovante COM as fotos dos produtos?\n(Pode demorar alguns segundos a mais para baixar as imagens)");
+
                         // 3. Chamar a função de gerar PDF
                         // (Parâmetros: saleData, saleId, dueDateString)
-                        generateConsignmentOpeningReport(sale, sale.id, dueDateString);
+                        generateConsignmentOpeningReport(sale, sale.id, dueDateString, includeImages);
 
                     } else {
                         showModal("Erro", "Não foi possível encontrar os dados da consignação para imprimir.");
@@ -4715,7 +4780,8 @@ function showBatchBillEditModal(ids) {
                             items: editConsignmentItems,
                             total: newSubtotal
                         };
-                        await generateConsignmentOpeningReport(updatedSaleDataForPDF, consignmentId, newDueDate);
+                        const includeImages = confirm("A consignação foi atualizada.\nDeseja gerar o novo comprovante COM as fotos dos produtos?");
+                        await generateConsignmentOpeningReport(updatedSaleDataForPDF, consignmentId, newDueDate, includeImages);
                     } catch (pdfError) {
                         console.error("Erro ao gerar o PDF de atualização:", pdfError);
                         showModal("Aviso", "Consignação atualizada, mas houve um erro ao gerar o novo PDF.");
@@ -5787,12 +5853,14 @@ function showBatchBillEditModal(ids) {
             const dataToExport = sale.items.map(item => {
                 let categoria = item.categoria || "";
                 let ref2 = item.ref2 || "";
+                let fotoUrl = item.fotoUrl || "";
 
-                if (!categoria || !ref2) {
+                if (!categoria || !ref2 || !fotoUrl) {
                     const productInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
                     if (productInCache) {
                         if (!categoria) categoria = productInCache.categoria;
                         if (!ref2) ref2 = productInCache.ref2;
+                        if (!fotoUrl) fotoUrl = productInCache.fotoUrl || "";
                     }
                 }
                 
@@ -5804,7 +5872,8 @@ function showBatchBillEditModal(ids) {
                     "Ref. 2": ref2 || "",
                     "Categoria": categoria,
                     "Quantidade": item.quantity || 1,
-                    "Preço": item.venda
+                    "Preço": item.venda,
+                    "Link da Imagem": fotoUrl
                 };
             });
 
@@ -5828,7 +5897,7 @@ function showBatchBillEditModal(ids) {
         * Gera um Comprovante de Retirada de Consignação em PDF
         * (CORRIGIDO com quebra de linha dinâmica para o NOME DO CLIENTE no CABEÇALHO e na ASSINATURA)
         */
-        async function generateConsignmentOpeningReport(saleData, newSaleId, dueDateString) {
+        async function generateConsignmentOpeningReport(saleData, newSaleId, dueDateString, includeImages = false) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ unit: 'mm', format: 'a4' });
             const formatCurrency = (val) => `R$ ${val !== undefined && val !== null ? val.toFixed(2).replace('.', ',') : '0,00'}`;
@@ -5886,19 +5955,50 @@ function showBatchBillEditModal(ids) {
                 doc.text('Itens Retirados', leftMargin, currentY); // Usa o Y dinâmico
                 currentY += 7;
 
+                let itemsToPrint = saleData.items;
+                // Se o usuário optou por gerar com imagens, baixamos e processamos antes
+                if (includeImages) {
+                    showModal("Carregando...", "Baixando e processando as imagens para o PDF. Por favor, aguarde.");
+                    itemsToPrint = await Promise.all(saleData.items.map(async (item) => {
+                        let base64 = null;
+                        let fotoUrl = item.fotoUrl;
+                        // Se não encontrar foto na venda salva, busca no histórico de produtos vivos
+                        if (!fotoUrl) {
+                            const prodInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
+                            if (prodInCache) fotoUrl = prodInCache.fotoUrl;
+                        }
+                        if (fotoUrl) {
+                            base64 = await getBase64FromImage(fotoUrl);
+                        }
+                        return { ...item, base64 };
+                    }));
+                    hideModal();
+                }
+
                 // Cabeçalho e corpo da tabela
-                const tableHead = [['Qtd.', 'Ref.', 'Produto', 'Valor Unit. (R$)', 'Valor Total (R$)']];
-                const tableBody = saleData.items.map(item => [
-                    item.quantity,
-                    item.ref,
-                    item.nome,
-                    item.venda.toFixed(2).replace('.', ','),
-                    (item.venda * (item.quantity || 1)).toFixed(2).replace('.', ',') // Garante que quantity exista
-                ]);
+                const tableHead = includeImages 
+                    ? [['Qtd.', 'Imagem', 'Ref.', 'Produto', 'Valor Unit. (R$)', 'Valor Total (R$)']]
+                    : [['Qtd.', 'Ref.', 'Produto', 'Valor Unit. (R$)', 'Valor Total (R$)']];
+
+                const tableBody = itemsToPrint.map(item => {
+                    const row = [
+                        item.quantity,
+                        item.ref,
+                        item.nome,
+                        item.venda.toFixed(2).replace('.', ','),
+                        (item.venda * (item.quantity || 1)).toFixed(2).replace('.', ',')
+                    ];
+                    // Adiciona uma coluna vazia como "placeholder" para desenhar a imagem por cima
+                    if (includeImages) {
+                        row.splice(1, 0, '');
+                    }
+                    return row;
+                });
+
                 tableBody.push([
                     {
                         content: 'Valor Total Consignado:',
-                        colSpan: 4,
+                        colSpan: includeImages ? 5 : 4,
                         styles: { halign: 'right', fontStyle: 'bold', fontSize: 11, fillColor: [240, 240, 240] }
                     },
                     {
@@ -5907,21 +6007,42 @@ function showBatchBillEditModal(ids) {
                     }
                 ]);
 
+                let columnStyles = {
+                    0: { halign: 'center' }
+                };
+                if (includeImages) {
+                    columnStyles[1] = { halign: 'center', cellWidth: 15 };
+                    columnStyles[4] = { halign: 'right' };
+                    columnStyles[5] = { halign: 'right' };
+                } else {
+                    columnStyles[3] = { halign: 'right' };
+                    columnStyles[4] = { halign: 'right' };
+                }
+
                 doc.autoTable({
                     startY: currentY, // Inicia a tabela na posição Y dinâmica
                     head: tableHead,
                     body: tableBody,
                     theme: 'striped',
                     headStyles: { fillColor: [79, 70, 229] },
-                    columnStyles: {
-                        0: { halign: 'center' },
-                        3: { halign: 'right' },
-                        4: { halign: 'right' }
-                    },
+                    columnStyles: columnStyles,
+                    bodyStyles: { minCellHeight: includeImages ? 12 : undefined }, // Dá espaço na linha para caber a foto
                     didParseCell: function (data) {
                         if (data.row.index === tableBody.length - 1) {
                             data.cell.styles.fillColor = [224, 231, 255];
                             data.cell.styles.textColor = [0, 0, 0];
+                        }
+                    },
+                    // didDrawCell executa imediatamente após desenhar uma célula da tabela
+                    didDrawCell: function (data) {
+                        if (includeImages && data.section === 'body' && data.column.index === 1 && data.row.index < itemsToPrint.length) {
+                            const imgBase64 = itemsToPrint[data.row.index].base64;
+                            if (imgBase64) {
+                                const dim = 10; // Tamanho da imagem no PDF (10x10 mm)
+                                const x = data.cell.x + (data.cell.width - dim) / 2;
+                                const y = data.cell.y + (data.cell.height - dim) / 2;
+                                doc.addImage(imgBase64, 'JPEG', x, y, dim, dim);
+                            }
                         }
                     }
                 });
@@ -6908,6 +7029,8 @@ function renderBillsTab(entries) {
                 const product = await findProductByRef(refCode);
 
                 if (!product) {
+                    const audio = new Audio('erro.mp3');
+                    audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
                     showModal("Erro", `Produto com referência "${refCode}" não foi encontrado.`);
                 } // Bloco NOVO com verificação de estoque
                 else {
@@ -6980,10 +7103,20 @@ function renderBillsTab(entries) {
                 return;
             }
 
+            const searchTerm = document.getElementById('sale-item-search')?.value.toLowerCase().trim() || '';
+            let visibleCount = 0;
+
             currentSaleItems.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.className = 'border-b';
                 const itemTotal = item.venda * item.quantity;
+
+                // Filtro de pesquisa
+                if (searchTerm && !item.nome.toLowerCase().includes(searchTerm) && !item.ref.toLowerCase().includes(searchTerm)) {
+                    tr.style.display = 'none';
+                } else {
+                    visibleCount++;
+                }
 
                 tr.innerHTML = `
             <td class="py-2 pr-2">
@@ -7015,6 +7148,10 @@ function renderBillsTab(entries) {
         `;
                 saleItemsListBody.appendChild(tr);
             });
+
+            if (visibleCount === 0 && currentSaleItems.length > 0) {
+                saleItemsListBody.innerHTML = '<tr><td colspan="6" class="py-2 text-center text-gray-500">Nenhum item encontrado na pesquisa.</td></tr>';
+            }
 
             lucide.createIcons(); // Recria os ícones de lixeira
         }
@@ -7050,6 +7187,11 @@ function renderBillsTab(entries) {
                 }
             });
             saleDiscountInput.addEventListener('input', updateSaleTotals);
+            
+            const saleItemSearchInput = document.getElementById('sale-item-search');
+            if (saleItemSearchInput) {
+                saleItemSearchInput.addEventListener('input', renderSaleItems);
+            }
         }
 
         renderSaleItems();
@@ -7147,6 +7289,10 @@ function renderBillsTab(entries) {
    */
         function resetSaleForm() {
             currentSaleItems = []; // Limpa o array do carrinho
+            
+            const saleItemSearchInput = document.getElementById('sale-item-search');
+            if (saleItemSearchInput) saleItemSearchInput.value = '';
+
             renderSaleItems();     // Limpa a tabela de itens na UI
             updateSaleTotals();    // Zera os totais na UI
 
@@ -7266,7 +7412,8 @@ function renderBillsTab(entries) {
                     ref: p.ref,
                     venda: p.venda,
                     custo: p.custo, // Mantém o custo para referência futura, se necessário
-                    quantity: p.quantity
+                    quantity: p.quantity,
+                    fotoUrl: p.fotoUrl || null
                 }));
 
                 // --- 2. Preparar o Pacote (Batch) ---
@@ -7327,7 +7474,8 @@ function renderBillsTab(entries) {
                     // Passa os dados que acabamos de preparar (saleData)
                     // Passa o ID da nova venda (newSaleRef.id)
                     // Passa a string da data de vencimento (dueDateString) para formatação
-                    await generateConsignmentOpeningReport(saleData, newSaleRef.id, dueDateString);
+                    const includeImages = document.getElementById('sale-include-images')?.checked || false;
+                    await generateConsignmentOpeningReport(saleData, newSaleRef.id, dueDateString, includeImages);
                 }
 
                 showModal("Sucesso!", `Venda do tipo "${saleType}" registrada com sucesso.`);
@@ -7723,6 +7871,10 @@ function renderBillsTab(entries) {
                         </div>                        
                     </div>
                     <div>
+                        <label class="block text-sm font-medium">URL da Imagem (Opcional)</label>
+                        <input type="url" id="edit-prod-foto" class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.fotoUrl || ''}" placeholder="https://exemplo.com/imagem.jpg">
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium">Descrição</label>
                         <textarea id="edit-prod-desc" rows="4" class="w-full px-3 py-2 mt-1 border rounded-md">${product.descricao || ''}</textarea>
                     </div>
@@ -7906,6 +8058,7 @@ function renderBillsTab(entries) {
                             estoque: parseInt(document.getElementById('edit-prod-estoque').value) || 0,
                             descricao: document.getElementById('edit-prod-desc').value,
                             // Não mexemos na fotoUrl aqui, ela permanece a mesma
+                            fotoUrl: formatImageUrl(document.getElementById('edit-prod-foto').value.trim()),
                         };
 
                         // Envia a atualização
