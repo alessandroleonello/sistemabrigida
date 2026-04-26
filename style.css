@@ -1,0 +1,21 @@
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Classe para esconder páginas inativas */
+        .page {
+            display: none;
+        }
+
+        /* Classe para mostrar a página ativa */
+        .page.active {
+            display: block;
+        }
+
+        /* Estilo para links ativos no menu */
+        .sidebar-link.active {
+            background-color: #4f46e5;
+            /* indigo-700 */
+            color: white;
+        }
+    
