@@ -94,7 +94,7 @@
 
     <!-- =========== APLICAÇÃO PRINCIPAL (Escondida até o login) =========== -->
     <div id="page-main-app" class="hidden">
-        <div class="flex h-screen">
+        <div class="flex h-screen w-full overflow-hidden">
             <!-- Overlay para Mobile -->
             <div id="mobile-overlay" class="fixed inset-0 z-20 hidden bg-black bg-opacity-50 md:hidden"
                 onclick="toggleMobileSidebar()"></div>
@@ -125,6 +125,11 @@
                         class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
                         <i data-lucide="package" class="flex-shrink-0"></i>
                         <span class="sidebar-text whitespace-nowrap">Produtos</span>
+                    </a>
+                     <a href="#" data-page="page-maletas"
+                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
+                        <i data-lucide="briefcase" class="flex-shrink-0"></i>
+                        <span class="sidebar-text whitespace-nowrap">Maletas</span>
                     </a>
                     <a href="#" data-page="page-vendas"
                         class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
@@ -166,7 +171,7 @@
             </nav>
 
             <!-- Conteúdo Principal -->
-            <main class="flex-1 p-6 overflow-y-auto bg-gray-100 md:p-10">
+            <main class="flex-1 min-w-0 p-6 overflow-x-hidden overflow-y-auto bg-gray-100 md:p-10">
                 <!-- Botão Menu Mobile -->
                 <div class="mb-4 md:hidden">
                     <button onclick="toggleMobileSidebar()"
@@ -276,6 +281,21 @@
                                     <i data-lucide="tag" class="w-6 h-6 mb-1"></i>
                                     Gerar Etiquetas
                                 </button>
+                                <button id="btn-dashboard-new-income"
+                                    class="flex flex-col items-center justify-center p-3 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
+                                    <i data-lucide="arrow-up-circle" class="w-6 h-6 mb-1"></i>
+                                    Nova Entrada
+                                </button>
+                                <button id="btn-dashboard-new-bill"
+                                    class="flex flex-col items-center justify-center p-3 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+                                    <i data-lucide="receipt" class="w-6 h-6 mb-1"></i>
+                                    Nova Despesa
+                                </button>
+                                <button id="btn-dashboard-new-transfer"
+                                    class="flex flex-col items-center justify-center p-3 text-xs font-medium text-cyan-700 bg-cyan-50 rounded-lg hover:bg-cyan-100 transition-colors col-span-2">
+                                    <i data-lucide="arrow-right-left" class="w-6 h-6 mb-1"></i>
+                                    Transferência
+                                </button>
                             </div>
                         </div>
                         <!-- Lista de Avisos (Itens clicáveis) -->
@@ -323,7 +343,7 @@
                     <h2 class="text-3xl font-semibold text-gray-800">Gestão de Produtos</h2>
                     <!-- Abas da Seção -->
                     <div class="mt-4 border-b border-gray-200">
-                        <nav class="flex -mb-px space-x-6" id="product-tabs">
+                        <nav class="flex overflow-x-auto scrollbar-hide -mb-px space-x-6" id="product-tabs">
                             <button data-tab="tab-produtos-view"
                                 class="product-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">Visualizar
                                 Produtos</button>
@@ -336,6 +356,9 @@
                             <button data-tab="tab-produtos-labels"
                                 class="product-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Gerar
                                 Etiquetas</button>
+                            <button data-tab="tab-produtos-estoque"
+                                class="product-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Resumo
+                                de Estoque</button>
                         </nav>
                     </div>
 
@@ -742,6 +765,85 @@
 
                         <div id="import-status" class="mt-4 text-sm"></div>
                     </div>
+
+                <!-- Conteúdo da Aba: Resumo de Estoque -->
+                <div id="tab-produtos-estoque" class="product-tab-content hidden mt-6">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        <!-- Estoque Físico -->
+                        <div class="p-6 bg-white rounded-xl shadow-md border border-gray-200">
+                            <div class="flex items-center mb-4">
+                                <div class="p-3 bg-blue-100 text-blue-600 rounded-full mr-4"><i data-lucide="package" class="w-6 h-6"></i></div>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Estoque Físico</p>
+                                    <p class="text-xs text-gray-400">Comigo no momento</p>
+                                </div>
+                            </div>
+                            <p id="estoque-fisico-qty" class="text-4xl font-extrabold text-gray-800 mb-4">0 un.</p>
+                            <div class="space-y-2 border-t pt-4">
+                                <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Total:</span><span id="estoque-fisico-cost" class="font-bold text-red-600">R$ 0,00</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-gray-500">Venda Total:</span><span id="estoque-fisico-sale" class="font-bold text-green-600">R$ 0,00</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Na Rua (Consignado) -->
+                        <div class="p-6 bg-white rounded-xl shadow-md border border-purple-200">
+                            <div class="flex items-center mb-4">
+                                <div class="p-3 bg-purple-100 text-purple-600 rounded-full mr-4"><i data-lucide="truck" class="w-6 h-6"></i></div>
+                                <div>
+                                    <p class="text-sm font-bold text-purple-600 uppercase tracking-wider">Nas Ruas</p>
+                                    <p class="text-xs text-gray-400">Em consignações ativas</p>
+                                </div>
+                            </div>
+                            <p id="estoque-rua-qty" class="text-4xl font-extrabold text-gray-800 mb-4">0 un.</p>
+                            <div class="space-y-2 border-t pt-4">
+                                <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Total:</span><span id="estoque-rua-cost" class="font-bold text-red-600">R$ 0,00</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-gray-500">Venda Total:</span><span id="estoque-rua-sale" class="font-bold text-green-600">R$ 0,00</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Total Geral -->
+                        <div class="p-6 bg-white rounded-xl shadow-md border border-gray-200">
+                            <div class="flex items-center mb-4">
+                                <div class="p-3 bg-gray-100 text-gray-800 rounded-full mr-4"><i data-lucide="layers" class="w-6 h-6"></i></div>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800 uppercase tracking-wider">Total Geral</p>
+                                    <p class="text-xs text-gray-400">Físico + Nas Ruas</p>
+                                </div>
+                            </div>
+                            <p id="estoque-total-qty" class="text-4xl font-extrabold text-gray-800 mb-4">0 un.</p>
+                            <div class="space-y-2 border-t pt-4">
+                                <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Total:</span><span id="estoque-total-cost" class="font-bold text-red-600">R$ 0,00</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-gray-500">Venda Total:</span><span id="estoque-total-sale" class="font-bold text-green-600">R$ 0,00</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            
+                <!-- =========== PÁGINA: MALETAS =========== -->
+                <div id="page-maletas" class="page">
+                    <h2 class="text-3xl font-semibold text-gray-800">Gestão de Maletas</h2>
+                    
+                    <div class="mt-6 p-6 bg-white rounded-lg shadow-md">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium">Kits e Maletas</h3>
+                            <button id="btn-new-maleta" class="px-4 py-2 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> Nova Maleta</button>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-6">Crie kits pré-configurados de produtos para adicioná-los rapidamente em uma Venda Consignada.</p>
+                        <div class="overflow-x-auto border rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Nome da Maleta</th>
+                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Qtd Itens / Produtos</th>
+                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Valor Total</th>
+                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="maletas-list-table" class="bg-white divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- =========== PÁGINA: VENDAS =========== -->
@@ -749,7 +851,7 @@
                     <h2 class="text-3xl font-semibold text-gray-800">Gestão de Vendas</h2>
                     <!-- Abas da Seção -->
                     <div class="mt-4 border-b border-gray-200">
-                        <nav class="flex -mb-px space-x-6" id="vendas-tabs">
+                        <nav class="flex overflow-x-auto scrollbar-hide -mb-px space-x-6" id="vendas-tabs">
                             <button data-tab="tab-vendas-new"
                                 class="vendas-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">Nova
                                 Venda / Consignação</button>
@@ -766,11 +868,11 @@
                     <div id="tab-vendas-new" class="vendas-tab-content mt-6">
                         <form id="form-new-sale" novalidate class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <!-- Coluna 1: Itens -->
-                            <div class="p-6 bg-white rounded-lg shadow-md lg:col-span-2">
+                            <div class="p-6 bg-white rounded-lg shadow-md lg:col-span-2 min-w-0">
                                 <!-- TÍTULO E CONTADOR DE ITENS (CORRIGIDO) -->
-                                <div class="flex items-baseline justify-between">
-                                    <h3 class="text-lg font-medium whitespace-nowrap">Itens da Venda</h3>
-                                    <span class="text-sm font-medium text-gray-500 whitespace-nowrap">
+                                <div class="flex items-baseline justify-between flex-wrap gap-2">
+                                    <h3 class="text-lg font-medium">Itens da Venda</h3>
+                                    <span class="text-sm font-medium text-gray-500">
                                         Total de Itens:
                                         <span id="sale-item-list-count"
                                             class="text-lg font-bold text-indigo-600">0</span>
@@ -778,11 +880,16 @@
                                 </div>
                                 <div class="flex mt-4 space-x-2">
 
-                                    <input type="text" id="sale-item-ref"
-                                        placeholder="Digitar Código de Ref. (ou usar leitor)"
+                                    <input type="text" id="sale-item-ref" list="sale-item-datalist"
+                                        placeholder="Digitar Nome ou Código de Ref. (ou usar leitor)"
                                         class="flex-1 px-3 py-2 border rounded-md">
+                                    <datalist id="sale-item-datalist"></datalist>
                                     <button type="button" id="btn-add-sale-item"
                                         class="px-4 py-2 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600">Adicionar</button>
+                                    <button type="button" id="btn-add-maleta-sale"
+                                        class="px-3 py-2 font-medium text-purple-700 bg-purple-100 rounded-md hover:bg-purple-200" title="Adicionar Maleta">
+                                        <i data-lucide="briefcase"></i>
+                                    </button>
                                 </div>
                                 <div class="mt-4 flex justify-between items-center bg-gray-50 p-2 rounded-md border">
                                     <span class="text-sm font-medium text-gray-600 hidden sm:inline">Buscar na
@@ -814,14 +921,14 @@
                             </div>
 
                             <!-- Coluna 2: Detalhes da Venda -->
-                            <div class="p-6 bg-white rounded-lg shadow-md lg:col-span-1">
+                            <div class="p-6 bg-white rounded-lg shadow-md lg:col-span-1 min-w-0">
                                 <h3 class="text-lg font-medium mb-4">Detalhes Finais</h3>
 
                                 <!-- Este é o DIV agrupador CORRETO -->
                                 <div class="space-y-4">
 
                                     <!-- Tipo de Venda -->
-                                    <div class="flex space-x-4">
+                                    <div class="flex flex-wrap gap-4">
 
                                         <label class="flex items-center">
                                             <input type="radio" name="sale-type" value="consignacao"
@@ -1006,7 +1113,7 @@
             <h2 class="text-3xl font-semibold text-gray-800">Gestão de Pessoas</h2>
             <!-- Abas da Seção -->
             <div class="mt-4 border-b border-gray-200">
-                <nav class="flex -mb-px space-x-6" id="pessoas-tabs">
+                <nav class="flex overflow-x-auto scrollbar-hide -mb-px space-x-6" id="pessoas-tabs">
                     <button data-tab="tab-pessoas-view"
                         class="pessoas-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">Visualizar
                         Pessoas</button>
@@ -1135,7 +1242,7 @@
             <h2 class="text-3xl font-semibold text-gray-800">Controle Financeiro</h2>
             <!-- Abas da Seção -->
             <div class="mt-4 border-b border-gray-200">
-                <nav class="flex -mb-px space-x-6" id="financeiro-tabs">
+                <nav class="flex overflow-x-auto scrollbar-hide -mb-px space-x-6" id="financeiro-tabs">
                     <button data-tab="tab-financeiro-summary"
                         class="financeiro-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">Visão
                         Geral</button>
@@ -1530,11 +1637,11 @@
 
         </div>
 
-        </main>
-        <!-- =========== RODAPÉ FIXO =========== -->
-        <footer class="absolute bottom-0 right-0 p-3 text-xs text-gray-500 bg-gray-100 bg-opacity-70">
-            Desenvolvido por Alessandro Leonello Ribeiro
-        </footer>
+            <!-- =========== RODAPÉ =========== -->
+            <footer class="mt-10 pb-2 text-center md:text-right text-xs text-gray-500">
+                Desenvolvido por Alessandro Leonello Ribeiro
+            </footer>
+            </main>
     </div>
     </div>
 
@@ -1588,13 +1695,35 @@
                         </select>
                     </div>
                     <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="bill-is-paid" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                        <label for="bill-is-paid" class="block text-sm font-medium">Já está paga?</label>
+                    </div>
+                    <div class="flex items-center space-x-2">
                         <input type="checkbox" id="bill-is-installment" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                         <label for="bill-is-installment" class="block text-sm font-medium">É parcelado?</label>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="bill-is-fixed" class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                        <label for="bill-is-fixed" class="block text-sm font-medium">É despesa fixa mensal?</label>
+                    </div>
+                    <div id="bill-fixed-group" class="hidden space-y-2">
+                        <div>
+                            <label class="block text-sm font-medium">Projetar por quantos meses?</label>
+                            <input type="number" id="bill-fixed-count" value="12" min="1" max="600" class="w-full px-3 py-2 mt-1 border rounded-md">
+                        </div>
+                        <p class="text-xs text-gray-500">O mesmo valor será repetido para os próximos meses escolhidos.</p>
                     </div>
                     <div id="bill-installments-group" class="hidden space-y-2">
                         <div>
                             <label class="block text-sm font-medium">Número de Parcelas</label>
                             <input type="number" id="bill-installments-count" value="2" min="2" class="w-full px-3 py-2 mt-1 border rounded-md">
+                        </div>
+                        <div class="mt-2">
+                            <label class="block text-sm font-medium">O valor digitado (R$) é:</label>
+                            <select id="bill-installment-value-type" class="w-full px-3 py-2 mt-1 border rounded-md">
+                                <option value="total">O valor TOTAL da compra</option>
+                                <option value="installment">O valor de CADA parcela</option>
+                            </select>
                         </div>
                         <p class="text-xs text-gray-500">A data de vencimento será a da 1ª parcela. As seguintes serão 30 dias após a outra.</p>
                     </div>
@@ -1620,6 +1749,30 @@
             <div id="modal-body" class="mt-4 overflow-y-auto">
                 <p>Modal body content goes here.</p>
             </div>
+        </div>
+    </div>
+
+    <!-- =========== MODAL TROCAR PRODUTO (MALETA) =========== -->
+    <div id="modal-swap-item" class="fixed inset-0 z-[80] flex items-center justify-center p-6 hidden bg-black bg-opacity-50">
+        <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-xl flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium">Trocar Produto</h3>
+                <button id="btn-close-swap-item" class="text-gray-500 hover:text-gray-800">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <form id="form-swap-item" novalidate class="space-y-4">
+                <p class="text-sm text-gray-600">Busque o novo produto que irá substituir o item selecionado na maleta. A quantidade será mantida.</p>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Novo Produto (Nome ou Ref.)</label>
+                    <input type="text" id="swap-item-ref" list="sale-item-datalist" required class="w-full px-3 py-2 border rounded-md" placeholder="Digite para buscar...">
+                    <p id="swap-item-error" class="text-sm text-red-600 mt-1 h-4"></p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-gray-200 text-right space-x-2">
+                    <button type="button" id="btn-cancel-swap-item" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Confirmar Troca</button>
+                </div>
+            </form>
         </div>
     </div>
 

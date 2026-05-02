@@ -1,3 +1,17 @@
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+
+        /* Esconde a barra de rolagem em menus horizontais (como as abas) mantendo o scroll */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
         body {
             font-family: 'Inter', sans-serif;
         }

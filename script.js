@@ -95,7 +95,7 @@
                 currentSaleItems = [];
 
                 // Limpa as tabelas da UI de forma segura
-                ['product-list-table', 'people-list-table', 'low-stock-list', 'history-list-table', 'consign-list-table', 'finance-history-table'].forEach(id => {
+                ['product-list-table', 'people-list-table', 'low-stock-list', 'history-list-table', 'consign-list-table', 'finance-history-table', 'maletas-list-table'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.innerHTML = '';
                 });
@@ -123,6 +123,8 @@
         let allUserProducts = []; // Cache global de produtos
         let currentSaleItems = []; // "Carrinho" da venda atual
         let allUserPeople = []; // Cache global de pessoas
+        let allMaletas = []; // Cache global de Maletas
+        let currentMaletaItems = []; // Items da maleta sendo criada/editada
         let personCadastroRedirect = 'page-vendas'; // NOVO: Para onde voltar após salvar pessoa
         let selectedLabelsState = {}; // Armazena os produtos e quantidades selecionados para etiquetas
 
@@ -141,6 +143,7 @@
             loadPeople();
             loadCategories(); // Categories também é essencial para renderização
             loadPlanosContas(); // Carrega os planos de contas do financeiro
+            loadMaletas(); // Carrega a lista de maletas configuradas
 
             // --- CARREGAMENTO DO DASHBOARD EM BACKGROUND (MELHORIA) ---
             // Cria promessas para os listeners que alimentam o Dashboard
@@ -186,8 +189,11 @@
                 // 3. Renderiza as listas de Estoque Baixo e Etiquetas (elas não precisam do filtro)
                 renderLowStockList(allUserProducts); // Widget do Dashboard
                 renderLabelList(allUserProducts);    // Lista de Etiquetas (inicial, sem filtro)
+                updateSaleItemDatalist();            // Atualiza datalist de nova venda
+                renderMaletasList();                 // Atualiza a tabela de maletas com o estoque real
                 // 4. Atualiza os contadores do dashboard
                 updateDashboard();
+                updateEstoqueSummary();
 
             }, (error) => {
                 console.error("Erro ao carregar produtos: ", error);
@@ -209,6 +215,14 @@
                 productTableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-gray-500">Nenhum produto encontrado com esse filtro.</td></tr>';
                 return;
             }
+            
+            // Calcula a demanda total de cada produto em TODAS as maletas
+            const globalDemand = {};
+            allMaletas.forEach(m => {
+                m.items.forEach(i => {
+                    globalDemand[i.id] = (globalDemand[i.id] || 0) + i.quantity;
+                });
+            });
 
 
             products.forEach(prod => {
@@ -265,6 +279,91 @@
 
             lucide.createIcons();
         }
+
+        /**
+         * Atualiza os cards da aba de Resumo de Estoque (Página Produtos)
+         */
+        function updateEstoqueSummary() {
+            let fisicoQty = 0;
+            let fisicoCost = 0;
+            let fisicoSale = 0;
+
+            let ruaQty = 0;
+            let ruaCost = 0;
+            let ruaSale = 0;
+
+            // 1. Calcula o Estoque Físico
+            allUserProducts.forEach(prod => {
+                const qty = prod.estoque || 0;
+                fisicoQty += qty;
+                fisicoCost += (prod.custo || 0) * qty;
+                fisicoSale += (prod.venda || 0) * qty;
+            });
+
+            // 2. Calcula as Peças nas Ruas (Consignações Ativas)
+            allSales.forEach(sale => {
+                if (sale.type === 'consignacao' && sale.status === 'Ativa' && sale.items) {
+                    sale.items.forEach(item => {
+                        const qty = item.quantity || 1;
+                        ruaQty += qty;
+                        
+                        // Tenta pegar o custo/venda do item salvo na venda, ou busca no produto atual
+                        let custo = item.custo;
+                        let venda = item.venda;
+                        
+                        if (custo === undefined || venda === undefined) {
+                            const prod = allUserProducts.find(p => p.id === item.id);
+                            if (prod) {
+                                if (custo === undefined) custo = prod.custo || 0;
+                                if (venda === undefined) venda = prod.venda || 0;
+                            } else {
+                                if (custo === undefined) custo = 0;
+                                if (venda === undefined) venda = 0;
+                            }
+                        }
+                        
+                        ruaCost += (custo || 0) * qty;
+                        ruaSale += (venda || 0) * qty;
+                    });
+                }
+            });
+
+            // 3. Calcula o Total Geral
+            const totalQty = fisicoQty + ruaQty;
+            const totalCost = fisicoCost + ruaCost;
+            const totalSale = fisicoSale + ruaSale;
+
+            // 4. Atualiza a UI
+            const formatCurrency = (val) => `R$ ${val.toFixed(2).replace('.', ',')}`;
+
+            // Físico
+            const elFisicoQty = document.getElementById('estoque-fisico-qty');
+            const elFisicoCost = document.getElementById('estoque-fisico-cost');
+            const elFisicoSale = document.getElementById('estoque-fisico-sale');
+            if(elFisicoQty) elFisicoQty.textContent = `${fisicoQty} un.`;
+            if(elFisicoCost) elFisicoCost.textContent = formatCurrency(fisicoCost);
+            if(elFisicoSale) elFisicoSale.textContent = formatCurrency(fisicoSale);
+
+            // Rua
+            const elRuaQty = document.getElementById('estoque-rua-qty');
+            const elRuaCost = document.getElementById('estoque-rua-cost');
+            const elRuaSale = document.getElementById('estoque-rua-sale');
+            if(elRuaQty) elRuaQty.textContent = `${ruaQty} un.`;
+            if(elRuaCost) elRuaCost.textContent = formatCurrency(ruaCost);
+            if(elRuaSale) elRuaSale.textContent = formatCurrency(ruaSale);
+
+            // Total
+            const elTotalQty = document.getElementById('estoque-total-qty');
+            const elTotalCost = document.getElementById('estoque-total-cost');
+            const elTotalSale = document.getElementById('estoque-total-sale');
+            if(elTotalQty) elTotalQty.textContent = `${totalQty} un.`;
+            if(elTotalCost) elTotalCost.textContent = formatCurrency(totalCost);
+            if(elTotalSale) elTotalSale.textContent = formatCurrency(totalSale);
+        }
+
+        /**
+         * Atualiza todo o painel de Extrato Analítico (Filtros, Cards e Tabela)
+         */
 
         /**
  * 2. Atualiza a lista de ESTOQUE BAIXO no Dashboard (COM LIMITE DE EXIBIÇÃO)
@@ -365,6 +464,21 @@
             >
         `;
                 labelProductList.appendChild(labelItem);
+            });
+        }
+
+        /**
+         * Atualiza o datalist de produtos na tela de Nova Venda e modais
+         */
+        function updateSaleItemDatalist() {
+            const datalist = document.getElementById('sale-item-datalist');
+            if (!datalist) return;
+            datalist.innerHTML = '';
+            allUserProducts.forEach(prod => {
+                const option = document.createElement('option');
+                option.value = prod.ref;
+                option.textContent = prod.nome;
+                datalist.appendChild(option);
             });
         }
         /**
@@ -627,6 +741,90 @@
                 });
             }
         }
+         /**
+         * Cria o listener (onSnapshot) para a coleção de MALETAS
+         */
+        function loadMaletas() {
+            const collectionPath = `artifacts/${appId}/users/${userId}/maletas`;
+            const q = query(collection(db, collectionPath));
+
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                allMaletas = [];
+                snapshot.forEach(doc => allMaletas.push({ id: doc.id, ...doc.data() }));
+                allMaletas.sort((a, b) => a.nome.localeCompare(b.nome));
+                
+                renderMaletasList();
+            }, (error) => {
+                console.error("Erro ao carregar maletas: ", error);
+            });
+            activeListeners.push(unsubscribe);
+        }
+
+        function renderMaletasList() {
+            const tbody = document.getElementById('maletas-list-table');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (allMaletas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-500">Nenhuma maleta criada.</td></tr>';
+                return;
+            }
+
+            // Calcula a demanda total de cada produto em TODAS as maletas
+            const globalDemand = {};
+            allMaletas.forEach(m => {
+                m.items.forEach(i => {
+                    globalDemand[i.id] = (globalDemand[i.id] || 0) + i.quantity;
+                });
+            });
+
+            allMaletas.forEach(m => {
+                const tr = document.createElement('tr');
+                
+                let totalItens = 0;
+                let availableItens = 0;
+                let sharedStockIssues = [];
+                let totalVenda = 0;
+
+                m.items.forEach(i => {
+                    totalItens += i.quantity;
+                    totalVenda += (i.venda || 0) * i.quantity;
+                    const productInDB = allUserProducts.find(p => p.id === i.id);
+                    const currentStock = productInDB ? productInDB.estoque : 0;
+                    availableItens += Math.min(i.quantity, Math.max(0, currentStock));
+
+                    // Verifica se o estoque atual é maior que zero, mas não é suficiente para atender a demanda de todas as maletas juntas
+                    if (currentStock > 0 && currentStock < globalDemand[i.id]) {
+                        if (productInDB) sharedStockIssues.push(`${productInDB.nome} (${currentStock}/${globalDemand[i.id]})`);
+                    }
+                });
+
+                const availabilityClass = availableItens === totalItens ? 'text-green-600' : (availableItens === 0 ? 'text-red-600' : 'text-yellow-600');
+
+                let sharedWarningHtml = '';
+                if (sharedStockIssues.length > 0) {
+                    const names = sharedStockIssues.slice(0, 3).join(', ') + (sharedStockIssues.length > 3 ? ' e outros' : '');
+                    const tooltipText = `Estoque compartilhado: Você tem estoque de ${names}, mas não o suficiente para montar TODAS as maletas que os utilizam ao mesmo tempo.`;
+                    sharedWarningHtml = `<span class="cursor-help" title="${tooltipText}"><i data-lucide="alert-triangle" class="w-4 h-4 text-orange-500 inline ml-2 pointer-events-none"></i></span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-gray-900"><span class="cursor-pointer text-indigo-600 hover:text-indigo-800 hover:underline btn-edit-maleta" data-id="${m.id}">${m.nome}</span></td>
+                    <td class="px-6 py-4 text-gray-500">
+                        <span class="font-medium ${availabilityClass}">${availableItens}/${totalItens} peças disponíveis</span> 
+                        <span class="text-xs ml-1">(${m.items.length} produtos)</span>${sharedWarningHtml}
+                    </td>
+                    <td class="px-6 py-4 text-gray-700 font-medium whitespace-nowrap">R$ ${totalVenda.toFixed(2).replace('.', ',')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button class="btn-add-maleta-to-sale text-purple-600 hover:text-purple-900" data-id="${m.id}" title="Adicionar à Consignação"><i data-lucide="shopping-cart" class="w-5 h-5 pointer-events-none"></i></button>
+                        <button class="btn-edit-maleta text-indigo-600 hover:text-indigo-900" data-id="${m.id}"><i data-lucide="edit-2" class="w-5 h-5 pointer-events-none"></i></button>
+                        <button class="btn-duplicate-maleta text-green-600 hover:text-green-900" data-id="${m.id}" title="Duplicar Maleta"><i data-lucide="copy" class="w-5 h-5 pointer-events-none"></i></button>
+                        <button class="btn-delete-maleta text-red-600 hover:text-red-900" data-id="${m.id}"><i data-lucide="trash-2" class="w-5 h-5 pointer-events-none"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
         // --- FIM DA LÓGICA DE CARREGAMENTO ---
         /**
          * Atualiza o <select> de Fornecedores no formulário de produto
@@ -693,6 +891,14 @@
             if (link && link.dataset.page) {
                 e.preventDefault();
                 showPage(link.dataset.page);
+            
+            // Fecha o menu lateral automaticamente em telas menores (mobile)
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar.classList.contains('-translate-x-full')) {
+                    toggleMobileSidebar();
+                }
+            }
             }
         });
         // --- FIM DA LÓGICA DE NAVEGAÇÃO ---
@@ -1120,6 +1326,12 @@
                 clearTimeout(modalTimeoutId);
                 modalTimeoutId = null;
             }
+            
+            const modalContent = document.getElementById('modal-content');
+            if (modalContent) {
+                modalContent.classList.remove('max-w-5xl', 'max-w-6xl', 'max-w-7xl', 'max-w-full');
+                modalContent.classList.add('max-w-4xl');
+            }
         }
         // --- FUNÇÃO HELPER PARA CALCULAR DATAS ---
         /**
@@ -1139,6 +1351,33 @@
             return `${year}-${month}-${day}`;
         }
         // --- FIM DA FUNÇÃO HELPER ---
+        
+        /**
+         * Helper para divisão automática de valores em duas caixas de pagamento.
+         */
+        function setupTwoSplitsLogic(container, rowSelector, inputSelector, getTotalCallback) {
+            if (!container) return;
+            container.addEventListener('input', (e) => {
+                if (e.target.matches(inputSelector)) {
+                    const splitRows = container.querySelectorAll(rowSelector);
+                    if (splitRows.length === 2) {
+                        const total = getTotalCallback();
+                        const inputs = [
+                            splitRows[0].querySelector(inputSelector),
+                            splitRows[1].querySelector(inputSelector)
+                        ];
+                        if (e.target === inputs[0]) {
+                            let remain = total - (parseFloat(inputs[0].value) || 0);
+                            inputs[1].value = remain > 0 ? remain.toFixed(2) : "0.00";
+                        } else if (e.target === inputs[1]) {
+                            let remain = total - (parseFloat(inputs[1].value) || 0);
+                            inputs[0].value = remain > 0 ? remain.toFixed(2) : "0.00";
+                        }
+                    }
+                }
+            });
+        }
+
         /**
          * Converte um objeto Date do JS para uma string 'YYYY-MM-DD'.
          */
@@ -1903,6 +2142,50 @@
                 return;
             }
 
+            // --- AÇÃO: Nova Maleta ---
+            const newMaletaBtn = e.target.closest('#btn-new-maleta');
+            if (newMaletaBtn) {
+                openMaletaModal(null);
+                return;
+            }
+
+            // --- AÇÃO: Adicionar Maleta à Consignação (da lista) ---
+            const addMaletaToSaleBtn = e.target.closest('.btn-add-maleta-to-sale');
+            if (addMaletaToSaleBtn && addMaletaToSaleBtn.dataset.id) {
+                const maletaId = addMaletaToSaleBtn.dataset.id;
+                
+                showPage('page-vendas');
+                setTimeout(() => {
+                    const tabVendasNew = document.querySelector('.vendas-tab-btn[data-tab="tab-vendas-new"]');
+                    if (tabVendasNew) tabVendasNew.click();
+                    processAddMaletaToSale(maletaId);
+                }, 50);
+                return;
+            }
+
+            // --- AÇÃO: Editar Maleta ---
+            const editMaletaBtn = e.target.closest('.btn-edit-maleta');
+            if (editMaletaBtn && editMaletaBtn.dataset.id) {
+                const maleta = allMaletas.find(m => m.id === editMaletaBtn.dataset.id);
+                if(maleta) openMaletaModal(maleta);
+                return;
+            }
+
+            // --- AÇÃO: Duplicar Maleta ---
+            const duplicateMaletaBtn = e.target.closest('.btn-duplicate-maleta');
+            if (duplicateMaletaBtn && duplicateMaletaBtn.dataset.id) {
+                const maleta = allMaletas.find(m => m.id === duplicateMaletaBtn.dataset.id);
+                if(maleta) openMaletaModal(maleta, true);
+                return;
+            }
+
+            // --- AÇÃO: Excluir Maleta ---
+            const deleteMaletaBtn = e.target.closest('.btn-delete-maleta');
+            if (deleteMaletaBtn && deleteMaletaBtn.dataset.id) {
+                showMaletaDeleteConfirmation(deleteMaletaBtn.dataset.id);
+                return;
+            }
+
                 // --- AÇÃO: Editar Conta a Pagar (NOVO) ---
                 const editBillBtn = e.target.closest('.btn-edit-bill');
                 if (editBillBtn && editBillBtn.dataset.id) {
@@ -1920,6 +2203,17 @@
                     showBillDeleteConfirmation(billId); // Chama a função de confirmação
                     return; // Encerra
                 }
+
+                // --- AÇÃO: Cancelar Assinatura / Serviço Fixo (NOVO) ---
+                const cancelSubBtn = e.target.closest('.btn-cancel-subscription');
+                if (cancelSubBtn && cancelSubBtn.dataset.group) {
+                    const groupId = cancelSubBtn.dataset.group;
+                    const desc = cancelSubBtn.dataset.desc;
+                    console.log("Solicitando cancelamento do serviço:", desc);
+                    showCancelSubscriptionConfirmation(groupId, desc);
+                    return; // Encerra
+                }
+
                 // --- AÇÃO: Estornar Conta Paga ---
                 const unmarkPaidBtn = e.target.closest('.btn-unmark-paid');
                 if (unmarkPaidBtn && unmarkPaidBtn.dataset.id) {
@@ -2800,6 +3094,21 @@ function showBatchBillEditModal(ids) {
 
             btnAddSplit.onclick = () => addSplitRow('Pix', 0);
 
+            setupTwoSplitsLogic(
+                container,
+                '.split-row',
+                '.split-value',
+                () => parseFloat(totalInput.value) || 0
+            );
+
+            totalInput.addEventListener('input', () => {
+                const splitRows = container.querySelectorAll('.split-row');
+                if (splitRows.length === 1) {
+                    const valInput = splitRows[0].querySelector('.split-value');
+                    if (valInput) valInput.value = parseFloat(totalInput.value || 0).toFixed(2);
+                }
+            });
+
             // 4. Ligar os botões do modal
             document.getElementById('btn-cancel-pay').onclick = hideModal;
 
@@ -3173,6 +3482,58 @@ function showBatchBillEditModal(ids) {
                 const warningLi = e.target.closest('#dashboard-warnings-list li[data-target-page]');
                 // 3. Verifica clique nos botões de AÇÃO RÁPIDA
                 const actionBtn = e.target.closest('.dashboard-action-btn');
+                const newBillBtn = e.target.closest('#btn-dashboard-new-bill');
+                const newIncomeBtn = e.target.closest('#btn-dashboard-new-income');
+                const newTransferBtn = e.target.closest('#btn-dashboard-new-transfer');
+
+                if (newTransferBtn) {
+                    e.preventDefault();
+                    showPage('page-financeiro');
+                    setTimeout(() => {
+                        const tabButton = document.querySelector('#page-financeiro button[data-tab="tab-financeiro-history"]');
+                        if (tabButton) tabButton.click();
+                        
+                        // Aciona o clique no botão original de transferência
+                        const btnNewTransferOriginal = document.getElementById('btn-new-transfer');
+                        if (btnNewTransferOriginal) btnNewTransferOriginal.click();
+                    }, 50);
+                    return;
+                }
+
+                if (newIncomeBtn) {
+                    e.preventDefault();
+                    showPage('page-financeiro');
+                    setTimeout(() => {
+                        const tabButton = document.querySelector('#page-financeiro button[data-tab="tab-financeiro-history"]');
+                        if (tabButton) tabButton.click();
+                        
+                        // Aciona o clique no botão original de nova entrada
+                        const btnNewIncomeOriginal = document.getElementById('btn-new-income');
+                        if (btnNewIncomeOriginal) btnNewIncomeOriginal.click();
+                    }, 50);
+                    return;
+                }
+
+                if (newBillBtn) {
+                    e.preventDefault();
+                    showPage('page-financeiro');
+                    setTimeout(() => {
+                        const tabButton = document.querySelector('#page-financeiro button[data-tab="tab-financeiro-bills"]');
+                        if (tabButton) tabButton.click();
+                        
+                        // Abre o modal de nova despesa
+                        const modalAddBill = document.getElementById('modal-add-bill');
+                        if (modalAddBill) {
+                            modalAddBill.classList.remove('hidden');
+                            lucide.createIcons();
+                            const billDueDateInput = document.getElementById('bill-due-date');
+                            if (billDueDateInput && !billDueDateInput.value) {
+                                billDueDateInput.value = getFutureDateString(30); 
+                            }
+                        }
+                    }, 50);
+                    return;
+                }
 
                 if (cardVendas) {
                     targetPage = 'page-vendas';
@@ -3234,6 +3595,74 @@ function showBatchBillEditModal(ids) {
             }
         }
         // --- FIM EXCLUIR CONTA (Ação Principal) ---
+
+        // --- LÓGICA PARA CANCELAR SERVIÇO / ASSINATURA ---
+        function showCancelSubscriptionConfirmation(groupId, descricao) {
+            if (!userId) {
+                showModal("Erro", "Usuário não logado.");
+                return;
+            }
+
+            // Tira os marcadores de parcela do nome se existirem (Ex: "Netflix (Jan/2025)" -> "Netflix")
+            const cleanDesc = descricao.split('(')[0].trim();
+
+            modalTitle.textContent = 'Confirmar Cancelamento';
+            modalBody.innerHTML = `
+                <p>Você tem certeza que deseja cancelar as próximas cobranças de:</p>
+                <p class="mt-2 text-lg font-bold text-orange-600">"${cleanDesc}"?</p>
+                <p class="text-sm text-gray-600 mt-2">Esta ação irá procurar no banco de dados e <b>apagar todas as despesas futuras (não pagas)</b> que fazem parte deste mesmo serviço ou parcelamento.</p>
+                <div class="mt-6 text-right space-x-2">
+                    <button type="button" id="btn-cancel-sub-back" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Não, Voltar</button>
+                    <button type="button" id="btn-confirm-delete-sub" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Sim, Cancelar Serviço</button>
+                </div>
+            `;
+
+            modalContainer.style.display = 'flex';
+
+            document.getElementById('btn-cancel-sub-back').onclick = hideModal;
+
+            document.getElementById('btn-confirm-delete-sub').onclick = async () => {
+                const deleteBtn = document.getElementById('btn-confirm-delete-sub');
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = 'Cancelando...';
+
+                try {
+                    const collectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
+                    // Busca apenas as contas desse grupo que ainda NÃO foram pagas
+                    const q = query(
+                        collection(db, collectionPath),
+                        where("groupId", "==", groupId),
+                        where("pago", "==", false)
+                    );
+
+                    const snapshot = await getDocs(q);
+                    
+                    if (snapshot.empty) {
+                        showModal("Aviso", "Nenhuma despesa pendente encontrada para este serviço/grupo.");
+                        hideModal();
+                        return;
+                    }
+
+                    // Apaga tudo usando WriteBatch (em lote para economizar escritas e ser rápido)
+                    const batch = writeBatch(db);
+                    snapshot.forEach(docSnap => {
+                        batch.delete(docSnap.ref);
+                    });
+
+                    await batch.commit();
+
+                    hideModal();
+                    showModal("Sucesso!", `Assinatura cancelada com sucesso! ${snapshot.size} despesa(s) futura(s) foram apagadas do seu painel.`);
+
+                } catch (error) {
+                    console.error("Erro ao cancelar serviço:", error);
+                    showModal("Erro", "Não foi possível cancelar o serviço: " + error.message);
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = 'Sim, Cancelar Serviço';
+                }
+            };
+        }
+        // --- FIM CANCELAR SERVIÇO ---
 
         // --- LÓGICA DE CANCELAMENTO DE CONSIGNAÇÃO ---
         function showConsignmentCancelConfirmation(consignmentId, clientId) {
@@ -3449,7 +3878,7 @@ function showBatchBillEditModal(ids) {
             <div class="space-y-4">
                 <h4 class="text-lg font-medium">Itens e Data de Acerto</h4>
                 <div class="flex mt-4 space-x-2">
-                    <input type="text" id="edit-item-ref" placeholder="Adicionar Código de Ref. para consignar" class="flex-1 px-3 py-2 border rounded-md">
+                    <input type="text" id="edit-item-ref" list="sale-item-datalist" placeholder="Adicionar Nome ou Cód. de Ref." class="flex-1 px-3 py-2 border rounded-md">
                     <button type="button" id="btn-add-edit-item" class="px-4 py-2 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600">Adicionar</button>
                 </div>
                 <p id="edit-consign-error" class="text-sm text-red-600 mt-1 h-8"></p>
@@ -3755,7 +4184,7 @@ function showBatchBillEditModal(ids) {
             <p class="text-sm text-gray-500">Digite a Ref. dos itens devolvidos.</p>
             
             <div class="flex space-x-2 mt-4">
-                <input type="text" id="settle-ref-input" placeholder="Digitar Ref. ou usar leitor" class="w-full px-3 py-2 border rounded-md">
+                <input type="text" id="settle-ref-input" list="sale-item-datalist" placeholder="Digitar Nome ou Ref. ou usar leitor" class="w-full px-3 py-2 border rounded-md">
                 <button type="button" id="btn-return-item" class="px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600">Devolver</button>
             </div>
             <p id="settle-error" class="text-xs text-red-600 mt-1 h-4"></p>
@@ -3827,6 +4256,11 @@ function showBatchBillEditModal(ids) {
 `;
 
             // 3. Mostrar o Modal
+            const modalContent = document.getElementById('modal-content');
+            if (modalContent) {
+                modalContent.classList.remove('max-w-4xl');
+                modalContent.classList.add('max-w-6xl');
+            }
             modalContainer.style.display = 'flex';
 
             // --- 4. Funções Internas do Modal (ATUALIZADAS) ---
@@ -3845,7 +4279,7 @@ function showBatchBillEditModal(ids) {
             const btnAddSplit = document.getElementById('btn-add-settle-payment-split');
             const splitErrorP = document.getElementById('settle-split-error');
 
-            function addSettleSplitRow(method = 'Dinheiro', value = 0) {
+            function addSettleSplitRow(method = 'Pix', value = 0) {
                 const row = document.createElement('div');
                 row.className = 'flex items-center space-x-2 settle-split-row mt-2';
                 row.innerHTML = `
@@ -3863,10 +4297,20 @@ function showBatchBillEditModal(ids) {
                 `;
                 container.appendChild(row);
                 lucide.createIcons();
-                row.querySelector('.btn-remove-settle-split').onclick = () => { row.remove(); if (container.children.length === 0) addSettleSplitRow('Dinheiro', 0); };
+                row.querySelector('.btn-remove-settle-split').onclick = () => { row.remove(); if (container.children.length === 0) addSettleSplitRow('Pix', 0); };
             }
-            addSettleSplitRow('Dinheiro', 0);
-            btnAddSplit.onclick = () => addSettleSplitRow('Pix', 0);
+            addSettleSplitRow('Pix', 0);
+            btnAddSplit.onclick = () => addSettleSplitRow('Dinheiro', 0);
+
+            setupTwoSplitsLogic(
+                container,
+                '.settle-split-row',
+                '.settle-split-value',
+                () => {
+                    const totalStr = finalAmountSpan.textContent.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
+                    return parseFloat(totalStr) || 0;
+                }
+            );
 
             // Função para desenhar as 3 listas (AGORA AGRUPA OS ITENS)
             function redrawListsAndCalculate() {
@@ -3982,8 +4426,11 @@ function showBatchBillEditModal(ids) {
 
                 const lowerRefCode = refCode.toLowerCase();
 
-                // Procura o item na lista 'itemsToSettle' ignorando maiúsculas/minúsculas
-                const itemIndex = itemsToSettle.findIndex(item => item.ref && item.ref.toLowerCase() === lowerRefCode);
+                // Procura o item na lista 'itemsToSettle' por ref ou nome
+                const itemIndex = itemsToSettle.findIndex(item => 
+                    (item.ref && item.ref.toLowerCase() === lowerRefCode) ||
+                    (item.nome && item.nome.toLowerCase() === lowerRefCode)
+                );
 
                 if (itemIndex > -1) {
                     // Achou!
@@ -5483,6 +5930,7 @@ function loadSalesHistory(resolve) {
         // --- LINHA ADICIONADA ---
         // Chama a atualização do Dashboard CADA VEZ que as vendas mudarem
         updateDashboard(); 
+        updateEstoqueSummary();
         // --- FIM DA LINHA ADICIONADA ---
 
         // Re-renderiza a lista de produtos para atualizar as tags de consignação ativa
@@ -5509,7 +5957,7 @@ function loadFinancialHistory(resolve) {
     const collectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
     const q = query(collection(db, collectionPath));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
         console.log(`Lançamentos financeiros recebidos: ${snapshot.size} docs`);
         allFinancialEntries = [];
         snapshot.forEach(doc => {
@@ -5523,9 +5971,13 @@ function loadFinancialHistory(resolve) {
             return timeB - timeA;
         });
 
+        // --- NOVA FUNÇÃO: Prorrogar contas fixas automaticamente ---
+        await checkAndExtendFixedBills();
+
         // --- ATUALIZAÇÃO: Chamar as QUATRO funções ---
         updateFinanceHistoryUI();                       // Extrato Analítico
-        updateFinancialSummary();                       // Resumo do Caixa
+        updateFinancialSummary();    
+                           // Resumo do Caixa
         renderBillsTab(allFinancialEntries);            // Tabela Contas a Pagar
         renderCashFlowChart();                          // Gráfico
         
@@ -5544,6 +5996,98 @@ function loadFinancialHistory(resolve) {
     });
 
     activeListeners.push(unsubscribe);
+}
+    let isExtendingBills = false;
+async function checkAndExtendFixedBills() {
+    if (!userId || allFinancialEntries.length === 0 || isExtendingBills) return;
+    isExtendingBills = true;
+
+    try {
+        const fixedGroups = {};
+        
+        // Agrupa todas as despesas fixas ativas (que têm groupId)
+        allFinancialEntries.forEach(entry => {
+            if (entry.isFixed && entry.groupId) {
+                if (!fixedGroups[entry.groupId]) {
+                    fixedGroups[entry.groupId] = { entries: [], hasUnpaid: false };
+                }
+                fixedGroups[entry.groupId].entries.push(entry);
+                if (!entry.pago) {
+                    fixedGroups[entry.groupId].hasUnpaid = true;
+                }
+            }
+        });
+
+        const batch = writeBatch(db);
+        let hasExtensions = false;
+        const collectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
+
+        for (const groupId in fixedGroups) {
+            const groupData = fixedGroups[groupId];
+            
+            // Ignora grupos cancelados ou já totalmente pagos (sem contas pendentes)
+            if (!groupData.hasUnpaid) continue;
+
+            const entries = groupData.entries;
+            
+            // Encontra a conta com o vencimento mais longe no futuro
+            entries.sort((a, b) => new Date(b.vencimento) - new Date(a.vencimento));
+            const latestEntry = entries[0];
+
+            if (!latestEntry.vencimento) continue;
+
+            const latestDate = new Date(latestEntry.vencimento + 'T00:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Diferença em meses entre hoje e a última conta projetada
+            const monthsDiff = (latestDate.getFullYear() - today.getFullYear()) * 12 + (latestDate.getMonth() - today.getMonth());
+
+            // Se a última conta estiver a 3 meses ou menos de distância, gera mais 12 meses
+            if (monthsDiff <= 3) {
+                const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+                
+                // Usa a descrição original se existir, senão tenta extrair removendo o sufixo " (Mês/Ano)"
+                const descriptionBase = latestEntry.originalDescription || latestEntry.descricao.replace(/\s\([A-Z][a-z]{2}\/\d{4}\)$/, '');
+
+                for (let i = 1; i <= 12; i++) {
+                    const nextDate = new Date(latestDate);
+                    nextDate.setMonth(nextDate.getMonth() + i);
+
+                    const m = nextDate.getMonth();
+                    const y = nextDate.getFullYear();
+                    const desc = `${descriptionBase} (${monthNames[m]}/${y})`;
+
+                    const newBillRef = doc(collection(db, collectionPath));
+                    batch.set(newBillRef, {
+                        descricao: desc,
+                        originalDescription: descriptionBase,
+                        valor: latestEntry.valor,
+                        tipo: 'Saída',
+                        data: serverTimestamp(),
+                        vencimento: nextDate.toISOString().split('T')[0],
+                        pago: false,
+                        paymentMethod: 'Não definido',
+                        planoContas: latestEntry.planoContas || 'Despesas Gerais',
+                        isInstallment: false,
+                        isFixed: true,
+                        groupId: groupId,
+                        ownerId: userId
+                    });
+                }
+                hasExtensions = true;
+            }
+        }
+
+        if (hasExtensions) {
+            await batch.commit();
+            console.log("Despesas fixas prorrogadas automaticamente (+12 meses).");
+        }
+    } catch (error) {
+        console.error("Erro ao prorrogar despesas fixas:", error);
+    } finally {
+        isExtendingBills = false;
+    }
 }
         // --- Funções de Renderização (Desenhar Tabelas) ---
 
@@ -6205,6 +6749,12 @@ function renderBillsTab(entries) {
             }
             const planoBadge = `<span class="badge-plano-filter cursor-pointer hover:bg-indigo-200 transition-colors ${corBadge} px-2 py-0.5 rounded text-[10px] font-medium mr-1" data-plano="${planoNome}" title="Filtrar por ${planoNome}">${planoNome}</span>`;
 
+            // --- NOVO: Botão de Cancelar Assinatura (só aparece se tiver groupId) ---
+            let cancelSubBtnHtml = '';
+            if (bill.groupId) {
+                cancelSubBtnHtml = `<button class="btn-cancel-subscription text-orange-500 hover:text-orange-700 ml-2" data-group="${bill.groupId}" data-desc="${bill.descricao}" title="Cancelar Serviço (Apagar Futuras)"><i data-lucide="calendar-x" class="w-4 h-4 pointer-events-none"></i></button>`;
+            }
+
             // --- INÍCIO DA ALTERAÇÃO NO HTML ---
             tr.innerHTML = `
                 <td class="px-4 py-3"><input type="checkbox" class="bill-checkbox rounded" data-id="${bill.id}"></td>
@@ -6223,6 +6773,7 @@ function renderBillsTab(entries) {
                     </button>
                     
                     <button class="btn-delete-bill text-red-500 hover:text-red-700 ml-2" data-id="${bill.id}" title="Excluir Conta"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>
+                    ${cancelSubBtnHtml}
                 </td>
             `;
             // --- FIM DA ALTERAÇÃO NO HTML ---
@@ -6524,8 +7075,12 @@ function renderBillsTab(entries) {
             if (!userId || !refCode) return null;
             
             // Busca ignorando maiúsculas/minúsculas no cache local de produtos
-            const lowerRefCode = refCode.toLowerCase();
-            const product = allUserProducts.find(p => p.ref && p.ref.toLowerCase() === lowerRefCode);
+            const lowerTerm = refCode.toLowerCase();
+            const product = allUserProducts.find(p => 
+                (p.ref && p.ref.toLowerCase() === lowerTerm) ||
+                (p.ref2 && p.ref2.toLowerCase() === lowerTerm) ||
+                (p.nome && p.nome.toLowerCase() === lowerTerm)
+            );
             
             return product || null;
         }
@@ -6651,6 +7206,18 @@ function renderBillsTab(entries) {
             if (btnAddSaleSplit) {
                 btnAddSaleSplit.onclick = () => addSaleSplitRow('Pix', 0);
                 addSaleSplitRow('Dinheiro', 0);
+                
+                setupTwoSplitsLogic(
+                    document.getElementById('sale-payment-splits-container'),
+                    '.sale-split-row',
+                    '.sale-split-value',
+                    () => {
+                        let subtotal = 0;
+                        currentSaleItems.forEach(item => { subtotal += (item.venda * item.quantity); });
+                        const discountPercent = parseFloat(saleDiscountInput.value) || 0;
+                        return subtotal - (subtotal * (discountPercent / 100));
+                    }
+                );
             }
         }
         
@@ -6658,7 +7225,7 @@ function renderBillsTab(entries) {
             const container = document.getElementById('sale-payment-splits-container');
             if(!container) return;
             const row = document.createElement('div');
-            row.className = 'flex items-center space-x-2 sale-split-row mt-2';
+            row.className = 'flex flex-wrap sm:flex-nowrap items-center gap-2 sale-split-row mt-2';
             row.innerHTML = `
                 <select class="sale-split-method flex-1 px-3 py-2 border rounded-md">
                     <option value="Dinheiro" ${method === 'Dinheiro' ? 'selected' : ''}>Dinheiro (Caixa Físico)</option>
@@ -6723,6 +7290,445 @@ function renderBillsTab(entries) {
             });
         }
         // --- FIM DO LISTENER DE QTD ---
+
+        // --- LÓGICA DAS MALETAS (CRIAR E ADICIONAR À VENDA) ---
+        function openMaletaModal(maleta = null, isDuplicate = false) {
+            currentMaletaItems = maleta ? JSON.parse(JSON.stringify(maleta.items)) : [];
+            const isEdit = maleta && !isDuplicate;
+            const initialName = isDuplicate ? `${maleta.nome} (Cópia)` : (maleta ? maleta.nome : '');
+
+            modalTitle.textContent = isEdit ? 'Editar Maleta' : 'Nova Maleta';
+            modalBody.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium">Nome do Kit / Maleta</label>
+                        <input type="text" id="maleta-name" class="w-full px-3 py-2 mt-1 border rounded-md" value="${initialName}" placeholder="Ex: Maleta Prata Mês 10" required>
+                    </div>
+                    <div class="flex mt-4 space-x-2">
+                        <input type="text" id="maleta-item-ref" list="sale-item-datalist" placeholder="Adicionar Nome, Cód. de Ref. ou usar leitor" class="flex-1 px-3 py-2 border rounded-md">
+                        <button type="button" id="btn-add-maleta-item" class="px-4 py-2 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600">Adicionar à Maleta</button>
+                    </div>
+                    <p id="maleta-error" class="text-sm text-red-600 mt-1 h-4"></p>
+                    <div class="mt-4 border rounded-lg max-h-[60vh] overflow-y-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Produto</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Ref.</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500 w-24">Qtd.</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="maleta-items-list" class="bg-white divide-y">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 text-right space-x-2 border-t pt-4">
+                        <button type="button" id="btn-cancel-maleta" class="px-6 py-2 font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
+                        <button type="button" id="btn-save-maleta" class="px-6 py-2 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">Salvar Maleta</button>
+                    </div>
+                </div>
+            `;
+
+            modalContainer.style.display = 'flex';
+            renderMaletaItemsTable();
+
+            const btnAdd = document.getElementById('btn-add-maleta-item');
+            const inputRef = document.getElementById('maleta-item-ref');
+            const btnSave = document.getElementById('btn-save-maleta');
+            const btnCancel = document.getElementById('btn-cancel-maleta');
+            const errorP = document.getElementById('maleta-error');
+
+            const addItemToMaleta = async () => {
+                const ref = inputRef.value.trim();
+                if (!ref) return;
+                const prod = await findProductByRef(ref);
+                if (!prod) {
+                    errorP.textContent = "Produto não encontrado.";
+                    const audio = new Audio('erro.mp3');
+                    audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
+                    return;
+                }
+                errorP.textContent = "";
+                const existing = currentMaletaItems.find(i => i.id === prod.id);
+                if (existing) {
+                    existing.quantity++;
+                } else {
+                    currentMaletaItems.push({
+                        id: prod.id,
+                        nome: prod.nome,
+                        ref: prod.ref,
+                        venda: prod.venda,
+                        quantity: 1
+                    });
+                }
+                inputRef.value = '';
+                renderMaletaItemsTable();
+                inputRef.focus();
+            };
+
+            btnAdd.onclick = addItemToMaleta;
+            inputRef.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addItemToMaleta(); } };
+            btnCancel.onclick = hideModal;
+
+            btnSave.onclick = async () => {
+                const nome = document.getElementById('maleta-name').value.trim();
+                if (!nome) { errorP.textContent = "Nome da maleta é obrigatório."; return; }
+                if (currentMaletaItems.length === 0) { errorP.textContent = "Adicione pelo menos um item à maleta."; return; }
+
+                btnSave.disabled = true;
+                btnSave.innerHTML = "Salvando...";
+
+                try {
+                    const collectionPath = `artifacts/${appId}/users/${userId}/maletas`;
+                    
+                    // Limpa as propriedades auxiliares (como categoria e estoque) antes de salvar no banco
+                    const itemsToSave = currentMaletaItems.map(item => ({
+                        id: item.id,
+                        nome: item.nome,
+                        ref: item.ref,
+                        venda: item.venda,
+                        quantity: item.quantity
+                    }));
+
+                    if (isEdit) {
+                        const docRef = doc(db, collectionPath, maleta.id);
+                        await updateDoc(docRef, { nome, items: itemsToSave });
+                    } else {
+                        await addDoc(collection(db, collectionPath), {
+                            nome,
+                            items: itemsToSave,
+                            createdAt: serverTimestamp(),
+                            ownerId: userId
+                        });
+                    }
+                    hideModal();
+                    showModal("Sucesso", isEdit ? "Maleta atualizada com sucesso." : "Nova maleta criada.");
+                } catch (e) {
+                    errorP.textContent = "Erro: " + e.message;
+                    btnSave.disabled = false;
+                    btnSave.innerHTML = "Salvar Maleta";
+                }
+            };
+        }
+
+        function renderMaletaItemsTable() {
+            const tbody = document.getElementById('maleta-items-list');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (currentMaletaItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-gray-500">Nenhum item adicionado à maleta.</td></tr>';
+                return;
+            }
+            // Calcula a demanda total de cada produto em TODAS as maletas
+        const globalDemand = {};
+        allMaletas.forEach(m => {
+            m.items.forEach(i => {
+                globalDemand[i.id] = (globalDemand[i.id] || 0) + i.quantity;
+            });
+        });
+
+            // Enriquecer e ordenar currentMaletaItems
+            currentMaletaItems.forEach(item => {
+                const productInDB = allUserProducts.find(p => p.id === item.id);
+                item.currentStock = productInDB ? productInDB.estoque : 0;
+                item.categoria = productInDB ? (productInDB.categoria || 'Sem Categoria') : 'Desconhecida';
+                item.fotoUrl = productInDB ? productInDB.fotoUrl : null;
+            });
+
+            const categoryStats = {};
+            currentMaletaItems.forEach(item => {
+                if (!categoryStats[item.categoria]) {
+                    categoryStats[item.categoria] = { total: 0, available: 0 };
+                }
+                categoryStats[item.categoria].total += item.quantity;
+                categoryStats[item.categoria].available += Math.min(item.quantity, Math.max(0, item.currentStock));
+            });
+
+            currentMaletaItems.sort((a, b) => {
+                // Ordenar por Categoria
+                if (a.categoria < b.categoria) return -1;
+                if (a.categoria > b.categoria) return 1;
+                
+                // Dentro da mesma categoria, produtos sem estoque ficam primeiro
+                const aOutOfStock = a.currentStock <= 0 ? 1 : 0;
+                const bOutOfStock = b.currentStock <= 0 ? 1 : 0;
+                if (aOutOfStock !== bOutOfStock) {
+                    return bOutOfStock - aOutOfStock; 
+                }
+                
+                // Por último, ordem alfabética de nome
+                return (a.nome || '').localeCompare(b.nome || '');
+            });
+
+            let currentCategory = null;
+
+            currentMaletaItems.forEach(item => {
+                if (item.categoria !== currentCategory) {
+                    currentCategory = item.categoria;
+                    const stats = categoryStats[currentCategory];
+                    const catTr = document.createElement('tr');
+                    catTr.className = 'bg-gray-100 font-semibold text-gray-700 uppercase tracking-wider text-xs';
+                    catTr.innerHTML = `<td colspan="4" class="px-4 py-2">
+                        <div class="flex justify-between items-center">
+                            <span>${currentCategory}</span>
+                            <span class="normal-case tracking-normal text-[11px] text-gray-500 font-medium">(${stats.available}/${stats.total} disp.)</span>
+                        </div>
+                    </td>`;
+                    tbody.appendChild(catTr);
+                }
+
+                const currentStock = item.currentStock;
+                const stockBadge = currentStock <= 0 
+                    ? `<span class="ml-2 px-1.5 py-0.5 text-[10px] font-medium text-red-800 bg-red-100 rounded-full" title="Produto sem estoque">Sem estoque</span>`
+                    : `<span class="ml-2 text-[10px] text-gray-500">(${currentStock} un.)</span>`;
+
+                let sharedWarningHtml = '';
+                const demand = globalDemand[item.id] || 0;
+                if (currentStock > 0 && currentStock < demand) {
+                    const tooltipText = `Estoque compartilhado (${currentStock}/${demand}): Você tem estoque, mas não o suficiente para montar TODAS as maletas que usam esta peça.`;
+                    sharedWarningHtml = `<span class="cursor-help" title="${tooltipText}"><i data-lucide="alert-triangle" class="w-4 h-4 text-orange-500 inline ml-1 pointer-events-none"></i></span>`;
+                }
+
+                const imgSrc = item.fotoUrl ? item.fotoUrl : 'https://placehold.co/40x40/e2e8f0/adb5bd?text=Sem+Foto';
+                const previewSrc = item.fotoUrl ? item.fotoUrl : 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Sem+Foto';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-2 pl-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="relative group shrink-0">
+                                <img src="${imgSrc}" alt="Foto" class="w-8 h-8 rounded-md object-cover border border-gray-200 cursor-pointer" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
+                                <div class="absolute z-[100] left-10 top-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-xl pointer-events-none w-48 h-48">
+                                    <img src="${previewSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                                </div>
+                            </div>
+                            <div class="text-sm font-medium">
+                                ${item.nome} ${stockBadge}${sharedWarningHtml}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-2 text-sm">${item.ref}</td>
+                    <td class="px-4 py-2">
+                        <input type="number" min="1" value="${item.quantity}" class="w-16 px-2 py-1 text-sm border rounded-md maleta-item-qty" data-id="${item.id}">
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        <button type="button" class="btn-swap-maleta-item text-blue-500 hover:text-blue-700 mr-3" data-id="${item.id}" title="Trocar Produto">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 pointer-events-none"></i>
+                        </button>
+                        <button type="button" class="btn-remove-maleta-item text-red-500 hover:text-red-700" data-id="${item.id}" title="Remover da Maleta">
+                            <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+
+            tbody.querySelectorAll('.maleta-item-qty').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    const id = e.target.dataset.id;
+                    const it = currentMaletaItems.find(i => i.id === id);
+                    if (it) {
+                        it.quantity = val < 1 ? 1 : val;
+                        e.target.value = it.quantity;
+                    }
+                });
+            });
+            tbody.querySelectorAll('.btn-remove-maleta-item').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    currentMaletaItems = currentMaletaItems.filter(i => i.id !== id);
+                    renderMaletaItemsTable();
+                });
+            });
+
+            tbody.querySelectorAll('.btn-swap-maleta-item').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    currentSwapItemId = e.currentTarget.dataset.id;
+                    const modalSwap = document.getElementById('modal-swap-item');
+                    if (modalSwap) {
+                        modalSwap.classList.remove('hidden');
+                        setTimeout(() => document.getElementById('swap-item-ref').focus(), 100);
+                    }
+                });
+            });
+        }
+
+        // --- MODAL DE TROCA DE PRODUTO DA MALETA ---
+        const modalSwapItem = document.getElementById('modal-swap-item');
+        const btnCloseSwapItem = document.getElementById('btn-close-swap-item');
+        const btnCancelSwapItem = document.getElementById('btn-cancel-swap-item');
+        const formSwapItem = document.getElementById('form-swap-item');
+        let currentSwapItemId = null;
+
+        if (modalSwapItem) {
+            const closeSwapModal = () => {
+                modalSwapItem.classList.add('hidden');
+                currentSwapItemId = null;
+                document.getElementById('swap-item-ref').value = '';
+                document.getElementById('swap-item-error').textContent = '';
+            };
+
+            if (btnCloseSwapItem) btnCloseSwapItem.addEventListener('click', closeSwapModal);
+            if (btnCancelSwapItem) btnCancelSwapItem.addEventListener('click', closeSwapModal);
+            modalSwapItem.addEventListener('click', (e) => {
+                if (e.target === modalSwapItem) closeSwapModal();
+            });
+
+            if (formSwapItem) {
+                formSwapItem.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const refCode = document.getElementById('swap-item-ref').value.trim();
+                    const errorP = document.getElementById('swap-item-error');
+                    
+                    if (!refCode) {
+                        errorP.textContent = "Digite um nome ou referência válida.";
+                        return;
+                    }
+                    
+                    const newProduct = await findProductByRef(refCode);
+                    if (!newProduct) {
+                        errorP.textContent = "Produto não encontrado.";
+                        return;
+                    }
+                    
+                    const oldItemIndex = currentMaletaItems.findIndex(i => i.id === currentSwapItemId);
+                    if (oldItemIndex > -1) {
+                        const oldQty = currentMaletaItems[oldItemIndex].quantity;
+                        
+                        // Verifica se o NOVO produto já existe em outra linha da maleta
+                        const existingIndex = currentMaletaItems.findIndex(i => i.id === newProduct.id);
+                        if (existingIndex > -1 && existingIndex !== oldItemIndex) {
+                            currentMaletaItems[existingIndex].quantity += oldQty;
+                            currentMaletaItems.splice(oldItemIndex, 1);
+                        } else {
+                            // Substitui os dados preservando a quantidade
+                            currentMaletaItems[oldItemIndex] = {
+                                id: newProduct.id,
+                                nome: newProduct.nome,
+                                ref: newProduct.ref,
+                                venda: newProduct.venda,
+                                quantity: oldQty
+                            };
+                        }
+                        
+                        renderMaletaItemsTable();
+                        closeSwapModal();
+                    }
+                });
+            }
+        }
+
+        function showMaletaDeleteConfirmation(maletaId) {
+            const maleta = allMaletas.find(m => m.id === maletaId);
+            if (!maleta) return;
+            modalTitle.textContent = 'Excluir Maleta';
+            modalBody.innerHTML = `
+                <p>Deseja excluir a maleta <strong>${maleta.nome}</strong>?</p>
+                <div class="mt-6 text-right space-x-2">
+                    <button type="button" id="btn-cancel-del" class="px-4 py-2 font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Cancelar</button>
+                    <button type="button" id="btn-confirm-del" class="px-4 py-2 font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Excluir</button>
+                </div>
+            `;
+            modalContainer.style.display = 'flex';
+            document.getElementById('btn-cancel-del').onclick = hideModal;
+            document.getElementById('btn-confirm-del').onclick = async () => {
+                const btn = document.getElementById('btn-confirm-del');
+                btn.disabled = true;
+                btn.textContent = "Excluindo...";
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/maletas`, maletaId));
+                    hideModal();
+                } catch (e) {
+                    showModal("Erro", "Falha ao excluir maleta: " + e.message);
+                    btn.disabled = false;
+                    btn.textContent = "Excluir";
+                }
+            };
+        }
+        
+        if (btnAddSaleItem) {
+            const btnAddMaletaSale = document.getElementById('btn-add-maleta-sale');
+            if(btnAddMaletaSale) {
+                btnAddMaletaSale.addEventListener('click', () => {
+                    if(allMaletas.length === 0) {
+                        openMaletaModal(null);
+                        return;
+                    }
+                    let options = allMaletas.map(m => `<option value="${m.id}">${m.nome} (${m.items.length} produtos)</option>`).join('');
+                    modalTitle.textContent = "Adicionar Maleta à Venda";
+                    modalBody.innerHTML = `
+                        <div class="space-y-4">
+                            <p class="text-sm text-gray-600">Selecione a maleta. O sistema verificará o estoque de cada item no momento da adição.</p>
+                            <div>
+                                <select id="select-maleta-id" class="w-full px-3 py-2 mt-1 border rounded-md">
+                                    ${options}
+                                </select>
+                            </div>
+                            <div class="mt-6 text-right space-x-2">
+                                <button type="button" id="btn-cancel-add-maleta" class="px-6 py-2 font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
+                                <button type="button" id="btn-confirm-add-maleta" class="px-6 py-2 font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700">Adicionar Itens</button>
+                            </div>
+                        </div>
+                    `;
+                    modalContainer.style.display = 'flex';
+                    document.getElementById('btn-cancel-add-maleta').onclick = hideModal;
+                    document.getElementById('btn-confirm-add-maleta').onclick = () => {
+                        const maletaId = document.getElementById('select-maleta-id').value;
+                        processAddMaletaToSale(maletaId);
+                    };
+                });
+            }
+        }
+
+        function processAddMaletaToSale(maletaId) {
+            const maleta = allMaletas.find(m => m.id === maletaId);
+            if (!maleta) return;
+
+            let addedCount = 0;
+            let warningMessages = [];
+
+            maleta.items.forEach(mItem => {
+                const productInDB = allUserProducts.find(p => p.id === mItem.id);
+                if (!productInDB) {
+                    warningMessages.push(`- "${mItem.nome}": Produto não encontrado ou excluído.`);
+                    return;
+                }
+
+                const existingItem = currentSaleItems.find(i => i.id === productInDB.id);
+                const currentQtyInCart = existingItem ? existingItem.quantity : 0;
+                const requestedQty = mItem.quantity;
+
+                if ((currentQtyInCart + requestedQty) > productInDB.estoque) {
+                    const availableToAdd = productInDB.estoque - currentQtyInCart;
+                    if (availableToAdd > 0) {
+                        if (existingItem) existingItem.quantity += availableToAdd;
+                        else currentSaleItems.push({ ...productInDB, quantity: availableToAdd });
+                        warningMessages.push(`- "${productInDB.nome}": Adicionado apenas ${availableToAdd} un. (Estoque insuficiente para as ${requestedQty} originais)`);
+                        addedCount += availableToAdd;
+                    } else {
+                        warningMessages.push(`- "${productInDB.nome}": Sem estoque disponível.`);
+                    }
+                } else {
+                    if (existingItem) existingItem.quantity += requestedQty;
+                    else currentSaleItems.push({ ...productInDB, quantity: requestedQty });
+                    addedCount += requestedQty;
+                }
+            });
+
+            renderSaleItems();
+            updateSaleTotals();
+
+            if (warningMessages.length > 0) {
+                showModal("Atenção - Estoque Insuficiente", `A maleta foi adicionada, mas houve divergência de estoque:<br><br>${warningMessages.join('<br>')}`);
+            } else {
+                hideModal();
+                setTimeout(() => showModal("Sucesso", `Maleta "${maleta.nome}" adicionada com sucesso!`), 200);
+            }
+        }
+        // --- FIM DA LÓGICA DE MALETAS ---
 
         // --- MODAL DE CONFIRMAÇÃO PARA EXCLUIR QTD ---
         function showQuantityDeleteConfirmation(itemId) {
@@ -7249,6 +8255,13 @@ function renderBillsTab(entries) {
                     }
                 });
 
+                setupTwoSplitsLogic(
+                    container,
+                    '.split-row',
+                    '.split-value',
+                    () => parseFloat(totalInput.value) || 0
+                );
+
                 document.getElementById('btn-cancel-income').onclick = hideModal;
 
                 document.getElementById('form-new-income').onsubmit = async (e) => {
@@ -7491,9 +8504,15 @@ function renderBillsTab(entries) {
                     const totalValue = parseFloat(document.getElementById('bill-value').value);
                     const firstDueDate = document.getElementById('bill-due-date').value; // Formato YYYY-MM-DD
                     const isInstallment = document.getElementById('bill-is-installment').checked;
+                    const isPaid = document.getElementById('bill-is-paid').checked;
                     const installmentCount = isInstallment ? parseInt(document.getElementById('bill-installments-count').value) : 1;
                     const planoContas = document.getElementById('bill-plano-contas').value;
                     const paymentMethod = document.getElementById('bill-payment-method-pre').value;
+                    const installmentValueType = isInstallment ? document.getElementById('bill-installment-value-type').value : 'total';
+                    const finalPaymentMethod = (isPaid && paymentMethod === 'Não definido') ? 'Dinheiro' : paymentMethod;
+
+                    const isFixed = document.getElementById('bill-is-fixed').checked;
+                    const fixedCount = isFixed ? parseInt(document.getElementById('bill-fixed-count').value) : 1;
 
                     // 2. Validações
                     if (!description || isNaN(totalValue) || totalValue <= 0 || !firstDueDate) {
@@ -7502,28 +8521,62 @@ function renderBillsTab(entries) {
                     if (isInstallment && (isNaN(installmentCount) || installmentCount < 2)) {
                         throw new Error("Número de parcelas inválido (mínimo 2).");
                     }
+                    if (isFixed && (isNaN(fixedCount) || fixedCount < 1 || fixedCount > 600)) {
+                        throw new Error("Número de meses para projeção inválido (1 a 600).");
+                    }
+                    
+                    // Cria um identificador único de grupo para contas fixas ou parceladas
+                    const groupId = (isInstallment || isFixed) ? `group_${Date.now()}` : null;
 
                     // 3. Preparar Lote (Batch)
                     const batch = writeBatch(db);
                     const collectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
 
-                    const installmentValue = totalValue / installmentCount;
+                    let iterations = 1;
+                    if (isInstallment) iterations = installmentCount;
+                    if (isFixed) iterations = fixedCount;
+
+                    let installmentValue;
+                    if (isInstallment) {
+                        if (installmentValueType === 'total') {
+                            installmentValue = totalValue / installmentCount;
+                        } else {
+                            installmentValue = totalValue; // O valor digitado já é o da parcela
+                        }
+                    } else {
+                        installmentValue = totalValue;
+                    }
+                    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
                     // 4. Loop para criar os lançamentos (1 ou N)
-                    for (let i = 0; i < installmentCount; i++) {
+                    for (let i = 0; i < iterations; i++) {
                         const currentDueDate = new Date(firstDueDate + 'T00:00:00'); // Adiciona T00:00:00
                         currentDueDate.setMonth(currentDueDate.getMonth() + i); // Adiciona 'i' meses à data da primeira parcela
+                        
+                        let desc = description;
+                        if (isInstallment) {
+                            desc = `${description} (${i + 1}/${installmentCount})`;
+                        } else if (isFixed) {
+                            const m = currentDueDate.getMonth();
+                            const y = currentDueDate.getFullYear();
+                            desc = `${description} (${monthNames[m]}/${y})`;
+                        }
+                        
+                        const isThisPaid = isPaid && i === 0;
 
                         const billData = {
-                            descricao: `${description} ${isInstallment ? `(${i + 1}/${installmentCount})` : ''}`,
+                            descricao: desc,
+                            originalDescription: description,
                             valor: installmentValue,
                             tipo: 'Saída',
-                            data: serverTimestamp(), // Data de registro
+                            data: isThisPaid ? Timestamp.fromDate(currentDueDate) : serverTimestamp(), // Se paga, registra na data escolhida
                             vencimento: currentDueDate.toISOString().split('T')[0], // Salva como YYYY-MM-DD
-                            pago: false,
-                            paymentMethod: paymentMethod,
+                            pago: isThisPaid,
+                            paymentMethod: isThisPaid ? finalPaymentMethod : 'Não definido',
                             planoContas: planoContas,
                             isInstallment: isInstallment,
+                            isFixed: isFixed,
+                            groupId: groupId,
                             installmentNumber: isInstallment ? i + 1 : null,
                             totalInstallments: isInstallment ? installmentCount : null,
                             ownerId: userId
@@ -7539,11 +8592,13 @@ function renderBillsTab(entries) {
                     showModal("Sucesso!", `Conta "${description}" registrada com sucesso.`);
                     formAddBill.reset();
                     // Desmarca o checkbox de parcela e esconde o campo
-                    const checkbox = document.getElementById('bill-is-installment');
-                    const group = document.getElementById('bill-installments-group');
-                    if (checkbox && group) {
-                        checkbox.checked = false;
-                        group.classList.add('hidden');
+                    if (document.getElementById('bill-is-installment')) {
+                        document.getElementById('bill-is-installment').checked = false;
+                        document.getElementById('bill-installments-group').classList.add('hidden');
+                    }
+                    if (document.getElementById('bill-is-fixed')) {
+                        document.getElementById('bill-is-fixed').checked = false;
+                        document.getElementById('bill-fixed-group').classList.add('hidden');
                     }
 
                     // O onSnapshot (loadFinancialHistory) vai atualizar as tabelas!
@@ -8394,6 +9449,21 @@ function renderBillsTab(entries) {
 
             existingSplits.forEach(split => addSplitRow(split.method, split.value));
             btnAddSplit.onclick = () => addSplitRow('Pix', 0);
+
+            setupTwoSplitsLogic(
+                container,
+                '.split-row',
+                '.split-value',
+                () => parseFloat(totalInput.value) || 0
+            );
+
+            totalInput.addEventListener('input', () => {
+                const splitRows = container.querySelectorAll('.split-row');
+                if (splitRows.length === 1) {
+                    const valInput = splitRows[0].querySelector('.split-value');
+                    if (valInput) valInput.value = parseFloat(totalInput.value || 0).toFixed(2);
+                }
+            });
 
             document.getElementById('btn-cancel-edit-entry').onclick = hideModal;
 
@@ -9261,4 +10331,3 @@ async function drawTotalReportPDF(reportData, options) {
             sumStart.value = formatDateToYYYYMMDD(firstDay);
             sumEnd.value = formatDateToYYYYMMDD(lastDay);
         }
-    
