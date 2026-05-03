@@ -125,6 +125,7 @@
         let allUserPeople = []; // Cache global de pessoas
         let allMaletas = []; // Cache global de Maletas
         let currentMaletaItems = []; // Items da maleta sendo criada/editada
+        let currentMaletaAverages = {}; // Armazena a média atual de cada categoria
         let personCadastroRedirect = 'page-vendas'; // NOVO: Para onde voltar após salvar pessoa
         let selectedLabelsState = {}; // Armazena os produtos e quantidades selecionados para etiquetas
 
@@ -243,6 +244,28 @@
                     consignmentsHtml += '</div>';
                 }
 
+                let categoryHtml = '';
+                const catStr = prod.categoria || 'Sem Categoria';
+                if (catStr === 'Sem Categoria') {
+                    categoryHtml = '<span class="text-gray-400 text-sm">Sem Categoria</span>';
+                } else {
+                    const parts = catStr.split(' > ');
+                    if (parts.length === 1) {
+                        categoryHtml = `<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-md border border-gray-200 whitespace-nowrap">${parts[0]}</span>`;
+                    } else {
+                        categoryHtml = '<div class="flex items-center flex-wrap gap-1">';
+                        parts.forEach((part, idx) => {
+                            if (idx < parts.length - 1) {
+                                categoryHtml += `<span class="text-xs text-gray-500 whitespace-nowrap">${part}</span>`;
+                                categoryHtml += `<i data-lucide="chevron-right" class="w-3 h-3 text-gray-400 shrink-0"></i>`;
+                            } else {
+                                categoryHtml += `<span class="px-2 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md whitespace-nowrap">${part}</span>`;
+                            }
+                        });
+                        categoryHtml += '</div>';
+                    }
+                }
+
                 tr.innerHTML = `
             <td class="px-6 py-4"><input type="checkbox" class="rounded product-checkbox" data-id="${prod.id}"></td>
             <td class="px-6 py-4 min-w-[250px] break-words"> 
@@ -260,7 +283,7 @@
                     </div>
                 </div>
             </td>
-            <td class="px-6 py-4 break-words">${prod.categoria}</td>
+            <td class="px-6 py-4">${categoryHtml}</td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 py-1 text-xs font-medium ${prod.estoque <= 0 ? 'text-red-800 bg-red-100' : (prod.estoque <= 5 ? 'text-yellow-800 bg-yellow-100' : 'text-green-800 bg-green-100')} rounded-full">
                     ${prod.estoque} un.
@@ -278,6 +301,25 @@
             });
 
             lucide.createIcons();
+            updateProductSelectionCounter();
+        }
+
+        function updateProductSelectionCounter() {
+            const totalFiltered = document.querySelectorAll('#product-list-table input.product-checkbox').length;
+            const selectedCount = document.querySelectorAll('#product-list-table input.product-checkbox:checked').length;
+            const counterEl = document.getElementById('product-filter-counter');
+            if (counterEl) {
+                if (selectedCount > 0) {
+                    counterEl.innerHTML = `<span class="font-bold text-indigo-600">${selectedCount}</span> / <span class="font-bold text-gray-800">${totalFiltered}</span> produtos selecionados`;
+                } else {
+                    counterEl.innerHTML = `<span class="font-bold text-gray-800">${totalFiltered}</span> produtos filtrados`;
+                }
+            }
+            
+            const selectAllCheckbox = document.getElementById('select-all-products');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = (totalFiltered > 0 && totalFiltered === selectedCount);
+            }
         }
 
         /**
@@ -292,12 +334,37 @@
             let ruaCost = 0;
             let ruaSale = 0;
 
+            let categoryCounts = {};
+            const initCat = (cat) => {
+                if (!categoryCounts[cat]) categoryCounts[cat] = { fisico: 0, rua: 0, total: 0 };
+            };
+
+            const getCategoryPaths = (catPath) => {
+                if (!catPath || catPath === 'Sem Categoria') return ['Sem Categoria'];
+                const parts = catPath.split(' > ');
+                const paths = [];
+                let current = '';
+                for (const part of parts) {
+                    current = current ? `${current} > ${part}` : part;
+                    paths.push(current);
+                }
+                return paths;
+            };
+
             // 1. Calcula o Estoque Físico
             allUserProducts.forEach(prod => {
                 const qty = prod.estoque || 0;
                 fisicoQty += qty;
                 fisicoCost += (prod.custo || 0) * qty;
                 fisicoSale += (prod.venda || 0) * qty;
+                
+                const cat = prod.categoria || 'Sem Categoria';
+                const catPaths = getCategoryPaths(cat);
+                catPaths.forEach(path => {
+                    initCat(path);
+                    categoryCounts[path].fisico += qty;
+                    categoryCounts[path].total += qty;
+                });
             });
 
             // 2. Calcula as Peças nas Ruas (Consignações Ativas)
@@ -321,6 +388,18 @@
                                 if (venda === undefined) venda = 0;
                             }
                         }
+                        
+                        let cat = item.categoria;
+                        if (!cat) {
+                            const prod = allUserProducts.find(p => p.id === item.id);
+                            cat = prod ? (prod.categoria || 'Sem Categoria') : 'Sem Categoria';
+                        }
+                        const catPaths = getCategoryPaths(cat);
+                        catPaths.forEach(path => {
+                            initCat(path);
+                            categoryCounts[path].rua += qty;
+                            categoryCounts[path].total += qty;
+                        });
                         
                         ruaCost += (custo || 0) * qty;
                         ruaSale += (venda || 0) * qty;
@@ -359,6 +438,90 @@
             if(elTotalQty) elTotalQty.textContent = `${totalQty} un.`;
             if(elTotalCost) elTotalCost.textContent = formatCurrency(totalCost);
             if(elTotalSale) elTotalSale.textContent = formatCurrency(totalSale);
+
+            // 5. Atualiza a UI das categorias
+            const catContainer = document.getElementById('estoque-categorias-list');
+            if (catContainer) {
+                catContainer.innerHTML = '';
+                
+                // Agrupar categorias por raiz
+                const rootCategories = {};
+                
+                Object.keys(categoryCounts).forEach(cat => {
+                    if (categoryCounts[cat].total === 0) return;
+                    
+                    const parts = cat.split(' > ');
+                    const root = parts[0];
+                    
+                    if (!rootCategories[root]) {
+                        rootCategories[root] = [];
+                    }
+                    rootCategories[root].push(cat);
+                });
+
+                Object.keys(rootCategories).sort().forEach(root => {
+                    const paths = rootCategories[root].sort();
+                    const rootData = categoryCounts[root];
+                    
+                    if (!rootData) return;
+
+                    const div = document.createElement('div');
+                    div.className = 'bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col shadow-sm';
+                    
+                    let html = `
+                        <div class="flex items-center justify-between mb-3 border-b border-gray-200 pb-2">
+                            <h4 class="font-bold text-indigo-700 uppercase tracking-wider text-sm truncate" title="${root}">${root}</h4>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded-full" title="Total">${rootData.total} un.</span>
+                        </div>
+                        
+                        <div class="space-y-2 mb-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-gray-500 flex items-center"><i data-lucide="package" class="w-3 h-3 mr-1 text-blue-500"></i> Físico:</span>
+                                <span class="font-bold text-gray-700">${rootData.fisico}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-gray-500 flex items-center"><i data-lucide="truck" class="w-3 h-3 mr-1 text-purple-500"></i> Na Rua:</span>
+                                <span class="font-bold text-gray-700">${rootData.rua}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    // Se tiver subcategorias
+                    if (paths.length > 1) {
+                        html += `<div class="mt-2 pt-2 border-t border-gray-100">
+                                    <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Subcategorias</p>
+                                    <ul class="space-y-1.5">`;
+                        
+                        paths.forEach(path => {
+                            if (path === root) return; // Pula a raiz
+                            
+                            const data = categoryCounts[path];
+                            const parts = path.split(' > ');
+                            const depth = parts.length - 1;
+                            const subName = parts[parts.length - 1];
+                            const indent = depth > 1 ? `${(depth - 1) * 12}px` : '0px';
+                            const isDeep = depth > 1;
+                            
+                            html += `
+                                <li class="flex justify-between items-center text-xs" style="padding-left: ${indent};">
+                                    <span class="text-gray-600 truncate pr-2 ${isDeep ? 'text-[11px]' : 'font-medium'}" title="${path}">
+                                        ${isDeep ? '<span class="text-gray-300 mr-1 inline-block">↳</span>' : ''}${subName}
+                                    </span>
+                                    <span class="text-gray-500 font-semibold bg-white border border-gray-200 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap cursor-help" title="Físico: ${data.fisico} | Na Rua: ${data.rua}">
+                                        ${data.total}
+                                    </span>
+                                </li>
+                            `;
+                        });
+                        
+                        html += `</ul></div>`;
+                    }
+                    
+                    div.innerHTML = html;
+                    catContainer.appendChild(div);
+                });
+                lucide.createIcons();
+            }
         }
 
         /**
@@ -680,7 +843,10 @@
             categories.forEach(cat => {
                 const option = document.createElement('option');
                 option.value = cat.nome;
-                option.textContent = cat.nome;
+                
+                const depth = (cat.nome.match(/ > /g) || []).length;
+                const indent = '\u00A0\u00A0\u00A0\u00A0'.repeat(depth);
+                option.textContent = indent + cat.nome;
                 option.className = 'custom-category'; // Marca como customizada
 
                 // Evita adicionar duplicatas das opções padrão
@@ -696,6 +862,12 @@
                     select.appendChild(option);
                 }
             });
+
+            // 3. Reordena todas as opções para agrupar categorias e subcategorias alfabeticamente
+            const optionsArray = Array.from(select.options);
+            optionsArray.sort((a, b) => a.value.localeCompare(b.value));
+            select.innerHTML = '';
+            optionsArray.forEach(opt => select.appendChild(opt));
         }
 
         /**
@@ -765,7 +937,8 @@
             if (!tbody) return;
             tbody.innerHTML = '';
             if (allMaletas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-500">Nenhuma maleta criada.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500">Nenhuma maleta criada.</td></tr>';
+                updateMaletasAverages();
                 return;
             }
 
@@ -808,6 +981,7 @@
                 }
 
                 tr.innerHTML = `
+                    <td class="px-6 py-4"><input type="checkbox" class="rounded maleta-checkbox" data-id="${m.id}"></td>
                     <td class="px-6 py-4 font-medium text-gray-900"><span class="cursor-pointer text-indigo-600 hover:text-indigo-800 hover:underline btn-edit-maleta" data-id="${m.id}">${m.nome}</span></td>
                     <td class="px-6 py-4 text-gray-500">
                         <span class="font-medium ${availabilityClass}">${availableItens}/${totalItens} peças disponíveis</span> 
@@ -824,6 +998,154 @@
                 tbody.appendChild(tr);
             });
             lucide.createIcons();
+            updateMaletasAverages();
+        }
+
+        function updateMaletasAverages() {
+            const container = document.getElementById('maletas-averages-list');
+            const btnCreateFromAvg = document.getElementById('btn-create-maleta-from-avg');
+            if (!container) return;
+
+            container.innerHTML = '';
+            currentMaletaAverages = {};
+            
+            const selectedCheckboxes = document.querySelectorAll('#maletas-list-table input.maleta-checkbox:checked');
+            let maletasToCalculate = [];
+
+            if (selectedCheckboxes.length > 0) {
+                selectedCheckboxes.forEach(cb => {
+                    const maleta = allMaletas.find(m => m.id === cb.dataset.id);
+                    if (maleta) maletasToCalculate.push(maleta);
+                });
+            } else {
+                maletasToCalculate = allMaletas;
+            }
+
+            if (maletasToCalculate.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 col-span-full">Nenhuma maleta cadastrada para calcular as médias.</p>';
+                if(btnCreateFromAvg) btnCreateFromAvg.classList.add('hidden');
+                return;
+            }
+
+            const exactCategoryTotals = {};
+            const categoryTotals = {};
+            const numMaletas = maletasToCalculate.length;
+
+            const getCategoryPaths = (catPath) => {
+                if (!catPath || catPath === 'Sem Categoria') return ['Sem Categoria'];
+                const parts = catPath.split(' > ');
+                const paths = [];
+                let current = '';
+                for (const part of parts) {
+                    current = current ? `${current} > ${part}` : part;
+                    paths.push(current);
+                }
+                return paths;
+            };
+
+            maletasToCalculate.forEach(maleta => {
+                maleta.items.forEach(item => {
+                    let cat = item.categoria;
+                    if (!cat) {
+                        const productInDB = allUserProducts.find(p => p.id === item.id);
+                        cat = productInDB ? (productInDB.categoria || 'Sem Categoria') : 'Sem Categoria';
+                    }
+                    
+                    exactCategoryTotals[cat] = (exactCategoryTotals[cat] || 0) + (item.quantity || 1);
+                    
+                    const catPaths = getCategoryPaths(cat);
+                    catPaths.forEach(path => {
+                        categoryTotals[path] = (categoryTotals[path] || 0) + (item.quantity || 1);
+                    });
+                });
+            });
+
+            // Preenche currentMaletaAverages com as categorias EXATAS para o assistente funcionar corretamente
+            Object.keys(exactCategoryTotals).forEach(cat => {
+                const avgQtyStr = (exactCategoryTotals[cat] / numMaletas).toFixed(1).replace('.0', '');
+                const avgQty = parseFloat(avgQtyStr);
+                if (avgQty > 0) {
+                    currentMaletaAverages[cat] = Math.max(1, Math.round(avgQty));
+                }
+            });
+
+            let hasCategories = false;
+            const rootCategories = {};
+            
+            Object.keys(categoryTotals).forEach(cat => {
+                if (categoryTotals[cat] === 0) return;
+                
+                const parts = cat.split(' > ');
+                const root = parts[0];
+                
+                if (!rootCategories[root]) {
+                    rootCategories[root] = [];
+                }
+                rootCategories[root].push(cat);
+            });
+
+            Object.keys(rootCategories).sort().forEach(root => {
+                const paths = rootCategories[root].sort();
+                const rootData = categoryTotals[root];
+                
+                if (!rootData) return;
+
+                const avgQtyStr = (rootData / numMaletas).toFixed(1).replace('.0', '');
+                const avgQty = parseFloat(avgQtyStr);
+
+                if (avgQty > 0) {
+                    hasCategories = true;
+                    
+                    const div = document.createElement('div');
+                    div.className = 'bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex flex-col shadow-sm';
+                    
+                    let html = `
+                        <div class="flex items-center justify-between mb-2 pb-2 border-b border-indigo-100">
+                            <h4 class="font-bold text-indigo-800 uppercase tracking-wider text-sm truncate" title="${root}">${root}</h4>
+                            <span class="bg-indigo-200 text-indigo-800 text-xs font-bold px-2 py-1 rounded-full" title="Média">${avgQtyStr} un.</span>
+                        </div>
+                    `;
+
+                    // Se tiver subcategorias
+                    if (paths.length > 1) {
+                        html += `<div class="mt-2 pt-1">
+                                    <ul class="space-y-1.5">`;
+                        
+                        paths.forEach(path => {
+                            if (path === root) return; // Pula a raiz
+                            
+                            const data = categoryTotals[path];
+                            const subAvgStr = (data / numMaletas).toFixed(1).replace('.0', '');
+                            const parts = path.split(' > ');
+                            const depth = parts.length - 1;
+                            const subName = parts[parts.length - 1];
+                            const indent = depth > 1 ? `${(depth - 1) * 12}px` : '0px';
+                            const isDeep = depth > 1;
+                            
+                            html += `
+                                <li class="flex justify-between items-center text-xs" style="padding-left: ${indent};">
+                                    <span class="text-indigo-700 truncate pr-2 ${isDeep ? 'text-[11px]' : 'font-medium'}" title="${path}">
+                                        ${isDeep ? '<span class="text-indigo-300 mr-1 inline-block">↳</span>' : ''}${subName}
+                                    </span>
+                                    <span class="text-indigo-600 font-semibold bg-white border border-indigo-100 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap">
+                                        ${subAvgStr}
+                                    </span>
+                                </li>
+                            `;
+                        });
+                        
+                        html += `</ul></div>`;
+                    }
+                    
+                    div.innerHTML = html;
+                    container.appendChild(div);
+                }
+            });
+            
+            if (btnCreateFromAvg) {
+                if (hasCategories) btnCreateFromAvg.classList.remove('hidden');
+                else btnCreateFromAvg.classList.add('hidden');
+            }
         }
         // --- FIM DA LÓGICA DE CARREGAMENTO ---
         /**
@@ -1652,12 +1974,29 @@
             btnAddCategory.addEventListener('click', () => {
                 // 1. Configurar o Modal
                 modalTitle.textContent = 'Adicionar Nova Categoria';
+                
+                const categorySelect = document.getElementById('prod-categoria');
+                let parentOptionsHtml = '<option value="">Nenhuma (Categoria Principal)</option>';
+                if (categorySelect) {
+                    Array.from(categorySelect.options).forEach(opt => {
+                        parentOptionsHtml += `<option value="${opt.value}">${opt.textContent}</option>`;
+                    });
+                }
+
                 modalBody.innerHTML = `
-    <p class="text-sm text-gray-600 mb-4">Digite o nome da nova categoria que você quer adicionar à lista.</p>
-    <div>
-        <label for="new-category-name" class="block text-sm font-medium">Nome da Categoria</label>
-        <input type="text" id="new-category-name" required class="w-full px-3 py-2 mt-1 border rounded-md" placeholder="Ex: Colares">
-        <p id="category-error" class="text-xs text-red-600 mt-1 hidden"></p>
+    <p class="text-sm text-gray-600 mb-4">Você pode criar uma categoria principal ou selecionar uma "Categoria Pai" para criar uma subcategoria (ex: Anéis > Ouro).</p>
+    <div class="space-y-4">
+        <div>
+            <label for="new-category-parent" class="block text-sm font-medium">Categoria Pai (Opcional)</label>
+            <select id="new-category-parent" class="w-full px-3 py-2 mt-1 border rounded-md">
+                ${parentOptionsHtml}
+            </select>
+        </div>
+        <div>
+            <label for="new-category-name" class="block text-sm font-medium">Nome da Nova Categoria</label>
+            <input type="text" id="new-category-name" required class="w-full px-3 py-2 mt-1 border rounded-md" placeholder="Ex: Ouro 18k">
+            <p id="category-error" class="text-xs text-red-600 mt-1 hidden"></p>
+        </div>
     </div>
     <div class="mt-6 text-right">
         <button type="button" id="btn-cancel-category" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 mr-2">Cancelar</button>
@@ -1671,19 +2010,24 @@
                 const saveBtn = document.getElementById('btn-save-category');
                 const cancelBtn = document.getElementById('btn-cancel-category');
                 const input = document.getElementById('new-category-name');
+                const parentInput = document.getElementById('new-category-parent');
                 const errorP = document.getElementById('category-error');
 
                 // 3. Adicionar listener de Salvar
                 saveBtn.onclick = async () => {
-                    const categoryName = input.value.trim();
+                    const rawName = input.value.trim();
+                    const parentName = parentInput.value;
                     errorP.classList.add('hidden');
 
-                    if (!categoryName) {
+                    if (!rawName) {
                         errorP.textContent = 'Por favor, digite um nome.';
                         errorP.classList.remove('hidden');
                         input.classList.add('border-red-500');
                         return;
                     }
+                    
+                    const categoryName = parentName ? `${parentName} > ${rawName}` : rawName;
+
                     if (!userId) {
                         showModal("Erro", "Usuário não logado.");
                         return;
@@ -1760,7 +2104,10 @@
                     customOptions.forEach(option => {
                         const li = document.createElement('li');
                         li.className = 'flex items-center justify-between p-2 bg-gray-50 rounded-md';
-                        li.textContent = option.value;
+                        
+                        const spanText = document.createElement('span');
+                        spanText.textContent = option.textContent; // Usa o texto indentado
+                        li.appendChild(spanText);
 
                         const deleteButton = document.createElement('button');
                         deleteButton.className = 'btn-delete-category text-red-500 hover:text-red-700';
@@ -2270,6 +2617,32 @@
         }
 
         // --- FIM DA LÓGICA DE AÇÕES ---
+        // Event listener para seleção de maletas
+        const maletasListTable = document.getElementById('maletas-list-table');
+        if (maletasListTable) {
+            maletasListTable.addEventListener('change', (e) => {
+                if (e.target.classList.contains('maleta-checkbox')) {
+                    updateMaletasAverages();
+                    const selectAllCb = document.getElementById('select-all-maletas');
+                    if (selectAllCb) {
+                        const totalCheckboxes = document.querySelectorAll('#maletas-list-table input.maleta-checkbox').length;
+                        const checkedCheckboxes = document.querySelectorAll('#maletas-list-table input.maleta-checkbox:checked').length;
+                        selectAllCb.checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
+                    }
+                }
+            });
+        }
+        
+        const selectAllMaletas = document.getElementById('select-all-maletas');
+        if (selectAllMaletas) {
+            selectAllMaletas.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                document.querySelectorAll('#maletas-list-table input.maleta-checkbox').forEach(cb => {
+                    cb.checked = isChecked;
+                });
+                updateMaletasAverages();
+            });
+        }
         // --- LÓGICA DE AÇÕES EM LOTE (PRODUTOS) ---
 
         const btnBatchDelete = document.getElementById('btn-batch-delete');
@@ -2297,6 +2670,20 @@
                 allCheckboxes.forEach(cb => {
                     cb.checked = selectAllCheckbox.checked;
                 });
+                if (typeof updateProductSelectionCounter === 'function') {
+                    updateProductSelectionCounter();
+                }
+            });
+        }
+
+        const productListTableEl = document.getElementById('product-list-table');
+        if (productListTableEl) {
+            productListTableEl.addEventListener('change', (e) => {
+                if (e.target.classList.contains('product-checkbox')) {
+                    if (typeof updateProductSelectionCounter === 'function') {
+                        updateProductSelectionCounter();
+                    }
+                }
             });
         }
 
@@ -2972,7 +3359,7 @@ function showBatchBillEditModal(ids) {
             const financeCollectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
 
             // --- 1. VERIFICAR QUAIS PRODUTOS AINDA EXISTEM ANTES DE ATUALIZAR ---
-            const productRefsToUpdate = [];
+            const productsToUpdate = [];
             if (sale.items && sale.items.length > 0) {
                 // Loop de Verificação (Leitura)
                 for (const item of sale.items) {
@@ -2982,8 +3369,8 @@ function showBatchBillEditModal(ids) {
                         try {
                             const productSnap = await getDoc(productRef);
                             if (productSnap.exists()) {
-                                // Se o produto existe, adicionamos a ref à lista
-                                productRefsToUpdate.push(productRef);
+                                // Se o produto existe, guardamos a ref e a quantidade a devolver
+                                productsToUpdate.push({ ref: productRef, qty: item.quantity || 1 });
                             } else {
                                 // O produto foi deletado, apenas loga e ignora
                                 console.warn(`Produto ${item.id} da venda ${sale.id} não existe mais. Estoque não será devolvido.`);
@@ -3000,9 +3387,9 @@ function showBatchBillEditModal(ids) {
 
             // --- 2. Devolver itens ao estoque (APENAS OS QUE EXISTEM) ---
             // Loop de Escrita (dentro do Batch)
-            productRefsToUpdate.forEach(productRef => {
-                batch.update(productRef, {
-                    estoque: increment(1)
+            productsToUpdate.forEach(p => {
+                batch.update(p.ref, {
+                    estoque: increment(p.qty)
                 });
             });
 
@@ -3727,7 +4114,7 @@ function showBatchBillEditModal(ids) {
                     if (consignment.items && consignment.items.length > 0) {
                         for (const item of consignment.items) {
                             const productRef = doc(db, productCollectionPath, item.id);
-                            batch.update(productRef, { estoque: increment(1) });
+                            batch.update(productRef, { estoque: increment(item.quantity || 1) });
                         }
                     }
 
@@ -4566,11 +4953,15 @@ function showBatchBillEditModal(ids) {
                     const financeCollectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
 
                     // --- 2a. Atualizar Estoque (Devolver itens) ---
-                    // Esta lógica está CORRETA, pois itemsReturned está "desempacotado"
+                    // Agrupar itemsReturned para não sobrescrever o incremento no mesmo doc no batch
+                    const returnedStockMap = {};
                     for (const item of itemsReturned) {
-                        const productRef = doc(db, productCollectionPath, item.id);
+                        returnedStockMap[item.id] = (returnedStockMap[item.id] || 0) + 1;
+                    }
+                    for (const itemId in returnedStockMap) {
+                        const productRef = doc(db, productCollectionPath, itemId);
                         batch.update(productRef, {
-                            estoque: increment(1) // Devolve 1 ao estoque
+                            estoque: increment(returnedStockMap[itemId])
                         });
                     }
 
@@ -4624,7 +5015,7 @@ function showBatchBillEditModal(ids) {
                         discountAmount: discountAmountValue,
                         discountReason: discountReasonValue,
                         finalAmountPaid: finalAmountPaid,
-                        paymentMethod: paymentMethod
+                        paymentMethod: mainPaymentMethod
                     };
 
                     // Passa os VENDIDOS (agrupados) e os DEVOLVIDOS (desagrupados)
@@ -5691,6 +6082,8 @@ function showBatchBillEditModal(ids) {
         const productSearchInput = document.getElementById('product-search-input');
         const productDateStart = document.getElementById('product-date-start');
         const productDateEnd = document.getElementById('product-date-end');
+        const productInStockOnly = document.getElementById('product-in-stock-only');
+        const productNoPhotoOnly = document.getElementById('product-no-photo-only');
         const productClearFilters = document.getElementById('product-clear-filters');
 
         // "Ligar" os listeners para chamar a função de filtro unificada
@@ -5705,6 +6098,8 @@ function showBatchBillEditModal(ids) {
         }
         if (productDateStart) productDateStart.addEventListener('change', applyProductViewFilters);
         if (productDateEnd) productDateEnd.addEventListener('change', applyProductViewFilters);
+        if (productInStockOnly) productInStockOnly.addEventListener('change', applyProductViewFilters);
+        if (productNoPhotoOnly) productNoPhotoOnly.addEventListener('change', applyProductViewFilters);
 
         // "Ligar" o botão de limpar
         if (productClearFilters) {
@@ -5713,6 +6108,8 @@ function showBatchBillEditModal(ids) {
                 productSearchInput.value = '';
                 productDateStart.value = '';
                 productDateEnd.value = '';
+                if (productInStockOnly) productInStockOnly.checked = false;
+                if (productNoPhotoOnly) productNoPhotoOnly.checked = false;
                 applyProductViewFilters(); // Re-executa com filtros limpos
             });
         }
@@ -5791,6 +6188,8 @@ function showBatchBillEditModal(ids) {
             const searchTerm = document.getElementById('product-search-input').value.toLowerCase().trim();
             const startDate = document.getElementById('product-date-start').value ? new Date(document.getElementById('product-date-start').value + 'T00:00:00') : null;
             const endDate = document.getElementById('product-date-end').value ? new Date(document.getElementById('product-date-end').value + 'T23:59:59') : null;
+            const inStockOnly = document.getElementById('product-in-stock-only')?.checked;
+            const noPhotoOnly = document.getElementById('product-no-photo-only')?.checked;
 
             let filtered = allUserProducts; // Começa com a lista global completa
 
@@ -5826,6 +6225,16 @@ function showBatchBillEditModal(ids) {
                     const productDate = prod.createdAt.toDate();
                     return productDate <= endDate;
                 });
+            }
+
+            // 5. Filtra por Estoque > 0
+            if (inStockOnly) {
+                filtered = filtered.filter(prod => prod.estoque > 0);
+            }
+
+            // 6. Filtra por Sem Foto
+            if (noPhotoOnly) {
+                filtered = filtered.filter(prod => !prod.fotoUrl || prod.fotoUrl.trim() === '');
             }
 
             // 5. Renderiza o resultado final na tabela
@@ -7497,11 +7906,34 @@ function renderBillsTab(entries) {
                 if (item.categoria !== currentCategory) {
                     currentCategory = item.categoria;
                     const stats = categoryStats[currentCategory];
+                    
+                    let categoryHtml = '';
+                    const catStr = currentCategory || 'Sem Categoria';
+                    if (catStr === 'Sem Categoria') {
+                        categoryHtml = '<span class="text-gray-500 normal-case tracking-normal">Sem Categoria</span>';
+                    } else {
+                        const parts = catStr.split(' > ');
+                        if (parts.length === 1) {
+                            categoryHtml = `<span class="px-2 py-1 text-xs font-bold text-gray-700 bg-gray-200 rounded-md border border-gray-300 whitespace-nowrap">${parts[0]}</span>`;
+                        } else {
+                            categoryHtml = '<div class="flex items-center flex-wrap gap-1">';
+                            parts.forEach((part, idx) => {
+                                if (idx < parts.length - 1) {
+                                    categoryHtml += `<span class="text-xs text-gray-500 normal-case tracking-normal">${part}</span>`;
+                                    categoryHtml += `<i data-lucide="chevron-right" class="w-3 h-3 text-gray-400 shrink-0"></i>`;
+                                } else {
+                                    categoryHtml += `<span class="px-2 py-1 text-xs font-bold text-indigo-700 bg-indigo-100 border border-indigo-200 rounded-md whitespace-nowrap">${part}</span>`;
+                                }
+                            });
+                            categoryHtml += '</div>';
+                        }
+                    }
+
                     const catTr = document.createElement('tr');
                     catTr.className = 'bg-gray-100 font-semibold text-gray-700 uppercase tracking-wider text-xs';
                     catTr.innerHTML = `<td colspan="4" class="px-4 py-2">
                         <div class="flex justify-between items-center">
-                            <span>${currentCategory}</span>
+                            <span class="flex items-center">${categoryHtml}</span>
                             <span class="normal-case tracking-normal text-[11px] text-gray-500 font-medium">(${stats.available}/${stats.total} disp.)</span>
                         </div>
                     </td>`;
@@ -7758,6 +8190,483 @@ function renderBillsTab(entries) {
                 setTimeout(() => showModal("Sucesso", `Maleta "${maleta.nome}" adicionada com sucesso!`), 200);
             }
         }
+        
+        // --- LÓGICA DO ASSISTENTE (WIZARD) DE MALETA PELA MÉDIA ---
+        const btnCreateFromAvg = document.getElementById('btn-create-maleta-from-avg');
+        const modalWizardMaleta = document.getElementById('modal-wizard-maleta');
+        const btnCloseWizardMaleta = document.getElementById('btn-close-wizard-maleta');
+        const btnWizardPrev = document.getElementById('btn-wizard-prev');
+        const btnWizardNext = document.getElementById('btn-wizard-next');
+        const btnWizardSkip = document.getElementById('btn-wizard-skip');
+        const btnWizardAddItem = document.getElementById('btn-wizard-add-item');
+        const wizardItemRefInput = document.getElementById('wizard-item-ref');
+        const wizardCatalogSearch = document.getElementById('wizard-catalog-search');
+        const wizardCatalogGrid = document.getElementById('wizard-catalog-grid');
+
+        let wizardCategories = [];
+        let wizardCurrentIndex = 0;
+        let wizardItems = []; // list of {id, nome, ref, venda, quantity, categoria, currentStock, fotoUrl}
+
+        if (btnCreateFromAvg) {
+            btnCreateFromAvg.addEventListener('click', () => {
+                wizardCategories = Object.keys(currentMaletaAverages).map(cat => ({
+                    name: cat,
+                    target: currentMaletaAverages[cat]
+                })).filter(c => c.target > 0);
+                const rootGroups = {};
+                Object.keys(currentMaletaAverages).forEach(cat => {
+                    const target = currentMaletaAverages[cat];
+                    if (target > 0) {
+                        const root = cat.split(' > ')[0];
+                        if (!rootGroups[root]) rootGroups[root] = { targetTotal: 0, subcats: {} };
+                        rootGroups[root].subcats[cat] = target;
+                        rootGroups[root].targetTotal += target;
+                    }
+                });
+
+                wizardCategories = Object.keys(rootGroups).sort().map(root => ({
+                    name: root,
+                    target: rootGroups[root].targetTotal,
+                    subcats: rootGroups[root].subcats
+                }));
+
+                if (wizardCategories.length === 0) {
+                    showModal("Aviso", "A média de produtos é zero para todas as categorias.");
+                    return;
+                }
+
+                wizardCurrentIndex = 0;
+                wizardItems = []; 
+                
+                modalWizardMaleta.classList.remove('hidden');
+                renderWizardStep();
+                if(wizardCatalogSearch) wizardCatalogSearch.value = '';
+            });
+        }
+        
+        function renderWizardStep() {
+            const currentCat = wizardCategories[wizardCurrentIndex];
+            
+            document.getElementById('wizard-maleta-title').textContent = `Gerar Maleta (Passo ${wizardCurrentIndex + 1} de ${wizardCategories.length})`;
+            
+            let categoryHtml = '';
+            const catStr = currentCat.name || 'Sem Categoria';
+            if (catStr === 'Sem Categoria') {
+                categoryHtml = '<span class="text-gray-500 normal-case tracking-normal">Sem Categoria</span>';
+            } else {
+                const parts = catStr.split(' > ');
+                if (parts.length === 1) {
+                    categoryHtml = `<span class="px-2 py-1 text-sm font-bold text-gray-700 bg-gray-200 rounded-md border border-gray-300 whitespace-nowrap uppercase tracking-wider">${parts[0]}</span>`;
+                } else {
+                    categoryHtml = '<div class="flex items-center flex-wrap gap-1">';
+                    parts.forEach((part, idx) => {
+                        if (idx < parts.length - 1) {
+                            categoryHtml += `<span class="text-sm text-gray-500 normal-case tracking-normal font-medium">${part}</span>`;
+                            categoryHtml += `<i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 shrink-0"></i>`;
+                        } else {
+                            categoryHtml += `<span class="px-2 py-1 text-sm font-bold text-indigo-700 bg-indigo-100 border border-indigo-200 rounded-md whitespace-nowrap uppercase tracking-wider">${part}</span>`;
+                        }
+                    });
+                    categoryHtml += '</div>';
+                }
+                categoryHtml = `<span class="px-2 py-1 text-sm font-bold text-gray-700 bg-gray-200 rounded-md border border-gray-300 whitespace-nowrap uppercase tracking-wider">${catStr}</span>`;
+            }
+            document.getElementById('wizard-category-name').innerHTML = categoryHtml;
+            
+            const itemsInThisCat = wizardItems.filter(i => {
+                const root = (i.categoria || 'Sem Categoria').split(' > ')[0];
+                return root === currentCat.name;
+            });
+            const totalQtyInThisCat = itemsInThisCat.reduce((sum, i) => sum + i.quantity, 0);
+            
+            document.getElementById('wizard-category-progress').textContent = `${totalQtyInThisCat} / ${currentCat.target} peças`;
+            const progressPercent = Math.min(100, (totalQtyInThisCat / currentCat.target) * 100);
+            document.getElementById('wizard-category-progress-bar').style.width = `${progressPercent}%`;
+
+            const subcatsProgressContainer = document.getElementById('wizard-subcats-progress');
+            if (subcatsProgressContainer) {
+                subcatsProgressContainer.innerHTML = '';
+                const subcatKeys = Object.keys(currentCat.subcats).sort();
+                if (subcatKeys.length > 1 || (subcatKeys.length === 1 && subcatKeys[0] !== currentCat.name)) {
+                    subcatKeys.forEach(subcat => {
+                        const target = currentCat.subcats[subcat];
+                        const itemsInSubcat = wizardItems.filter(i => (i.categoria || 'Sem Categoria') === subcat);
+                        const qtyInSubcat = itemsInSubcat.reduce((sum, i) => sum + i.quantity, 0);
+                        
+                        const subName = subcat.split(' > ').pop();
+                        const isComplete = qtyInSubcat >= target;
+                        const badgeClass = isComplete ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-700 border-gray-200';
+                        
+                        subcatsProgressContainer.innerHTML += `
+                            <span class="text-xs font-medium px-2 py-1 rounded border ${badgeClass}" title="${subcat}">
+                                ${subName}: ${qtyInSubcat}/${target}
+                            </span>
+                        `;
+                    });
+                }
+            }
+
+            btnWizardPrev.classList.toggle('hidden', wizardCurrentIndex === 0);
+            
+            if (wizardCurrentIndex === wizardCategories.length - 1) {
+                btnWizardNext.innerHTML = 'Finalizar <i data-lucide="check" class="w-4 h-4 ml-1"></i>';
+                btnWizardNext.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                btnWizardNext.classList.add('bg-green-600', 'hover:bg-green-700');
+            } else {
+                btnWizardNext.innerHTML = 'Próxima <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>';
+                btnWizardNext.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                btnWizardNext.classList.remove('bg-green-600', 'hover:bg-green-700');
+            }
+
+            if (totalQtyInThisCat >= currentCat.target) {
+                btnWizardNext.classList.add('ring-2', 'ring-offset-2', wizardCurrentIndex === wizardCategories.length - 1 ? 'ring-green-500' : 'ring-indigo-500');
+            } else {
+                btnWizardNext.classList.remove('ring-2', 'ring-offset-2', 'ring-green-500', 'ring-indigo-500');
+            }
+
+            const searchTerm = wizardCatalogSearch ? wizardCatalogSearch.value : '';
+            renderWizardCatalog(searchTerm);
+
+            renderWizardItemsTable();
+            wizardItemRefInput.value = '';
+            wizardItemRefInput.focus();
+            document.getElementById('wizard-error').classList.add('hidden');
+            lucide.createIcons();
+        }
+
+        function renderWizardCatalog(searchTerm = '') {
+            const currentCat = wizardCategories[wizardCurrentIndex];
+            const grid = document.getElementById('wizard-catalog-grid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            let productsInCat = allUserProducts.filter(p => {
+                const pCat = p.categoria || 'Sem Categoria';
+                return currentCat.subcats.hasOwnProperty(pCat) && p.estoque > 0;
+            });
+            
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                productsInCat = productsInCat.filter(p => 
+                    p.nome.toLowerCase().includes(term) || p.ref.toLowerCase().includes(term)
+                );
+            }
+            
+            if (productsInCat.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center p-4 text-gray-500">Nenhum produto encontrado.</div>`;
+                return;
+            }
+            
+            // Agrupar por subcategoria
+            const groupedProducts = {};
+            productsInCat.forEach(prod => {
+                const cat = prod.categoria || 'Sem Categoria';
+                if (!groupedProducts[cat]) groupedProducts[cat] = [];
+                groupedProducts[cat].push(prod);
+            });
+
+            const sortedCats = Object.keys(groupedProducts).sort();
+
+            sortedCats.forEach(cat => {
+                const products = groupedProducts[cat];
+                products.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                const parts = cat.split(' > ');
+                const depth = parts.length - 1;
+                const leafName = parts[parts.length - 1];
+
+                // Header da Categoria/Subcategoria em lista
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'col-span-full mt-3 mb-1 pb-1 border-b border-gray-200';
+                
+                if (cat !== 'Sem Categoria') {
+                    // Usamos style.paddingLeft para simular indentação visual na hierarquia
+                    const indentPadding = depth > 0 ? `padding-left: ${depth * 1}rem;` : '';
+                    const iconHtml = depth > 0 ? '<span class="text-gray-400 mr-2">↳</span>' : '';
+                    
+                    headerDiv.innerHTML = `
+                        <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center" style="${indentPadding}">
+                            ${iconHtml} ${leafName}
+                        </h5>
+                    `;
+                } else {
+                    headerDiv.innerHTML = `
+                        <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Sem Categoria</h5>
+                    `;
+                }
+                grid.appendChild(headerDiv);
+
+                products.forEach(prod => {
+                    const imgSrc = prod.fotoUrl ? prod.fotoUrl : 'https://placehold.co/150x150/e2e8f0/adb5bd?text=Sem+Foto';
+                    
+                    const existing = wizardItems.find(i => i.id === prod.id);
+                    const addedQty = existing ? existing.quantity : 0;
+                    const availableStock = prod.estoque - addedQty;
+                    
+                    const isOutOfStock = availableStock <= 0;
+                    const opacityClass = isOutOfStock ? 'opacity-50 grayscale' : 'cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all';
+                    const stockText = isOutOfStock ? '<span class="text-red-600 font-bold">Esgotado</span>' : `Estoque: ${availableStock}`;
+                    
+                    const card = document.createElement('div');
+                    card.className = `bg-white border border-gray-200 rounded-lg p-2 flex flex-col items-center text-center shadow-sm ${opacityClass} wizard-catalog-item`;
+                    if (!isOutOfStock) {
+                        card.dataset.id = prod.id;
+                        card.title = "Clique para adicionar 1 unidade";
+                    }
+                    
+                    card.innerHTML = `
+                        <div class="relative w-full">
+                            <img src="${imgSrc}" alt="${prod.nome}" class="w-full h-20 object-cover rounded mb-2" onerror="this.src='https://placehold.co/150x150/e2e8f0/adb5bd?text=Erro'">
+                        </div>
+                        <span class="text-[10px] text-gray-500 font-medium w-full truncate">${prod.ref}</span>
+                        <span class="text-xs font-semibold text-gray-800 leading-tight w-full line-clamp-2 mt-0.5 mb-1" title="${prod.nome}">${prod.nome}</span>
+                        <div class="mt-auto pt-1 w-full border-t border-gray-100 text-[10px] text-gray-500">
+                            ${stockText}
+                        </div>
+                    `;
+                    
+                    grid.appendChild(card);
+                });
+            });
+        }
+
+        function renderWizardItemsTable() {
+            const currentCat = wizardCategories[wizardCurrentIndex];
+            const tbody = document.getElementById('wizard-items-list');
+            tbody.innerHTML = '';
+            
+            const itemsInThisCat = wizardItems.filter(i => {
+                const root = (i.categoria || 'Sem Categoria').split(' > ')[0];
+                return root === currentCat.name;
+            });
+            
+            if (itemsInThisCat.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-6 text-center text-gray-500 text-sm">Nenhum item selecionado.</td></tr>';
+                return;
+            }
+            
+            itemsInThisCat.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                const isSubCat = item.categoria && item.categoria.includes(' > ');
+                const subCatName = isSubCat ? item.categoria.split(' > ').pop() : '';
+                const subCatHtml = isSubCat ? `<span class="bg-gray-100 text-gray-600 px-1 rounded text-[9px] uppercase">${subCatName}</span>` : '';
+                
+                tr.innerHTML = `
+                    <td class="px-4 py-3">
+                        <div class="text-sm font-medium text-gray-900 line-clamp-1" title="${item.nome}">${item.nome}</div>
+                        <div class="text-[11px] text-gray-500 mt-0.5">Ref: ${item.ref} ${subCatHtml}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <input type="number" min="1" max="${item.currentStock}" value="${item.quantity}" class="w-14 px-2 py-1 text-sm border rounded-md wizard-item-qty" data-id="${item.id}">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <button type="button" class="btn-remove-wizard-item text-red-500 hover:text-red-700" data-id="${item.id}" title="Remover">
+                            <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+            
+            tbody.querySelectorAll('.wizard-item-qty').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    const id = e.target.dataset.id;
+                    const it = wizardItems.find(i => i.id === id);
+                    if (it) {
+                        let finalVal = val < 1 ? 1 : val;
+                        if (finalVal > it.currentStock) {
+                            finalVal = it.currentStock;
+                        }
+                        it.quantity = finalVal;
+                        e.target.value = it.quantity;
+                        renderWizardStep();
+                    }
+                });
+            });
+            
+            tbody.querySelectorAll('.btn-remove-wizard-item').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    wizardItems = wizardItems.filter(i => i.id !== id);
+                    renderWizardStep(); 
+                });
+            });
+        }
+        
+        async function handleWizardAddItem() {
+            const refCode = wizardItemRefInput.value.trim();
+            const errorP = document.getElementById('wizard-error');
+            errorP.classList.add('hidden');
+            
+            if (!refCode) return;
+            
+            const prod = await findProductByRef(refCode);
+            if (!prod) {
+                errorP.textContent = "Produto não encontrado.";
+                errorP.classList.remove('hidden');
+                const audio = new Audio('erro.mp3');
+                audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
+                return;
+            }
+            
+            const currentCat = wizardCategories[wizardCurrentIndex];
+            const prodCat = prod.categoria || 'Sem Categoria';
+            const prodRoot = prodCat.split(' > ')[0];
+            
+            if (!currentCat.subcats.hasOwnProperty(prodCat)) {
+                if (prodRoot === currentCat.name) {
+                     errorP.textContent = `Atenção: Este produto é de "${prodCat}", mas a média não pede essa subcategoria.`;
+                } else {
+                     errorP.textContent = `Atenção: Este produto é da categoria "${prodRoot}". O passo atual é para "${currentCat.name}".`;
+                }
+                errorP.classList.remove('hidden');
+                const audio = new Audio('erro.mp3');
+                audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
+                return;
+            }
+            
+            const existing = wizardItems.find(i => i.id === prod.id);
+            if (existing) {
+                if (existing.quantity < prod.estoque) {
+                    existing.quantity++;
+                } else {
+                    errorP.textContent = `Estoque insuficiente para "${prod.nome}".`;
+                    errorP.classList.remove('hidden');
+                    const audio = new Audio('erro.mp3');
+                    audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
+                    return;
+                }
+            } else {
+                if (prod.estoque > 0) {
+                    wizardItems.push({
+                        id: prod.id,
+                        nome: prod.nome,
+                        ref: prod.ref,
+                        venda: prod.venda,
+                        categoria: prodCat,
+                        currentStock: prod.estoque,
+                        fotoUrl: prod.fotoUrl,
+                        quantity: 1
+                    });
+                } else {
+                    errorP.textContent = `Produto sem estoque: "${prod.nome}".`;
+                    errorP.classList.remove('hidden');
+                    const audio = new Audio('erro.mp3');
+                    audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
+                    return;
+                }
+            }
+            
+            wizardItemRefInput.value = '';
+            renderWizardStep();
+        }
+
+        if (btnWizardAddItem) {
+            btnWizardAddItem.addEventListener('click', handleWizardAddItem);
+            wizardItemRefInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleWizardAddItem();
+                }
+            });
+        }
+
+        if (btnWizardNext) {
+            btnWizardNext.addEventListener('click', () => {
+                if (wizardCurrentIndex < wizardCategories.length - 1) {
+                    wizardCurrentIndex++;
+                    if(wizardCatalogSearch) wizardCatalogSearch.value = '';
+                    renderWizardStep();
+                } else {
+                    finishWizardMaleta();
+                }
+            });
+        }
+
+        if (btnWizardPrev) {
+            btnWizardPrev.addEventListener('click', () => {
+                if (wizardCurrentIndex > 0) {
+                    wizardCurrentIndex--;
+                    if(wizardCatalogSearch) wizardCatalogSearch.value = '';
+                    renderWizardStep();
+                }
+            });
+        }
+
+        if (btnWizardSkip) {
+            btnWizardSkip.addEventListener('click', () => {
+                if (wizardCurrentIndex < wizardCategories.length - 1) {
+                    wizardCurrentIndex++;
+                    if(wizardCatalogSearch) wizardCatalogSearch.value = '';
+                    renderWizardStep();
+                } else {
+                    finishWizardMaleta();
+                }
+            });
+        }
+
+        const closeWizard = () => {
+            modalWizardMaleta.classList.add('hidden');
+            wizardItems = [];
+        };
+
+        if (btnCloseWizardMaleta) btnCloseWizardMaleta.addEventListener('click', closeWizard);
+        if (modalWizardMaleta) {
+            modalWizardMaleta.addEventListener('click', (e) => {
+                if (e.target === modalWizardMaleta) closeWizard();
+            });
+        }
+        
+        if (wizardCatalogSearch) {
+            wizardCatalogSearch.addEventListener('input', (e) => {
+                renderWizardCatalog(e.target.value);
+            });
+        }
+        
+        if (wizardCatalogGrid) {
+            wizardCatalogGrid.addEventListener('click', (e) => {
+                const card = e.target.closest('.wizard-catalog-item');
+                if (card && card.dataset.id) {
+                    const prodId = card.dataset.id;
+                    const prod = allUserProducts.find(p => p.id === prodId);
+                    if (prod) {
+                        const existing = wizardItems.find(i => i.id === prod.id);
+                        if (existing) {
+                            if (existing.quantity < prod.estoque) {
+                                existing.quantity++;
+                            }
+                        } else {
+                            if (prod.estoque > 0) {
+                                wizardItems.push({ id: prod.id, nome: prod.nome, ref: prod.ref, venda: prod.venda, categoria: prod.categoria || 'Sem Categoria', currentStock: prod.estoque, fotoUrl: prod.fotoUrl, quantity: 1 });
+                            }
+                        }
+                        renderWizardStep();
+                    }
+                }
+            });
+        }
+
+        function finishWizardMaleta() {
+            modalWizardMaleta.classList.add('hidden');
+            
+            const generatedMaleta = {
+                nome: `Maleta Automática (${new Date().toLocaleDateString('pt-BR')})`,
+                items: wizardItems.map(item => ({
+                    id: item.id,
+                    nome: item.nome,
+                    ref: item.ref,
+                    venda: item.venda,
+                    quantity: item.quantity
+                }))
+            };
+            
+            openMaletaModal(generatedMaleta, false);
+        }
+        // --- FIM WIZARD ---
         // --- FIM DA LÓGICA DE MALETAS ---
 
         // --- MODAL DE CONFIRMAÇÃO PARA EXCLUIR QTD ---

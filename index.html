@@ -394,15 +394,28 @@
                                     <input type="date" id="product-date-end"
                                         class="w-full px-3 py-1.5 mt-1 text-sm border rounded-md">
                                 </div>
-                                <div class="pt-3">
+                                <div class="flex items-center space-x-4 pt-2 md:pt-5">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="checkbox" id="product-in-stock-only" class="rounded text-indigo-600 w-4 h-4 mr-2 focus:ring-indigo-500">
+                                        <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Com Estoque</span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="checkbox" id="product-no-photo-only" class="rounded text-indigo-600 w-4 h-4 mr-2 focus:ring-indigo-500">
+                                        <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Sem Foto</span>
+                                    </label>
+                                </div>
+                                <div class="pt-2 md:pt-5">
                                     <button id="product-clear-filters"
-                                        class="text-xs text-indigo-600 hover:underline">Limpar filtros</button>
+                                        class="text-xs text-indigo-600 hover:underline whitespace-nowrap">Limpar filtros</button>
                                 </div>
                             </div>
 
+                            <div class="flex justify-between items-center px-1 mt-2">
+                                <span id="product-filter-counter" class="text-sm text-gray-600">Carregando...</span>
+                            </div>
 
                         </div>
-                        <div class="mt-4 overflow-x-auto bg-white rounded-lg shadow">
+                        <div class="mt-2 overflow-x-auto bg-white rounded-lg shadow">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
@@ -817,6 +830,14 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Detalhamento por Categorias -->
+                    <div class="mt-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i data-lucide="pie-chart" class="w-5 h-5 mr-2 text-indigo-600"></i> Distribuição por Categorias (Detalhado)</h3>
+                        <div id="estoque-categorias-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-start">
+                            <!-- JS via popular -->
+                        </div>
+                    </div>
                 </div>
                 </div>
             
@@ -834,6 +855,7 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
+                                        <th class="w-12 px-6 py-3 text-left"><input type="checkbox" id="select-all-maletas" class="rounded"></th>
                                         <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Nome da Maleta</th>
                                         <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Qtd Itens / Produtos</th>
                                         <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Valor Total</th>
@@ -842,6 +864,19 @@
                                 </thead>
                                 <tbody id="maletas-list-table" class="bg-white divide-y divide-gray-200"></tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- NOVO CARD: MÉDIAS POR CATEGORIA -->
+                    <div class="mt-6 p-6 bg-white rounded-lg shadow-md">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+                            <h3 class="text-lg font-medium flex items-center"><i data-lucide="bar-chart-2" class="w-5 h-5 mr-2 text-indigo-600"></i> Média de Produtos por Categoria</h3>
+                            <button id="btn-create-maleta-from-avg" class="hidden mt-2 sm:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 flex items-center"><i data-lucide="wand-2" class="w-4 h-4 mr-1"></i> Gerar Maleta com esta Média</button>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-6">Média de peças por categoria com base nas maletas selecionadas.</p>
+                        
+                        <div id="maletas-averages-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">
+                            <!-- JS popula aqui -->
                         </div>
                     </div>
                 </div>
@@ -1773,6 +1808,82 @@
                     <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Confirmar Troca</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- =========== MODAL ASSISTENTE DE MALETA =========== -->
+    <div id="modal-wizard-maleta" class="fixed inset-0 z-[85] flex items-center justify-center p-4 sm:p-6 hidden bg-black bg-opacity-50">
+        <div class="w-full max-w-6xl bg-white rounded-lg shadow-xl flex flex-col max-h-[95vh] h-full">
+            <div class="p-4 sm:p-6 border-b flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-medium" id="wizard-maleta-title">Gerar Maleta (Passo 1)</h3>
+                    <p class="text-sm text-gray-500 mt-1">Selecione os produtos no catálogo para atingir a média da categoria.</p>
+                </div>
+                <button id="btn-close-wizard-maleta" class="text-gray-500 hover:text-gray-800">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div class="px-4 sm:px-6 pt-4">
+                <div class="flex justify-between items-center mb-1">
+                    <h4 class="font-bold text-indigo-700 text-lg flex items-center" id="wizard-category-name">Categoria</h4>
+                    <span class="text-base font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-full" id="wizard-category-progress">0 / 0</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div class="bg-indigo-600 h-3 rounded-full transition-all duration-300" id="wizard-category-progress-bar" style="width: 0%"></div>
+                </div>
+                <div id="wizard-subcats-progress" class="flex flex-wrap gap-2 mb-2"></div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-4 overflow-hidden flex-1 p-4 sm:px-6 pb-0">
+                <!-- Painel Esquerdo: Catálogo -->
+                <div class="flex-1 flex flex-col border border-gray-200 rounded-lg bg-gray-50 overflow-hidden w-full lg:w-1/2">
+                    <div class="p-3 border-b border-gray-200 bg-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <h4 class="font-medium text-gray-700 flex items-center"><i data-lucide="layout-grid" class="w-4 h-4 mr-2"></i>Catálogo</h4>
+                        <input type="search" id="wizard-catalog-search" placeholder="Filtrar catálogo..." class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-auto">
+                    </div>
+                    <div id="wizard-catalog-grid" class="flex-1 overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 content-start">
+                        <!-- JS popula -->
+                    </div>
+                </div>
+
+                <!-- Painel Direito: Selecionados -->
+                <div class="flex-1 flex flex-col border border-gray-200 rounded-lg overflow-hidden w-full lg:w-1/2">
+                    <div class="p-3 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <h4 class="font-medium text-gray-700 flex items-center"><i data-lucide="check-square" class="w-4 h-4 mr-2"></i>Selecionados</h4>
+                        <div class="flex space-x-2">
+                            <input type="text" id="wizard-item-ref" list="sale-item-datalist" placeholder="Ou use leitor (Ref)" class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-auto">
+                            <button type="button" id="btn-wizard-add-item" class="px-3 py-1.5 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 text-sm">Add</button>
+                        </div>
+                    </div>
+                    <p id="wizard-error" class="text-sm text-red-600 px-3 pt-2 hidden"></p>
+                    <div class="overflow-y-auto flex-1 bg-white">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 shadow-sm">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Qtd.</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="wizard-items-list" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-6 border-t border-gray-200 mt-4 flex justify-between items-center bg-gray-50 rounded-b-lg">
+                <button type="button" id="btn-wizard-prev" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 flex items-center">
+                    <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Anterior
+                </button>
+                <div class="space-x-2 flex">
+                    <button type="button" id="btn-wizard-skip" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hidden sm:block">Pular Categoria</button>
+                    <button type="button" id="btn-wizard-next" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center shadow-sm">
+                        Próxima <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
