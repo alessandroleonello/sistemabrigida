@@ -250,20 +250,23 @@
                     categoryHtml = '<span class="text-gray-400 text-sm">Sem Categoria</span>';
                 } else {
                     const parts = catStr.split(' > ');
-                    if (parts.length === 1) {
-                        categoryHtml = `<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-md border border-gray-200 whitespace-nowrap">${parts[0]}</span>`;
-                    } else {
-                        categoryHtml = '<div class="flex items-center flex-wrap gap-1">';
-                        parts.forEach((part, idx) => {
-                            if (idx < parts.length - 1) {
-                                categoryHtml += `<span class="text-xs text-gray-500 whitespace-nowrap">${part}</span>`;
-                                categoryHtml += `<i data-lucide="chevron-right" class="w-3 h-3 text-gray-400 shrink-0"></i>`;
-                            } else {
-                                categoryHtml += `<span class="px-2 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md whitespace-nowrap">${part}</span>`;
-                            }
-                        });
-                        categoryHtml += '</div>';
-                    }
+                    categoryHtml = '<div class="flex items-center flex-wrap gap-1">';
+                    let accumulatedPath = '';
+                    parts.forEach((part, idx) => {
+                        accumulatedPath = accumulatedPath ? `${accumulatedPath} > ${part}` : part;
+                        const isLast = idx === parts.length - 1;
+                        
+                        const baseClasses = isLast 
+                            ? "px-2 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md whitespace-nowrap cursor-pointer hover:bg-indigo-100 transition-colors category-tag-filter"
+                            : "text-xs text-gray-500 whitespace-nowrap cursor-pointer hover:text-indigo-600 hover:underline transition-colors category-tag-filter";
+                        
+                        categoryHtml += `<span class="${baseClasses}" data-category-path="${accumulatedPath}" title="Filtrar por ${accumulatedPath}">${part}</span>`;
+                        
+                        if (!isLast) {
+                            categoryHtml += `<i data-lucide="chevron-right" class="w-3 h-3 text-gray-400 shrink-0"></i>`;
+                        }
+                    });
+                    categoryHtml += '</div>';
                 }
 
                 tr.innerHTML = `
@@ -348,6 +351,7 @@
                     current = current ? `${current} > ${part}` : part;
                     paths.push(current);
                 }
+
                 return paths;
             };
 
@@ -2289,6 +2293,21 @@
                     if (clientName) {
                         const searchInput = document.getElementById('product-search-input');
                         searchInput.value = clientName;
+                        // Dispara o evento de input para acionar o filtro
+                        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        searchInput.focus();
+                    }
+                    return; // Encerra
+                }
+
+                // --- AÇÃO: Filtrar por tag de categoria (NOVO) ---
+                const categoryTag = e.target.closest('.category-tag-filter');
+                if (categoryTag) {
+                    e.preventDefault();
+                    const catPath = categoryTag.dataset.categoryPath;
+                    if (catPath) {
+                        const searchInput = document.getElementById('product-search-input');
+                        searchInput.value = catPath;
                         // Dispara o evento de input para acionar o filtro
                         searchInput.dispatchEvent(new Event('input', { bubbles: true }));
                         searchInput.focus();
