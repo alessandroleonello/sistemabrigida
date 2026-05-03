@@ -2066,6 +2066,29 @@
                     return;
                 }
 
+                // --- AÇÃO: Criar Maleta a partir de Consignação (NOVO) ---
+                const createMaletaBtn = e.target.closest('.btn-create-maleta-from-consign');
+                if (createMaletaBtn && createMaletaBtn.dataset.id) {
+                    const consignmentId = createMaletaBtn.dataset.id;
+                    const sale = allSales.find(s => s.id === consignmentId);
+                    if (sale && sale.items && sale.items.length > 0) {
+                        const maletaSimulada = {
+                            nome: `Kit de ${sale.clientId || 'Cliente'} (${new Date().toLocaleDateString('pt-BR')})`,
+                            items: sale.items.map(item => ({
+                                id: item.id,
+                                nome: item.nome,
+                                ref: item.ref,
+                                venda: item.venda,
+                                quantity: item.quantity || 1
+                            }))
+                        };
+                        openMaletaModal(maletaSimulada, false);
+                    } else {
+                        showModal("Erro", "Não foi possível encontrar os itens desta consignação.");
+                    }
+                    return;
+                }
+
                 // --- AÇÃO: Excluir Venda (do Histórico) ---
                 const deleteSaleBtn = e.target.closest('.btn-delete-sale');
                 if (deleteSaleBtn && deleteSaleBtn.dataset.id) {
@@ -6174,6 +6197,10 @@ async function checkAndExtendFixedBills() {
                     <i data-lucide="file-spreadsheet" class="w-5 h-5 pointer-events-none"></i>
                 </button>
                 
+                <button class="btn-create-maleta-from-consign text-purple-600 hover:text-purple-800" data-id="${c.id}" title="Salvar como Maleta">
+                    <i data-lucide="briefcase" class="w-5 h-5 pointer-events-none"></i>
+                </button>
+                
                 <button class="btn-settle-consignment px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700" data-id="${c.id}" title="Realizar Acerto">Acertar</button>
                 
                 <button class="btn-delete-consign text-red-600 hover:text-red-900" data-id="${c.id}" data-client-id="${c.clientId || ''}" title="Cancelar Consignação">
@@ -7294,8 +7321,11 @@ function renderBillsTab(entries) {
         // --- LÓGICA DAS MALETAS (CRIAR E ADICIONAR À VENDA) ---
         function openMaletaModal(maleta = null, isDuplicate = false) {
             currentMaletaItems = maleta ? JSON.parse(JSON.stringify(maleta.items)) : [];
-            const isEdit = maleta && !isDuplicate;
-            const initialName = isDuplicate ? `${maleta.nome} (Cópia)` : (maleta ? maleta.nome : '');
+            const isEdit = maleta && maleta.id && !isDuplicate;
+            let initialName = '';
+            if (maleta) {
+                initialName = isDuplicate && maleta.id ? `${maleta.nome} (Cópia)` : maleta.nome;
+            }
 
             modalTitle.textContent = isEdit ? 'Editar Maleta' : 'Nova Maleta';
             modalBody.innerHTML = `
