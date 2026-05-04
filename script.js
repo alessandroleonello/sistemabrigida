@@ -8037,6 +8037,12 @@ function renderBillsTab(entries) {
                         if (searchInput) searchInput.value = '';
                         renderSwapCatalog();
                         modalSwap.classList.remove('hidden');
+                        
+                        // Foca automaticamente no novo campo de busca do catálogo
+                        setTimeout(() => {
+                            const searchFocus = document.getElementById('swap-catalog-search');
+                            if (searchFocus) searchFocus.focus();
+                        }, 100);
                     }
                 });
             });
