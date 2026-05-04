@@ -8028,10 +8028,15 @@ function renderBillsTab(entries) {
             tbody.querySelectorAll('.btn-swap-maleta-item').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     currentSwapItemId = e.currentTarget.dataset.id;
+                    const itemToSwap = currentMaletaItems.find(i => i.id === currentSwapItemId);
+                    
                     const modalSwap = document.getElementById('modal-swap-item');
-                    if (modalSwap) {
+                    if (modalSwap && itemToSwap) {
+                        document.getElementById('swap-item-current-name').textContent = itemToSwap.nome;
+                        const searchInput = document.getElementById('swap-catalog-search');
+                        if (searchInput) searchInput.value = '';
+                        renderSwapCatalog();
                         modalSwap.classList.remove('hidden');
-                        setTimeout(() => document.getElementById('swap-item-ref').focus(), 100);
                     }
                 });
             });
@@ -8041,15 +8046,98 @@ function renderBillsTab(entries) {
         const modalSwapItem = document.getElementById('modal-swap-item');
         const btnCloseSwapItem = document.getElementById('btn-close-swap-item');
         const btnCancelSwapItem = document.getElementById('btn-cancel-swap-item');
-        const formSwapItem = document.getElementById('form-swap-item');
         let currentSwapItemId = null;
+
+        function renderSwapCatalog(searchTerm = '') {
+            const grid = document.getElementById('swap-catalog-grid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            // Apenas produtos com estoque > 0
+            let productsToSwap = allUserProducts.filter(p => p.estoque > 0);
+            
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                productsToSwap = productsToSwap.filter(p => 
+                    p.nome.toLowerCase().includes(term) || p.ref.toLowerCase().includes(term) || (p.categoria && p.categoria.toLowerCase().includes(term))
+                );
+            }
+            
+            if (productsToSwap.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center p-4 text-gray-500">Nenhum produto em estoque encontrado.</div>`;
+                return;
+            }
+            
+            // Agrupar por categoria
+            const groupedProducts = {};
+            productsToSwap.forEach(prod => {
+                const cat = prod.categoria || 'Sem Categoria';
+                if (!groupedProducts[cat]) groupedProducts[cat] = [];
+                groupedProducts[cat].push(prod);
+            });
+
+            const sortedCats = Object.keys(groupedProducts).sort();
+
+            sortedCats.forEach(cat => {
+                const products = groupedProducts[cat];
+                products.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                const parts = cat.split(' > ');
+                const depth = parts.length - 1;
+                const leafName = parts[parts.length - 1];
+
+                // Header da Categoria/Subcategoria em lista
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'col-span-full mt-4 mb-2 pb-1 border-b border-gray-300';
+                
+                if (cat !== 'Sem Categoria') {
+                    const indentPadding = depth > 0 ? `padding-left: ${depth * 1}rem;` : '';
+                    const iconHtml = depth > 0 ? '<span class="text-gray-400 mr-2">↳</span>' : '';
+                    
+                    headerDiv.innerHTML = `
+                        <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center" style="${indentPadding}">
+                            ${iconHtml} ${leafName}
+                        </h5>
+                    `;
+                } else {
+                    headerDiv.innerHTML = `
+                        <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Sem Categoria</h5>
+                    `;
+                }
+                grid.appendChild(headerDiv);
+
+                products.forEach(prod => {
+                    const imgSrc = prod.fotoUrl ? prod.fotoUrl : 'https://placehold.co/150x150/e2e8f0/adb5bd?text=Sem+Foto';
+                    
+                    const card = document.createElement('div');
+                    card.className = `bg-white border border-gray-200 rounded-lg p-2 flex flex-col items-center text-center shadow-sm cursor-pointer hover:shadow-md hover:border-blue-400 transition-all swap-catalog-item`;
+                    card.dataset.id = prod.id;
+                    card.title = "Clique para selecionar este produto";
+                    
+                    card.innerHTML = `
+                        <div class="relative w-full">
+                            <img src="${imgSrc}" alt="${prod.nome}" class="w-full h-24 object-cover rounded mb-2" onerror="this.src='https://placehold.co/150x150/e2e8f0/adb5bd?text=Erro'">
+                        </div>
+                        <span class="text-[10px] text-gray-500 font-medium w-full truncate">${prod.ref}</span>
+                        <span class="text-xs font-semibold text-gray-800 leading-tight w-full line-clamp-2 mt-0.5 mb-1" title="${prod.nome}">${prod.nome}</span>
+                        <div class="mt-auto pt-1 w-full border-t border-gray-100 flex justify-between items-center text-[10px]">
+                            <span class="text-gray-500">Estoque: ${prod.estoque}</span>
+                            <span class="text-green-600 font-bold">R$ ${prod.venda.toFixed(2).replace('.',',')}</span>
+                        </div>
+                    `;
+                    
+                    grid.appendChild(card);
+                });
+            });
+        }
 
         if (modalSwapItem) {
             const closeSwapModal = () => {
                 modalSwapItem.classList.add('hidden');
                 currentSwapItemId = null;
-                document.getElementById('swap-item-ref').value = '';
-                document.getElementById('swap-item-error').textContent = '';
+                const searchInput = document.getElementById('swap-catalog-search');
+                if(searchInput) searchInput.value = '';
             };
 
             if (btnCloseSwapItem) btnCloseSwapItem.addEventListener('click', closeSwapModal);
@@ -8058,46 +8146,47 @@ function renderBillsTab(entries) {
                 if (e.target === modalSwapItem) closeSwapModal();
             });
 
-            if (formSwapItem) {
-                formSwapItem.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const refCode = document.getElementById('swap-item-ref').value.trim();
-                    const errorP = document.getElementById('swap-item-error');
-                    
-                    if (!refCode) {
-                        errorP.textContent = "Digite um nome ou referência válida.";
-                        return;
-                    }
-                    
-                    const newProduct = await findProductByRef(refCode);
-                    if (!newProduct) {
-                        errorP.textContent = "Produto não encontrado.";
-                        return;
-                    }
-                    
-                    const oldItemIndex = currentMaletaItems.findIndex(i => i.id === currentSwapItemId);
-                    if (oldItemIndex > -1) {
-                        const oldQty = currentMaletaItems[oldItemIndex].quantity;
+            const swapCatalogGrid = document.getElementById('swap-catalog-grid');
+            if (swapCatalogGrid) {
+                swapCatalogGrid.addEventListener('click', (e) => {
+                    const card = e.target.closest('.swap-catalog-item');
+                    if (card && card.dataset.id) {
+                        const newProductId = card.dataset.id;
+                        const newProduct = allUserProducts.find(p => p.id === newProductId);
                         
-                        // Verifica se o NOVO produto já existe em outra linha da maleta
-                        const existingIndex = currentMaletaItems.findIndex(i => i.id === newProduct.id);
-                        if (existingIndex > -1 && existingIndex !== oldItemIndex) {
-                            currentMaletaItems[existingIndex].quantity += oldQty;
-                            currentMaletaItems.splice(oldItemIndex, 1);
-                        } else {
-                            // Substitui os dados preservando a quantidade
-                            currentMaletaItems[oldItemIndex] = {
-                                id: newProduct.id,
-                                nome: newProduct.nome,
-                                ref: newProduct.ref,
-                                venda: newProduct.venda,
-                                quantity: oldQty
-                            };
+                        if (newProduct && currentSwapItemId) {
+                            const oldItemIndex = currentMaletaItems.findIndex(i => i.id === currentSwapItemId);
+                            if (oldItemIndex > -1) {
+                                const oldQty = currentMaletaItems[oldItemIndex].quantity;
+                                
+                                // Verifica se o NOVO produto já existe em outra linha da maleta
+                                const existingIndex = currentMaletaItems.findIndex(i => i.id === newProduct.id);
+                                if (existingIndex > -1 && existingIndex !== oldItemIndex) {
+                                    currentMaletaItems[existingIndex].quantity += oldQty;
+                                    currentMaletaItems.splice(oldItemIndex, 1);
+                                } else {
+                                    // Substitui os dados preservando a quantidade
+                                    currentMaletaItems[oldItemIndex] = {
+                                        id: newProduct.id,
+                                        nome: newProduct.nome,
+                                        ref: newProduct.ref,
+                                        venda: newProduct.venda,
+                                        quantity: oldQty
+                                    };
+                                }
+                                
+                                renderMaletaItemsTable();
+                                closeSwapModal();
+                            }
                         }
-                        
-                        renderMaletaItemsTable();
-                        closeSwapModal();
                     }
+                });
+            }
+
+            const swapCatalogSearch = document.getElementById('swap-catalog-search');
+            if (swapCatalogSearch) {
+                swapCatalogSearch.addEventListener('input', (e) => {
+                    renderSwapCatalog(e.target.value);
                 });
             }
         }
