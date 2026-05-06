@@ -145,6 +145,7 @@
             loadCategories(); // Categories também é essencial para renderização
             loadPlanosContas(); // Carrega os planos de contas do financeiro
             loadMaletas(); // Carrega a lista de maletas configuradas
+            loadUIConfig(); // Carrega a configuração da UI (Logo, Favicon)
 
             // --- CARREGAMENTO DO DASHBOARD EM BACKGROUND (MELHORIA) ---
             // Cria promessas para os listeners que alimentam o Dashboard
@@ -203,6 +204,36 @@
 
             activeListeners.push(unsubscribe);
         }
+
+                /**
+         * Carrega as configurações de UI (Logotipo e Favicon)
+         */
+        function loadUIConfig() {
+            if (!userId) return;
+            const docRef = doc(db, `artifacts/${appId}/users/${userId}/config`, 'ui');
+            
+            const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.logoUrl) {
+                        document.getElementById('sidebar-logo').src = data.logoUrl;
+                    }
+                    if (data.faviconUrl) {
+                        document.getElementById('sidebar-favicon').src = data.faviconUrl;
+                        const headFavicon = document.querySelector('link[rel="icon"]');
+                        if (headFavicon) {
+                            // Clona e substitui o elemento inteiro para forçar o navegador a atualizar a aba imediatamente
+                            const newFavicon = headFavicon.cloneNode(true);
+                            newFavicon.href = data.faviconUrl;
+                            newFavicon.removeAttribute('type'); // Remove o tipo fixo para aceitar PNG, JPG ou ICO
+                            headFavicon.parentNode.replaceChild(newFavicon, headFavicon);
+                        }
+                    }
+                }
+            });
+            activeListeners.push(unsubscribe);
+        }
+
         /**
  * 1. Atualiza a TABELA PRINCIPAL de produtos (em "Visualizar Produtos")
  */
@@ -274,8 +305,8 @@
             <td class="px-6 py-4 min-w-[250px] break-words"> 
                 <div class="flex items-center space-x-3">
                     <div class="relative group shrink-0">
-                        <img src="${imgSrc}" alt="Foto" class="w-10 h-10 rounded-md object-cover border border-gray-200 cursor-pointer" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
-                        <div class="absolute z-[100] left-12 top-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-xl pointer-events-none w-48 h-48">
+                        <img src="${imgSrc}" alt="Foto" class="w-10 h-10 rounded-md object-cover border border-gray-200 cursor-pointer fullscreen-trigger" data-full-src="${previewSrc}" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
+                        <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
                             <img src="${previewSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
                         </div>
                     </div>
@@ -2667,6 +2698,7 @@
         const btnBatchDelete = document.getElementById('btn-batch-delete');
         const btnBatchEdit = document.getElementById('btn-batch-edit');
         const selectAllCheckbox = document.getElementById('select-all-products');
+        const btnBatchReport = document.getElementById('btn-batch-report');
 
         /**
          * Helper: Pega os IDs de todos os produtos selecionados
@@ -3127,6 +3159,148 @@ function showBatchBillEditModal(ids) {
                     saveBtn.innerHTML = 'Atualizar Produtos';
                 }
             };
+        }
+
+        // --- Lógica do "Gerar Relatório em Lote" ---
+        if (btnBatchReport) {
+            btnBatchReport.addEventListener('click', async () => {
+                const idsToReport = getSelectedProductIds();
+
+                if (idsToReport.length === 0) {
+                    showModal("Atenção", "Selecione pelo menos um produto para gerar o relatório.");
+                    return;
+                }
+
+                showModal("Gerando Relatório", "Baixando imagens, calculando dados e preparando o PDF. Por favor, aguarde.");
+
+                setTimeout(async () => {
+                    try {
+                        const productsToReport = allUserProducts.filter(p => idsToReport.includes(p.id));
+                        await generateProductsReportPDF(productsToReport);
+                        hideModal();
+                    } catch (error) {
+                        console.error("Erro ao gerar relatório de produtos:", error);
+                        showModal("Erro", "Não foi possível gerar o relatório: " + error.message);
+                    }
+                }, 50);
+            });
+        }
+
+        /**
+         * Gera um Relatório em PDF para os produtos selecionados
+         */
+        async function generateProductsReportPDF(products) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const formatCurrency = (val) => `R$ ${val !== undefined && val !== null ? val.toFixed(2).replace('.', ',') : '0,00'}`;
+
+            // --- 1. Título e Cabeçalho ---
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('Relatório de Produtos Selecionados', 105, 20, { align: 'center' });
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 105, 28, { align: 'center' });
+
+            let currentY = 35;
+            
+            let totalStock = 0;
+            let totalCost = 0;
+            let totalSale = 0;
+
+            // --- 1.5. Baixar Imagens (Base64) ---
+            const productsWithImages = await Promise.all(products.map(async (prod) => {
+                let base64 = null;
+                if (prod.fotoUrl) {
+                    base64 = await getBase64FromImage(prod.fotoUrl);
+                }
+                return { ...prod, base64 };
+            }));
+
+            // --- 2. Tabela de Produtos ---
+            const head = [['Foto', 'Ref.', 'Nome', 'Categoria', 'Estoque', 'Custo (R$)', 'Venda (R$)']];
+            const body = productsWithImages.map(prod => {
+                const stock = prod.estoque || 0;
+                const cost = prod.custo || 0;
+                const sale = prod.venda || 0;
+                
+                totalStock += stock;
+                totalCost += cost * stock;
+                totalSale += sale * stock;
+
+                return [
+                    '', // Placeholder para a imagem que será desenhada por cima
+                    prod.ref || '',
+                    prod.nome || '',
+                    prod.categoria || 'Sem Categoria',
+                    `${stock} un.`,
+                    cost.toFixed(2).replace('.', ','),
+                    sale.toFixed(2).replace('.', ',')
+                ];
+            });
+
+            doc.autoTable({
+                startY: currentY,
+                head: head,
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [41, 128, 185] }, // Azul
+                bodyStyles: { minCellHeight: 15 }, // Altura mínima para caber a foto
+                columnStyles: {
+                    0: { halign: 'center', cellWidth: 18 }, // Foto
+                    4: { halign: 'center' }, // Estoque
+                    5: { halign: 'right' },  // Custo
+                    6: { halign: 'right' }   // Venda
+                },
+                didDrawCell: function (data) {
+                    if (data.section === 'body' && data.column.index === 0) {
+                        const prod = productsWithImages[data.row.index];
+                        if (prod && prod.base64) {
+                            const dim = 12; // Tamanho da imagem
+                            const x = data.cell.x + (data.cell.width - dim) / 2;
+                            const y = data.cell.y + (data.cell.height - dim) / 2;
+                            try {
+                                doc.addImage(prod.base64, 'JPEG', x, y, dim, dim);
+                            } catch (e) {
+                                console.error("Erro ao desenhar imagem no PDF:", e);
+                            }
+                        }
+                    }
+                }
+            });
+
+            currentY = doc.lastAutoTable.finalY + 10;
+
+            const checkPageBreak = (y) => {
+                if (y > 270) {
+                    doc.addPage();
+                    return 20;
+                }
+                return y;
+            };
+            
+            currentY = checkPageBreak(currentY);
+
+            // --- 3. Resumo ---
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Resumo dos Produtos Selecionados:', 15, currentY);
+            currentY += 7;
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de itens únicos: ${products.length}`, 15, currentY);
+            currentY += 5;
+            doc.text(`Quantidade total em estoque: ${totalStock} un.`, 15, currentY);
+            currentY += 5;
+            doc.text(`Custo Total do Estoque: ${formatCurrency(totalCost)}`, 15, currentY);
+            currentY += 5;
+            doc.text(`Valor de Venda Total do Estoque: ${formatCurrency(totalSale)}`, 15, currentY);
+
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
         }
         // --- FIM DAS AÇÕES EM LOTE ---
         // --- LÓGICA DE EXCLUIR PESSOA ---
@@ -4232,8 +4406,21 @@ function showBatchBillEditModal(ids) {
                         const tr = document.createElement('tr');
                         tr.className = 'border-b';
 
+                        const imgSrc = product.fotoUrl ? product.fotoUrl : 'https://placehold.co/40x40/e2e8f0/adb5bd?text=Sem+Foto';
+                        const previewSrc = product.fotoUrl ? product.fotoUrl : 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Sem+Foto';
+
                         tr.innerHTML = `
-                    <td class="py-2 pr-2"><div class="font-medium">${product.nome}</div></td>
+                    <td class="py-2 pr-2">
+                        <div class="flex items-center space-x-2">
+                            <div class="relative group shrink-0">
+                                <img src="${imgSrc}" alt="Foto" class="w-8 h-8 rounded-md object-cover border border-gray-200 cursor-pointer fullscreen-trigger" data-full-src="${previewSrc}" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
+                                <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
+                                    <img src="${previewSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                                </div>
+                            </div>
+                            <div class="font-medium">${product.nome}</div>
+                        </div>
+                    </td>
                     <td class="py-2 px-2">${product.ref}</td>
                     <td class="py-2 px-2">
                         <input type="number" value="${product.quantity}" min="0" 
@@ -5391,6 +5578,67 @@ function showBatchBillEditModal(ids) {
             sidebar.classList.toggle('-translate-x-full');
             overlay.classList.toggle('hidden');
         };
+
+        // --- LÓGICA DE EDIÇÃO DO LOGOTIPO E FAVICON ---
+        const btnEditLogo = document.getElementById('btn-edit-logo');
+        if (btnEditLogo) {
+            btnEditLogo.addEventListener('click', () => {
+                const currentLogo = document.getElementById('sidebar-logo').src;
+                const currentFavicon = document.getElementById('sidebar-favicon').src;
+
+                modalTitle.textContent = 'Alterar Imagens do Sistema';
+                modalBody.innerHTML = `
+                    <form id="form-edit-logo" class="space-y-4">
+                        <p class="text-sm text-gray-600">Cole as URLs das imagens que deseja utilizar. Você pode usar sites como o ImgBB para hospedar suas imagens gratuitamente.</p>
+                        <div>
+                            <label class="block text-sm font-medium">URL do Logotipo (Menu Aberto)</label>
+                            <input type="url" id="input-logo-url" class="w-full px-3 py-2 mt-1 border rounded-md" value="${currentLogo}" placeholder="https://exemplo.com/logo.png">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium">URL do Ícone/Favicon (Menu Fechado)</label>
+                            <input type="url" id="input-favicon-url" class="w-full px-3 py-2 mt-1 border rounded-md" value="${currentFavicon}" placeholder="https://exemplo.com/icone.png">
+                        </div>
+                        <div class="mt-6 text-right space-x-2">
+                            <button type="button" id="btn-cancel-edit-logo" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Cancelar</button>
+                            <button type="submit" id="btn-save-edit-logo" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Salvar Alterações</button>
+                        </div>
+                    </form>
+                `;
+                modalContainer.style.display = 'flex';
+                lucide.createIcons();
+
+                document.getElementById('btn-cancel-edit-logo').onclick = hideModal;
+
+                document.getElementById('form-edit-logo').onsubmit = async (e) => {
+                    e.preventDefault();
+                    if (!userId) return;
+
+                    const btnSave = document.getElementById('btn-save-edit-logo');
+                    btnSave.disabled = true;
+                    btnSave.innerHTML = 'Salvando...';
+
+                    const newLogoUrl = document.getElementById('input-logo-url').value.trim();
+                    const newFaviconUrl = document.getElementById('input-favicon-url').value.trim();
+
+                    try {
+                        const docRef = doc(db, `artifacts/${appId}/users/${userId}/config`, 'ui');
+                        await setDoc(docRef, {
+                            logoUrl: newLogoUrl,
+                            faviconUrl: newFaviconUrl,
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+
+                        hideModal();
+                        showModal("Sucesso", "Imagens atualizadas com sucesso!");
+                    } catch (error) {
+                        console.error("Erro ao salvar imagens:", error);
+                        showModal("Erro", "Falha ao salvar as imagens: " + error.message);
+                        btnSave.disabled = false;
+                        btnSave.innerHTML = 'Salvar Alterações';
+                    }
+                };
+            });
+        }
 
         // Definições de layout das etiquetas PIMACO (em mm)
         // Convertido de cm (valor * 10)
@@ -7574,9 +7822,20 @@ function renderBillsTab(entries) {
                     visibleCount++;
                 }
 
+            const imgSrc = item.fotoUrl ? item.fotoUrl : 'https://placehold.co/40x40/e2e8f0/adb5bd?text=Sem+Foto';
+            const previewSrc = item.fotoUrl ? item.fotoUrl : 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Sem+Foto';
+
                 tr.innerHTML = `
             <td class="py-2 pr-2">
+            <div class="flex items-center space-x-2">
+                <div class="relative group shrink-0">
+                    <img src="${imgSrc}" alt="Foto" class="w-8 h-8 rounded-md object-cover border border-gray-200 cursor-pointer fullscreen-trigger" data-full-src="${previewSrc}" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
+                    <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
+                        <img src="${previewSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                    </div>
+                </div>
                 <div class="font-medium">${item.nome}</div>
+            </div>
             </td>
             <td class="py-2 px-2">${item.ref}</td>
             <td class="py-2 px-2">R$ ${item.venda.toFixed(2).replace('.', ',')}</td>
@@ -7642,13 +7901,90 @@ function renderBillsTab(entries) {
             }
         }
         // --- "LIGA" OS EVENTOS DA PÁGINA DE VENDAS ---
+        const saleItemDropdown = document.getElementById('sale-item-dropdown');
+
+        function renderSaleItemDropdown(searchTerm = '') {
+            if (!saleItemDropdown) return;
+
+            const term = searchTerm.toLowerCase().trim();
+            let filtered = allUserProducts;
+
+            if (term) {
+                filtered = allUserProducts.filter(p => 
+                    (p.nome && p.nome.toLowerCase().includes(term)) || 
+                    (p.ref && p.ref.toLowerCase().includes(term)) ||
+                    (p.ref2 && p.ref2.toLowerCase().includes(term))
+                );
+            }
+
+            filtered = filtered.slice(0, 50); // Limita a 50 itens para performance
+
+            saleItemDropdown.innerHTML = '';
+
+            if (filtered.length === 0) {
+                saleItemDropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center">Nenhum produto encontrado.</div>';
+                return;
+            }
+
+            filtered.forEach(prod => {
+                const imgSrc = prod.fotoUrl ? prod.fotoUrl : 'https://placehold.co/40x40/e2e8f0/adb5bd?text=Sem+Foto';
+                const stockColor = prod.estoque > 0 ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200';
+                
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-2 hover:bg-indigo-50 cursor-pointer transition-colors';
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <img src="${imgSrc}" class="w-10 h-10 rounded-md object-cover border border-gray-200 shrink-0" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-sm font-medium text-gray-800 truncate" title="${prod.nome}">${prod.nome}</span>
+                            <span class="text-xs text-gray-500 truncate">Ref: ${prod.ref}${prod.ref2 ? ' / ' + prod.ref2 : ''}</span>
+                        </div>
+                    </div>
+                    <div class="shrink-0 pl-2 text-right">
+                        <div class="text-[10px] font-bold px-2 py-0.5 rounded border ${stockColor} whitespace-nowrap mb-0.5">${prod.estoque} un.</div>
+                        <div class="text-xs font-bold text-gray-700 whitespace-nowrap">R$ ${prod.venda.toFixed(2).replace('.', ',')}</div>
+                    </div>
+                `;
+                
+                div.addEventListener('click', () => {
+                    saleItemRefInput.value = prod.ref;
+                    saleItemDropdown.classList.add('hidden');
+                    handleAddSaleItem(); 
+                });
+
+                saleItemDropdown.appendChild(div);
+            });
+        }
+
         if (btnAddSaleItem) {
             btnAddSaleItem.addEventListener('click', handleAddSaleItem);
             saleItemRefInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    handleAddSaleItem(e);
+                    e.preventDefault();
+                    handleAddSaleItem();
+                    saleItemDropdown?.classList.add('hidden');
                 }
             });
+            
+            // Lógica do Menu de Auto-Completar Customizado
+            saleItemRefInput.addEventListener('focus', () => {
+                renderSaleItemDropdown(saleItemRefInput.value);
+                saleItemDropdown?.classList.remove('hidden');
+            });
+
+            saleItemRefInput.addEventListener('input', (e) => {
+                renderSaleItemDropdown(e.target.value);
+                saleItemDropdown?.classList.remove('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (saleItemRefInput && saleItemDropdown) {
+                    if (!saleItemRefInput.contains(e.target) && !saleItemDropdown.contains(e.target)) {
+                        saleItemDropdown.classList.add('hidden');
+                    }
+                }
+            });
+
             saleDiscountInput.addEventListener('input', updateSaleTotals);
             
             const saleItemSearchInput = document.getElementById('sale-item-search');
@@ -7979,8 +8315,8 @@ function renderBillsTab(entries) {
                     <td class="px-4 py-2 pl-6">
                         <div class="flex items-center space-x-3">
                             <div class="relative group shrink-0">
-                                <img src="${imgSrc}" alt="Foto" class="w-8 h-8 rounded-md object-cover border border-gray-200 cursor-pointer" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
-                                <div class="absolute z-[100] left-10 top-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-xl pointer-events-none w-48 h-48">
+                                <img src="${imgSrc}" alt="Foto" class="w-8 h-8 rounded-md object-cover border border-gray-200 cursor-pointer fullscreen-trigger" data-full-src="${previewSrc}" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
+                                <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
                                     <img src="${previewSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
                                 </div>
                             </div>
@@ -11362,6 +11698,41 @@ async function drawTotalReportPDF(reportData, options) {
         }
 
         // --- INICIALIZAÇÃO FINAL ---
+
+        // --- LÓGICA DO LIGHTBOX (TELA CHEIA) ---
+        const lightboxContainer = document.getElementById('lightbox-container');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxClose = document.getElementById('lightbox-close');
+
+        if (lightboxContainer) {
+            lightboxClose.addEventListener('click', () => {
+                lightboxContainer.classList.add('hidden');
+            });
+            
+            lightboxContainer.addEventListener('click', (e) => {
+                if (e.target === lightboxContainer) {
+                    lightboxContainer.classList.add('hidden');
+                }
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !lightboxContainer.classList.contains('hidden')) {
+                    lightboxContainer.classList.add('hidden');
+                }
+            });
+        }
+
+        document.body.addEventListener('click', (e) => {
+            const trigger = e.target.closest('.fullscreen-trigger');
+            if (trigger && lightboxContainer) {
+                e.stopPropagation(); // Evita conflitar com outras ações de clique
+                const src = trigger.dataset.fullSrc || trigger.src;
+                if (src) {
+                    lightboxImg.src = src;
+                    lightboxContainer.classList.remove('hidden');
+                }
+            }
+        });
 
         // Renderiza ícones
         lucide.createIcons();
