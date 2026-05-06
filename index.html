@@ -480,8 +480,13 @@
                             <div class="space-y-4 md:col-span-2">
                                 <h3 class="text-lg font-medium">Detalhes do Produto</h3>
                                 <div>
-                                    <label class="block text-sm font-medium">Nome do Produto</label>
+                                    <label class="block text-sm font-medium">Nome Técnico do Produto</label>
                                     <input type="text" id="prod-nome" required
+                                        class="w-full px-3 py-2 mt-1 border rounded-md">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium">Nome Comercial (Para Vendas e Etiquetas)</label>
+                                    <input type="text" id="prod-nome-comercial"
                                         class="w-full px-3 py-2 mt-1 border rounded-md">
                                 </div>
                                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -518,8 +523,18 @@
                                 <!-- FIM DO NOVO BLOCO -->
                                 <div>
                                     <label class="block text-sm font-medium">URL da Imagem (Opcional)</label>
-                                    <input type="url" id="prod-foto" placeholder="https://exemplo.com/imagem.jpg"
-                                        class="w-full px-3 py-2 mt-1 border rounded-md">
+                                    <div class="flex items-start space-x-4 mt-1">
+                                        <div class="flex-1">
+                                            <input type="url" id="prod-foto" placeholder="https://exemplo.com/imagem.jpg"
+                                                class="w-full px-3 py-2 border rounded-md">
+                                        </div>
+                                        <div class="shrink-0 relative group">
+                                            <img id="prod-foto-preview" src="https://placehold.co/100x100/e2e8f0/adb5bd?text=Preview" alt="Preview da Imagem" class="w-16 h-16 object-cover border rounded-md cursor-pointer fullscreen-trigger" data-full-src="https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview">
+                                            <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
+                                                <img id="prod-foto-preview-large" src="https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview" alt="Preview da Imagem" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium">Descrição</label>
@@ -728,6 +743,7 @@
                             vírgulas) com as colunas na primeira linha:</p>
                         <div class="flex flex-wrap gap-2 mt-2">
                             <code class="text-xs bg-gray-100 p-1 rounded">nome</code>
+                            <code class="text-xs bg-gray-100 p-1 rounded">nomeComercial</code>
                             <code class="text-xs bg-gray-100 p-1 rounded">ref</code>
                             <code class="text-xs bg-gray-100 p-1 rounded">custo</code>
                             <code class="text-xs bg-gray-100 p-1 rounded">margem</code>

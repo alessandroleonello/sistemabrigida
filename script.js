@@ -311,8 +311,8 @@
                         </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="font-medium truncate" title="${prod.nome}">${prod.nome}</div>
-                        <div class="text-sm text-gray-500">${prod.ref}${prod.ref2 ? ' / ' + prod.ref2 : ''}</div>
+                        <div class="font-medium truncate" title="${prod.nomeComercial || prod.nome}">${prod.nomeComercial || prod.nome}</div>
+                        <div class="text-sm text-gray-500">${prod.ref}${prod.ref2 ? ' / ' + prod.ref2 : ''} | Téc: ${prod.nome}</div>
                         ${consignmentsHtml}
                     </div>
                 </div>
@@ -599,7 +599,7 @@
 
                 // Adiciona 'truncate' para evitar que nomes longos quebrem o layout
                 li.innerHTML = `
-            <span class="truncate pr-2" title="${prod.nome}">${prod.nome}</span> 
+            <span class="truncate pr-2" title="${prod.nomeComercial || prod.nome}">${prod.nomeComercial || prod.nome}</span> 
             <span class="font-medium whitespace-nowrap ${prod.estoque === 0 ? 'text-red-600' : 'text-yellow-600'}">
                 ${prod.estoque} un.
             </span>
@@ -647,8 +647,8 @@
                     data-id="${prod.id}"
                     ${isSelected ? 'checked' : ''}
                 >
-                <span class="text-sm truncate" title="${prod.ref} - ${prod.nome} (Estoque: ${prod.estoque || 0})">
-                    ${prod.ref} - ${prod.nome} <span class="text-gray-500 font-medium ml-1">(${prod.estoque || 0} no estoque)</span>
+                <span class="text-sm truncate" title="${prod.ref} - ${prod.nomeComercial || prod.nome} (Estoque: ${prod.estoque || 0})">
+                    ${prod.ref} - ${prod.nomeComercial || prod.nome} <span class="text-gray-500 font-medium ml-1">(${prod.estoque || 0} no estoque)</span>
                 </span>
             </label>
             <input 
@@ -675,7 +675,7 @@
             allUserProducts.forEach(prod => {
                 const option = document.createElement('option');
                 option.value = prod.ref;
-                option.textContent = prod.nome;
+                option.textContent = prod.nomeComercial || prod.nome;
                 datalist.appendChild(option);
             });
         }
@@ -692,6 +692,7 @@
                 // Verifica se o termo existe no nome, ref ou categoria
                 return (
                     (prod.nome && prod.nome.toLowerCase().includes(term)) ||
+                    (prod.nomeComercial && prod.nomeComercial.toLowerCase().includes(term)) ||
                     (prod.ref && prod.ref.toLowerCase().includes(term)) ||
                     (prod.ref2 && prod.ref2.toLowerCase().includes(term)) ||
                     (prod.categoria && prod.categoria.toLowerCase().includes(term))
@@ -1497,6 +1498,24 @@
         });
         prodVenda.addEventListener('input', calcularMargem);
 
+        // Preview da Imagem no Cadastro
+        const prodFoto = document.getElementById('prod-foto');
+        const prodFotoPreview = document.getElementById('prod-foto-preview');
+        const prodFotoPreviewLarge = document.getElementById('prod-foto-preview-large');
+        if (prodFoto && prodFotoPreview) {
+            prodFoto.addEventListener('input', () => {
+                const url = prodFoto.value.trim();
+                const finalUrl = url ? formatImageUrl(url) : 'https://placehold.co/100x100/e2e8f0/adb5bd?text=Preview';
+                prodFotoPreview.src = finalUrl;
+                prodFotoPreview.dataset.fullSrc = finalUrl;
+                if (prodFotoPreviewLarge) prodFotoPreviewLarge.src = finalUrl;
+            });
+            prodFotoPreview.addEventListener('error', () => {
+                prodFotoPreview.src = 'https://placehold.co/100x100/e2e8f0/adb5bd?text=Erro';
+                if (prodFotoPreviewLarge) prodFotoPreviewLarge.src = 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro';
+            });
+        }
+
         // Função para formatar o link de imagem do Google Drive como link direto
         function formatImageUrl(url) {
             if (!url) return null;
@@ -1584,6 +1603,7 @@
                 // ---- Salvar dados no Firestore (sem foto) ----
                 const produto = {
                     nome: document.getElementById('prod-nome').value,
+                    nomeComercial: document.getElementById('prod-nome-comercial').value.trim() || null,
                     custo: parseFloat(prodCusto.value) || 0,
                     margem: parseFloat(prodMargem.value) || 0,
                     venda: parseFloat(prodVenda.value.replace(',', '.')) || 0,
@@ -1604,6 +1624,12 @@
                 showModal("Sucesso", `Produto "${produto.nome}" salvo com sucesso.`);
                 form.reset(); // Limpa o formulário
                 gerarBarcodePreview(); // Limpa o preview do código de barras
+                if (prodFotoPreview) {
+                    prodFotoPreview.src = 'https://placehold.co/100x100/e2e8f0/adb5bd?text=Preview';
+                    prodFotoPreview.dataset.fullSrc = 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview';
+                }
+                const prodFotoPreviewLarge = document.getElementById('prod-foto-preview-large');
+                if (prodFotoPreviewLarge) prodFotoPreviewLarge.src = 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview'; // Reseta a imagem de preview
 
             } catch (error) {
                 console.error("Erro ao salvar produto: ", error);
@@ -1842,6 +1868,7 @@
                     // 2. Criar o objeto do produto (Convertendo tudo para String para segurança)
                     const newProduct = {
                         nome: String(prod.nome || '').trim(),
+                        nomeComercial: String(prod.nomeComercial || prod.nome || '').trim() || null,
                         ref: String(prod.ref || '').trim(),
                         custo: custo,
                         margem: margem,
@@ -2474,6 +2501,7 @@
                             items: sale.items.map(item => ({
                                 id: item.id,
                                 nome: item.nome,
+                                nomeComercial: item.nomeComercial || null,
                                 ref: item.ref,
                                 venda: item.venda,
                                 quantity: item.quantity || 1
@@ -3232,7 +3260,7 @@ function showBatchBillEditModal(ids) {
                 return [
                     '', // Placeholder para a imagem que será desenhada por cima
                     prod.ref || '',
-                    prod.nome || '',
+                    prod.nomeComercial || prod.nome || '',
                     prod.categoria || 'Sem Categoria',
                     `${stock} un.`,
                     cost.toFixed(2).replace('.', ','),
@@ -4418,7 +4446,10 @@ function showBatchBillEditModal(ids) {
                                     <img src="${previewSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
                                 </div>
                             </div>
-                            <div class="font-medium">${product.nome}</div>
+                            <div>
+                                <div class="font-medium">${product.nomeComercial || product.nome}</div>
+                                ${product.nomeComercial && product.nomeComercial !== product.nome ? `<div class="text-[11px] text-gray-500">Téc: ${product.nome}</div>` : ''}
+                            </div>
                         </div>
                     </td>
                     <td class="py-2 px-2">${product.ref}</td>
@@ -4958,7 +4989,7 @@ function showBatchBillEditModal(ids) {
                     for (const ref in soldGroups) {
                         const item = soldGroups[ref];
                         listSold.innerHTML += `<li class="flex justify-between text-sm p-1">
-                    <span>${item.nome} (${item.ref}) x ${item.count}</span> 
+                    <span>${item.nomeComercial || item.nome} (${item.ref}) x ${item.count}</span> 
                     <span>R$ ${item.totalValue.toFixed(2).replace('.', ',')}</span>
                 </li>`;
                     }
@@ -4981,7 +5012,7 @@ function showBatchBillEditModal(ids) {
                     for (const ref in returnedGroups) {
                         const item = returnedGroups[ref];
                         listReturned.innerHTML += `<li class="text-sm p-1 text-gray-700 line-through">
-                    ${item.nome} (${item.ref}) x ${item.count}
+                    ${item.nomeComercial || item.nome} (${item.ref}) x ${item.count}
                 </li>`;
                     }
                 }
@@ -4995,7 +5026,7 @@ function showBatchBillEditModal(ids) {
                         const qty = item.quantity || 1;
                         countConsigned += qty;
                         listConsigned.innerHTML += `<li class="text-sm p-1 text-gray-700">
-                    ${item.nome} (${item.ref}) x ${qty}
+                    ${item.nomeComercial || item.nome} (${item.ref}) x ${qty}
                 </li>`;
                     });
                 }
@@ -5298,7 +5329,7 @@ function showBatchBillEditModal(ids) {
                     return [
                         item.quantity, // Adiciona a quantidade
                         item.ref,
-                        item.nome,
+                        item.nomeComercial || item.nome,
                         item.venda.toFixed(2),
                         (item.venda * item.quantity).toFixed(2) // Calcula o total da linha
                     ];
@@ -5350,7 +5381,7 @@ function showBatchBillEditModal(ids) {
                     return [
                         item.count, // A quantidade devolvida
                         item.ref,
-                        item.nome
+                        item.nomeComercial || item.nome
                     ];
                 });
 
@@ -5451,7 +5482,7 @@ function showBatchBillEditModal(ids) {
                     return [
                         qty,
                         item.ref,
-                        item.nome,
+                        item.nomeComercial || item.nome,
                         item.venda.toFixed(2),
                         (item.venda * qty).toFixed(2)
                     ];
@@ -5900,7 +5931,8 @@ function showBatchBillEditModal(ids) {
 
                     // Trunca o nome do produto para não ficar muito longo
                     const maxNameChars = isSmallLabel ? 12 : 20;
-                    const nomeTruncado = product.nome.length > maxNameChars ? product.nome.substring(0, maxNameChars) + '...' : product.nome;
+                    const nomeExibicao = product.nomeComercial || product.nome;
+                    const nomeTruncado = nomeExibicao.length > maxNameChars ? nomeExibicao.substring(0, maxNameChars) + '...' : nomeExibicao;
                     
                     let displayRef = product.ref;
                     if (product.ref2) {
@@ -5964,7 +5996,8 @@ function showBatchBillEditModal(ids) {
                 if (!categoria) categoria = "N/D";
 
                 return {
-                    "Nome": item.nome,
+                    "Nome Comercial": item.nomeComercial || "",
+                    "Nome Técnico": item.nome || "",
                     "Código": item.ref,
                     "Ref. 2": ref2 || "",
                     "Categoria": categoria,
@@ -6464,6 +6497,7 @@ function showBatchBillEditModal(ids) {
             if (searchTerm) {
                 filtered = filtered.filter(prod => {
                     const textMatch = (prod.nome && prod.nome.toLowerCase().includes(searchTerm)) ||
+                        (prod.nomeComercial && prod.nomeComercial.toLowerCase().includes(searchTerm)) ||
                         (prod.ref && prod.ref.toLowerCase().includes(searchTerm)) ||
                         (prod.ref2 && prod.ref2.toLowerCase().includes(searchTerm)) ||
                         (prod.categoria && prod.categoria.toLowerCase().includes(searchTerm));
@@ -6527,6 +6561,7 @@ function showBatchBillEditModal(ids) {
             if (searchTerm) {
                 filtered = filtered.filter(prod =>
                     (prod.nome && prod.nome.toLowerCase().includes(searchTerm)) ||
+                    (prod.nomeComercial && prod.nomeComercial.toLowerCase().includes(searchTerm)) ||
                     (prod.ref && prod.ref.toLowerCase().includes(searchTerm))
                 );
             }
@@ -7744,7 +7779,7 @@ function renderBillsTab(entries) {
                         // Erro: Sem estoque
                         showModal("Estoque Insuficiente",
                             `Você não pode adicionar este item.<br><br>
-<strong>Produto:</strong> "${product.nome}" (Ref: ${product.ref})<br>
+<strong>Produto:</strong> "${product.nomeComercial || product.nome}" (Ref: ${product.ref})<br>
  <strong>Estoque disponível:</strong> ${product.estoque} un.<br>
 <strong>Você já tem:</strong> ${currentQtyInCart} un. no carrinho.`);
 
@@ -7782,6 +7817,7 @@ function renderBillsTab(entries) {
             const product = allUserProducts.find(p => 
                 (p.ref && p.ref.toLowerCase() === lowerTerm) ||
                 (p.ref2 && p.ref2.toLowerCase() === lowerTerm) ||
+                (p.nomeComercial && p.nomeComercial.toLowerCase() === lowerTerm) ||
                 (p.nome && p.nome.toLowerCase() === lowerTerm)
             );
             
@@ -7816,7 +7852,7 @@ function renderBillsTab(entries) {
                 const itemTotal = item.venda * item.quantity;
 
                 // Filtro de pesquisa
-                if (searchTerm && !item.nome.toLowerCase().includes(searchTerm) && !item.ref.toLowerCase().includes(searchTerm)) {
+                if (searchTerm && !(item.nomeComercial || item.nome).toLowerCase().includes(searchTerm) && !item.ref.toLowerCase().includes(searchTerm)) {
                     tr.style.display = 'none';
                 } else {
                     visibleCount++;
@@ -7834,7 +7870,10 @@ function renderBillsTab(entries) {
                         <img src="${previewSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
                     </div>
                 </div>
-                <div class="font-medium">${item.nome}</div>
+                <div>
+                    <div class="font-medium">${item.nomeComercial || item.nome}</div>
+                    ${item.nomeComercial && item.nomeComercial !== item.nome ? `<div class="text-[11px] text-gray-500">Téc: ${item.nome}</div>` : ''}
+                </div>
             </div>
             </td>
             <td class="py-2 px-2">${item.ref}</td>
@@ -7911,7 +7950,8 @@ function renderBillsTab(entries) {
 
             if (term) {
                 filtered = allUserProducts.filter(p => 
-                    (p.nome && p.nome.toLowerCase().includes(term)) || 
+                    (p.nome && p.nome.toLowerCase().includes(term)) ||
+                    (p.nomeComercial && p.nomeComercial.toLowerCase().includes(term)) || 
                     (p.ref && p.ref.toLowerCase().includes(term)) ||
                     (p.ref2 && p.ref2.toLowerCase().includes(term))
                 );
@@ -7934,9 +7974,14 @@ function renderBillsTab(entries) {
                 div.className = 'flex items-center justify-between p-2 hover:bg-indigo-50 cursor-pointer transition-colors';
                 div.innerHTML = `
                     <div class="flex items-center space-x-3 overflow-hidden">
-                        <img src="${imgSrc}" class="w-10 h-10 rounded-md object-cover border border-gray-200 shrink-0" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
+                        <div class="relative group shrink-0">
+                            <img src="${imgSrc}" class="w-10 h-10 rounded-md object-cover border border-gray-200 shrink-0" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
+                            <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
+                                <img src="${imgSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                            </div>
+                        </div>
                         <div class="flex flex-col min-w-0">
-                            <span class="text-sm font-medium text-gray-800 truncate" title="${prod.nome}">${prod.nome}</span>
+                            <span class="text-sm font-medium text-gray-800 truncate" title="${prod.nomeComercial || prod.nome}">${prod.nomeComercial || prod.nome}</span>
                             <span class="text-xs text-gray-500 truncate">Ref: ${prod.ref}${prod.ref2 ? ' / ' + prod.ref2 : ''}</span>
                         </div>
                     </div>
@@ -8066,7 +8111,7 @@ function renderBillsTab(entries) {
                         // Se for maior, mostra o erro e reverte
                         showModal("Estoque Insuficiente",
                             `Você não pode definir essa quantidade.<br><br>
-                    <strong>Produto:</strong> "${item.nome}" (Ref: ${item.ref})<br>
+                    <strong>Produto:</strong> "${item.nomeComercial || item.nome}" (Ref: ${item.ref})<br>
                     <strong>Estoque disponível:</strong> ${item.estoque} un.`);
 
                         input.value = oldQuantity; // Reverte o valor no campo de input
@@ -8151,6 +8196,7 @@ function renderBillsTab(entries) {
                     currentMaletaItems.push({
                         id: prod.id,
                         nome: prod.nome,
+                        nomeComercial: prod.nomeComercial || null,
                         ref: prod.ref,
                         venda: prod.venda,
                         quantity: 1
@@ -8180,6 +8226,7 @@ function renderBillsTab(entries) {
                     const itemsToSave = currentMaletaItems.map(item => ({
                         id: item.id,
                         nome: item.nome,
+                        nomeComercial: item.nomeComercial || null,
                         ref: item.ref,
                         venda: item.venda,
                         quantity: item.quantity
@@ -8321,7 +8368,7 @@ function renderBillsTab(entries) {
                                 </div>
                             </div>
                             <div class="text-sm font-medium">
-                                ${item.nome} ${stockBadge}${sharedWarningHtml}
+                                ${item.nomeComercial || item.nome} ${stockBadge}${sharedWarningHtml}
                             </div>
                         </div>
                     </td>
@@ -8458,11 +8505,14 @@ function renderBillsTab(entries) {
                     card.title = "Clique para selecionar este produto";
                     
                     card.innerHTML = `
-                        <div class="relative w-full">
+                        <div class="relative w-full group">
                             <img src="${imgSrc}" alt="${prod.nome}" class="w-full h-24 object-cover rounded mb-2" onerror="this.src='https://placehold.co/150x150/e2e8f0/adb5bd?text=Erro'">
+                            <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
+                                <img src="${imgSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                            </div>
                         </div>
                         <span class="text-[10px] text-gray-500 font-medium w-full truncate">${prod.ref}</span>
-                        <span class="text-xs font-semibold text-gray-800 leading-tight w-full line-clamp-2 mt-0.5 mb-1" title="${prod.nome}">${prod.nome}</span>
+                        <span class="text-xs font-semibold text-gray-800 leading-tight w-full line-clamp-2 mt-0.5 mb-1" title="${prod.nomeComercial || prod.nome}">${prod.nomeComercial || prod.nome}</span>
                         <div class="mt-auto pt-1 w-full border-t border-gray-100 flex justify-between items-center text-[10px]">
                             <span class="text-gray-500">Estoque: ${prod.estoque}</span>
                             <span class="text-green-600 font-bold">R$ ${prod.venda.toFixed(2).replace('.',',')}</span>
@@ -8511,6 +8561,7 @@ function renderBillsTab(entries) {
                                     currentMaletaItems[oldItemIndex] = {
                                         id: newProduct.id,
                                         nome: newProduct.nome,
+                                        nomeComercial: newProduct.nomeComercial || null,
                                         ref: newProduct.ref,
                                         venda: newProduct.venda,
                                         quantity: oldQty
@@ -8605,7 +8656,7 @@ function renderBillsTab(entries) {
             maleta.items.forEach(mItem => {
                 const productInDB = allUserProducts.find(p => p.id === mItem.id);
                 if (!productInDB) {
-                    warningMessages.push(`- "${mItem.nome}": Produto não encontrado ou excluído.`);
+                    warningMessages.push(`- "${mItem.nomeComercial || mItem.nome}": Produto não encontrado ou excluído.`);
                     return;
                 }
 
@@ -8618,10 +8669,10 @@ function renderBillsTab(entries) {
                     if (availableToAdd > 0) {
                         if (existingItem) existingItem.quantity += availableToAdd;
                         else currentSaleItems.push({ ...productInDB, quantity: availableToAdd });
-                        warningMessages.push(`- "${productInDB.nome}": Adicionado apenas ${availableToAdd} un. (Estoque insuficiente para as ${requestedQty} originais)`);
+                        warningMessages.push(`- "${productInDB.nomeComercial || productInDB.nome}": Adicionado apenas ${availableToAdd} un. (Estoque insuficiente para as ${requestedQty} originais)`);
                         addedCount += availableToAdd;
                     } else {
-                        warningMessages.push(`- "${productInDB.nome}": Sem estoque disponível.`);
+                        warningMessages.push(`- "${productInDB.nomeComercial || productInDB.nome}": Sem estoque disponível.`);
                     }
                 } else {
                     if (existingItem) existingItem.quantity += requestedQty;
@@ -8866,11 +8917,14 @@ function renderBillsTab(entries) {
                     }
                     
                     card.innerHTML = `
-                        <div class="relative w-full">
+                        <div class="relative w-full group">
                             <img src="${imgSrc}" alt="${prod.nome}" class="w-full h-20 object-cover rounded mb-2" onerror="this.src='https://placehold.co/150x150/e2e8f0/adb5bd?text=Erro'">
+                            <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
+                                <img src="${imgSrc}" alt="Preview" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                            </div>
                         </div>
                         <span class="text-[10px] text-gray-500 font-medium w-full truncate">${prod.ref}</span>
-                        <span class="text-xs font-semibold text-gray-800 leading-tight w-full line-clamp-2 mt-0.5 mb-1" title="${prod.nome}">${prod.nome}</span>
+                        <span class="text-xs font-semibold text-gray-800 leading-tight w-full line-clamp-2 mt-0.5 mb-1" title="${prod.nomeComercial || prod.nome}">${prod.nomeComercial || prod.nome}</span>
                         <div class="mt-auto pt-1 w-full border-t border-gray-100 text-[10px] text-gray-500">
                             ${stockText}
                         </div>
@@ -8905,7 +8959,7 @@ function renderBillsTab(entries) {
                 
                 tr.innerHTML = `
                     <td class="px-4 py-3">
-                        <div class="text-sm font-medium text-gray-900 line-clamp-1" title="${item.nome}">${item.nome}</div>
+                        <div class="text-sm font-medium text-gray-900 line-clamp-1" title="${item.nomeComercial || item.nome}">${item.nomeComercial || item.nome}</div>
                         <div class="text-[11px] text-gray-500 mt-0.5">Ref: ${item.ref} ${subCatHtml}</div>
                     </td>
                     <td class="px-4 py-3">
@@ -8984,7 +9038,7 @@ function renderBillsTab(entries) {
                 if (existing.quantity < prod.estoque) {
                     existing.quantity++;
                 } else {
-                    errorP.textContent = `Estoque insuficiente para "${prod.nome}".`;
+                    errorP.textContent = `Estoque insuficiente para "${prod.nomeComercial || prod.nome}".`;
                     errorP.classList.remove('hidden');
                     const audio = new Audio('erro.mp3');
                     audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
@@ -8995,6 +9049,7 @@ function renderBillsTab(entries) {
                     wizardItems.push({
                         id: prod.id,
                         nome: prod.nome,
+                        nomeComercial: prod.nomeComercial || null,
                         ref: prod.ref,
                         venda: prod.venda,
                         categoria: prodCat,
@@ -9003,7 +9058,7 @@ function renderBillsTab(entries) {
                         quantity: 1
                     });
                 } else {
-                    errorP.textContent = `Produto sem estoque: "${prod.nome}".`;
+                    errorP.textContent = `Produto sem estoque: "${prod.nomeComercial || prod.nome}".`;
                     errorP.classList.remove('hidden');
                     const audio = new Audio('erro.mp3');
                     audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
@@ -9108,6 +9163,7 @@ function renderBillsTab(entries) {
                 items: wizardItems.map(item => ({
                     id: item.id,
                     nome: item.nome,
+                    nomeComercial: item.nomeComercial || null,
                     ref: item.ref,
                     venda: item.venda,
                     quantity: item.quantity
@@ -9125,7 +9181,7 @@ function renderBillsTab(entries) {
             if (itemIndex === -1) return;
             const item = currentSaleItems[itemIndex];
 
-            modalTitle.textContent = `Remover "${item.nome}"`;
+            modalTitle.textContent = `Remover "${item.nomeComercial || item.nome}"`;
             modalBody.innerHTML = `
         <p>Você tem ${item.quantity} unidades deste item no carrinho. Como deseja remover?</p>
         <div class="mt-6 text-right space-x-2">
@@ -9330,6 +9386,7 @@ function renderBillsTab(entries) {
                 const itemsSold = currentSaleItems.map(p => ({
                     id: p.id,
                     nome: p.nome,
+                    nomeComercial: p.nomeComercial || null,
                     ref: p.ref,
                     venda: p.venda,
                     custo: p.custo, // Mantém o custo para referência futura, se necessário
@@ -10403,8 +10460,12 @@ function renderBillsTab(entries) {
                 <div class="space-y-4 md:col-span-2">
                     <h3 class="text-lg font-medium">Detalhes do Produto</h3>
                     <div>
-                        <label class="block text-sm font-medium">Nome do Produto</label>
+                        <label class="block text-sm font-medium">Nome Técnico</label>
                         <input type="text" id="edit-prod-nome" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.nome}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Nome Comercial (Para Vendas e Etiquetas)</label>
+                        <input type="text" id="edit-prod-nome-comercial" class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.nomeComercial || ''}">
                     </div>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div>
@@ -10422,7 +10483,17 @@ function renderBillsTab(entries) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium">URL da Imagem (Opcional)</label>
-                        <input type="url" id="edit-prod-foto" class="w-full px-3 py-2 mt-1 border rounded-md" value="${product.fotoUrl || ''}" placeholder="https://exemplo.com/imagem.jpg">
+                    <div class="flex items-start space-x-4 mt-1">
+                        <div class="flex-1">
+                            <input type="url" id="edit-prod-foto" class="w-full px-3 py-2 border rounded-md" value="${product.fotoUrl || ''}" placeholder="https://exemplo.com/imagem.jpg">
+                        </div>
+                        <div class="shrink-0 relative group">
+                            <img id="edit-prod-foto-preview" src="${product.fotoUrl ? formatImageUrl(product.fotoUrl) : 'https://placehold.co/100x100/e2e8f0/adb5bd?text=Preview'}" onerror="this.src='https://placehold.co/100x100/e2e8f0/adb5bd?text=Erro'" alt="Preview da Imagem" class="w-16 h-16 object-cover border rounded-md cursor-pointer fullscreen-trigger" data-full-src="${product.fotoUrl ? formatImageUrl(product.fotoUrl) : 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview'}">
+                            <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
+                                <img id="edit-prod-foto-preview-large" src="${product.fotoUrl ? formatImageUrl(product.fotoUrl) : 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview'}" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'" alt="Preview da Imagem Grande" class="w-full h-full object-cover rounded-md">
+                            </div>
+                        </div>
+                    </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Descrição</label>
@@ -10534,6 +10605,20 @@ function renderBillsTab(entries) {
                     if (e.key === 'Enter') e.preventDefault();
                 });
                 
+                // Preview da Imagem na Edição
+                const editProdFoto = document.getElementById('edit-prod-foto');
+                const editProdFotoPreview = document.getElementById('edit-prod-foto-preview');
+                const editProdFotoPreviewLarge = document.getElementById('edit-prod-foto-preview-large');
+                if (editProdFoto && editProdFotoPreview) {
+                    editProdFoto.addEventListener('input', () => {
+                        const url = editProdFoto.value.trim();
+                        const finalUrl = url ? formatImageUrl(url) : 'https://placehold.co/100x100/e2e8f0/adb5bd?text=Preview';
+                        editProdFotoPreview.src = finalUrl;
+                        editProdFotoPreview.dataset.fullSrc = finalUrl;
+                        if (editProdFotoPreviewLarge) editProdFotoPreviewLarge.src = finalUrl;
+                    });
+                }
+                
                 // Listener para o botão de gerar código (Edição)
                 document.getElementById('btn-gen-edit-ref').onclick = async () => {
                     const btn = document.getElementById('btn-gen-edit-ref');
@@ -10598,6 +10683,7 @@ function renderBillsTab(entries) {
                         // Monta o objeto atualizado
                         const updatedProduct = {
                             nome: document.getElementById('edit-prod-nome').value,
+                            nomeComercial: document.getElementById('edit-prod-nome-comercial').value.trim() || null,
                             custo: parseFloat(editCusto.value) || 0,
                             margem: parseFloat(editMargem.value) || 0,
                             venda: parseFloat(editVenda.value) || 0,
@@ -11201,7 +11287,7 @@ async function drawTotalReportPDF(reportData, options) {
         const head = [['Ref.', 'Nome', 'Estoque (un)', 'Custo (R$)', 'Venda (R$)']];
         const body = allUserProducts.map(prod => [
             prod.ref,
-            prod.nome,
+            prod.nomeComercial || prod.nome,
             prod.estoque,
             formatCurrency(prod.custo),
             formatCurrency(prod.venda)
