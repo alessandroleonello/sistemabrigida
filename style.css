@@ -32,4 +32,26 @@
             /* indigo-700 */
             color: white;
         }
+
+    /* Classe para ocultar valores financeiros */
+    body.hide-values .sensitive-value {
+        color: transparent !important;
+        user-select: none;
+        pointer-events: none;
+        /* Ícone fixo com exatos 3 diamantes lado a lado */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(0, 0)'%3E%3Cpath d='M6 3h12l4 6-10 13L2 9Z'/%3E%3Cpath d='M11 3 8 9l4 13 4-13-3-6'/%3E%3Cpath d='M2 9h20'/%3E%3C/g%3E%3Cg transform='translate(24, 0)'%3E%3Cpath d='M6 3h12l4 6-10 13L2 9Z'/%3E%3Cpath d='M11 3 8 9l4 13 4-13-3-6'/%3E%3Cpath d='M2 9h20'/%3E%3C/g%3E%3Cg transform='translate(48, 0)'%3E%3Cpath d='M6 3h12l4 6-10 13L2 9Z'/%3E%3Cpath d='M11 3 8 9l4 13 4-13-3-6'/%3E%3Cpath d='M2 9h20'/%3E%3C/g%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: left center;
+        background-size: 3.3em 1.1em; /* Exatamente 3 diamantes em escala com o texto */
+    }
+
+    /* Garante que os diamantes fiquem alinhados corretamente se a célula/texto original for alinhado à direita ou ao centro */
+    body.hide-values .sensitive-value.text-right,
+    body.hide-values .text-right .sensitive-value {
+        background-position: right center;
+    }
+    body.hide-values .sensitive-value.text-center,
+    body.hide-values .text-center .sensitive-value {
+        background-position: center center;
+    }
     

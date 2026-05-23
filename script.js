@@ -70,6 +70,37 @@
         const userInfo = document.getElementById('user-info');
         const authError = document.getElementById('auth-error');
 
+        // --- LÓGICA DE OCULTAR VALORES ---
+        const btnToggleValues = document.getElementById('btn-toggle-values');
+        let hideValuesTimeout = null;
+
+        function setValuesHidden(hidden) {
+            const iconToggleValues = document.getElementById('icon-toggle-values');
+            const textToggleValues = document.getElementById('text-toggle-values');
+            
+            if (hidden) {
+                document.body.classList.add('hide-values');
+                if (iconToggleValues) iconToggleValues.setAttribute('data-lucide', 'eye-off');
+                if (textToggleValues) textToggleValues.textContent = 'Valores Ocultos';
+                if (hideValuesTimeout) { clearTimeout(hideValuesTimeout); hideValuesTimeout = null; }
+            } else {
+                document.body.classList.remove('hide-values');
+                if (iconToggleValues) iconToggleValues.setAttribute('data-lucide', 'eye');
+                if (textToggleValues) textToggleValues.textContent = 'Valores Visíveis';
+                
+                if (hideValuesTimeout) clearTimeout(hideValuesTimeout);
+                hideValuesTimeout = setTimeout(() => { setValuesHidden(true); }, 300000); // 5 minutos
+            }
+            lucide.createIcons();
+        }
+        
+        if (btnToggleValues) {
+            btnToggleValues.addEventListener('click', () => {
+                const isHidden = document.body.classList.contains('hide-values');
+                setValuesHidden(!isHidden);
+            });
+        }
+
         // Monitorar estado de autenticação (Login/Logout real)
         onAuthStateChanged(auth, (user) => {
             if (user && !user.isAnonymous) {
@@ -319,11 +350,11 @@
             </td>
             <td class="px-6 py-4">${categoryHtml}</td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 text-xs font-medium ${prod.estoque <= 0 ? 'text-red-800 bg-red-100' : (prod.estoque <= 5 ? 'text-yellow-800 bg-yellow-100' : 'text-green-800 bg-green-100')} rounded-full">
+                <span class="px-2 py-1 text-xs font-medium ${prod.estoque <= 0 ? 'text-red-800 bg-red-100' : (prod.estoque <= 5 ? 'text-yellow-800 bg-yellow-100' : 'text-green-800 bg-green-100')} rounded-full sensitive-value">
                     ${prod.estoque} un.
                 </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">R$ ${prod.venda.toFixed(2).replace('.', ',')}</td>
+            <td class="px-6 py-4 whitespace-nowrap sensitive-value">R$ ${prod.venda.toFixed(2).replace('.', ',')}</td>
             <td class="sticky right-0 px-6 py-4 whitespace-nowrap text-sm font-medium bg-white bg-opacity-95 shadow-sm">
                 <div class="flex items-center space-x-2">
                     <button class="btn-edit-product text-indigo-600 hover:text-indigo-900" data-id="${prod.id}"><i data-lucide="edit-2" class="w-5 h-5 pointer-events-none"></i></button>
@@ -539,10 +570,10 @@
                             
                             html += `
                                 <li class="flex justify-between items-center text-xs" style="padding-left: ${indent};">
-                                    <span class="text-gray-600 truncate pr-2 ${isDeep ? 'text-[11px]' : 'font-medium'}" title="${path}">
+                                    <span class="text-gray-600 truncate pr-2 sensitive-value ${isDeep ? 'text-[11px]' : 'font-medium'}" title="${path}">
                                         ${isDeep ? '<span class="text-gray-300 mr-1 inline-block">↳</span>' : ''}${subName}
                                     </span>
-                                    <span class="text-gray-500 font-semibold bg-white border border-gray-200 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap cursor-help" title="Físico: ${data.fisico} | Na Rua: ${data.rua}">
+                                    <span class="text-gray-500 font-semibold bg-white border border-gray-200 px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap cursor-help sensitive-value" title="Físico: ${data.fisico} | Na Rua: ${data.rua}">
                                         ${data.total}
                                     </span>
                                 </li>
@@ -600,7 +631,7 @@
                 // Adiciona 'truncate' para evitar que nomes longos quebrem o layout
                 li.innerHTML = `
             <span class="truncate pr-2" title="${prod.nomeComercial || prod.nome}">${prod.nomeComercial || prod.nome}</span> 
-            <span class="font-medium whitespace-nowrap ${prod.estoque === 0 ? 'text-red-600' : 'text-yellow-600'}">
+            <span class="font-medium whitespace-nowrap sensitive-value ${prod.estoque === 0 ? 'text-red-600' : 'text-yellow-600'}">
                 ${prod.estoque} un.
             </span>
         `;
@@ -647,7 +678,7 @@
                     data-id="${prod.id}"
                     ${isSelected ? 'checked' : ''}
                 >
-                <span class="text-sm truncate" title="${prod.ref} - ${prod.nomeComercial || prod.nome} (Estoque: ${prod.estoque || 0})">
+                <span class="text-sm truncate sensitive-value" title="${prod.ref} - ${prod.nomeComercial || prod.nome} (Estoque: ${prod.estoque || 0})">
                     ${prod.ref} - ${prod.nomeComercial || prod.nome} <span class="text-gray-500 font-medium ml-1">(${prod.estoque || 0} no estoque)</span>
                 </span>
             </label>
@@ -1023,7 +1054,7 @@
                         <span class="font-medium ${availabilityClass}">${availableItens}/${totalItens} peças disponíveis</span> 
                         <span class="text-xs ml-1">(${m.items.length} produtos)</span>${sharedWarningHtml}
                     </td>
-                    <td class="px-6 py-4 text-gray-700 font-medium whitespace-nowrap">R$ ${totalVenda.toFixed(2).replace('.', ',')}</td>
+                    <td class="px-6 py-4 text-gray-700 font-medium whitespace-nowrap sensitive-value">R$ ${totalVenda.toFixed(2).replace('.', ',')}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                         <button class="btn-add-maleta-to-sale text-purple-600 hover:text-purple-900" data-id="${m.id}" title="Adicionar à Consignação"><i data-lucide="shopping-cart" class="w-5 h-5 pointer-events-none"></i></button>
                         <button class="btn-edit-maleta text-indigo-600 hover:text-indigo-900" data-id="${m.id}"><i data-lucide="edit-2" class="w-5 h-5 pointer-events-none"></i></button>
@@ -1562,6 +1593,61 @@
             });
         }
 
+        // --- LÓGICA DE IMAGENS EXTRAS ---
+        function createExtraImageField(containerId, inputClass, previewPrefix, initialValue = '') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const rowId = Math.random().toString(36).substr(2, 9);
+            const row = document.createElement('div');
+            row.className = 'flex items-start space-x-4 mt-1';
+            row.innerHTML = `
+                <div class="flex-1">
+                    <input type="url" class="w-full px-3 py-2 border rounded-md ${inputClass}" placeholder="https://exemplo.com/imagem_extra.jpg" value="${initialValue}">
+                </div>
+                <div class="shrink-0 relative group">
+                    <img id="${previewPrefix}-preview-${rowId}" src="${initialValue ? formatImageUrl(initialValue) : 'https://placehold.co/40x40/e2e8f0/adb5bd?text=Preview'}" alt="Preview" class="w-10 h-10 object-cover border rounded-md cursor-pointer fullscreen-trigger" data-full-src="${initialValue ? formatImageUrl(initialValue) : 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview'}">
+                    <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
+                        <img id="${previewPrefix}-preview-large-${rowId}" src="${initialValue ? formatImageUrl(initialValue) : 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview'}" alt="Preview Grande" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                    </div>
+                </div>
+                <button type="button" class="btn-remove-extra-image mt-2 text-red-500 hover:text-red-700">
+                    <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
+                </button>
+            `;
+            
+            const input = row.querySelector(`.${inputClass}`);
+            const preview = row.querySelector(`#${previewPrefix}-preview-${rowId}`);
+            const previewLarge = row.querySelector(`#${previewPrefix}-preview-large-${rowId}`);
+
+            input.addEventListener('input', () => {
+                const url = input.value.trim();
+                const finalUrl = url ? formatImageUrl(url) : 'https://placehold.co/40x40/e2e8f0/adb5bd?text=Preview';
+                preview.src = finalUrl;
+                preview.dataset.fullSrc = finalUrl;
+                if (previewLarge) previewLarge.src = finalUrl;
+            });
+            
+            preview.addEventListener('error', () => {
+                preview.src = 'https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro';
+                if (previewLarge) previewLarge.src = 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro';
+            });
+
+            row.querySelector('.btn-remove-extra-image').addEventListener('click', () => {
+                row.remove();
+            });
+
+            container.appendChild(row);
+            lucide.createIcons();
+        }
+
+        const btnAddExtraImage = document.getElementById('btn-add-extra-image');
+        if (btnAddExtraImage) {
+            btnAddExtraImage.addEventListener('click', () => {
+                createExtraImageField('extra-images-container', 'extra-prod-foto', 'extra-foto');
+            });
+        }
+
         // Salvar produto (Versão simplificada, sem foto)
         document.getElementById('form-add-product').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1600,6 +1686,13 @@
                     throw new Error(`A referência "${newRef}" já está sendo usada por outro produto.`);
                 }
 
+                const extraImageInputs = document.querySelectorAll('.extra-prod-foto');
+                const extraFotos = [];
+                extraImageInputs.forEach(input => {
+                    const url = input.value.trim();
+                    if(url) extraFotos.push(formatImageUrl(url));
+                });
+
                 // ---- Salvar dados no Firestore (sem foto) ----
                 const produto = {
                     nome: document.getElementById('prod-nome').value,
@@ -1615,6 +1708,7 @@
                     descricao: document.getElementById('prod-desc').value,
                     // fotoUrl: null, // Não precisamos mais deste campo
                     fotoUrl: formatImageUrl(document.getElementById('prod-foto').value.trim()),
+                    fotosExtras: extraFotos,
                     createdAt: serverTimestamp(),
                     ownerId: userId
                 };
@@ -1630,6 +1724,9 @@
                 }
                 const prodFotoPreviewLarge = document.getElementById('prod-foto-preview-large');
                 if (prodFotoPreviewLarge) prodFotoPreviewLarge.src = 'https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview'; // Reseta a imagem de preview
+                
+                const extraImagesContainer = document.getElementById('extra-images-container');
+                if (extraImagesContainer) extraImagesContainer.innerHTML = ''; // Limpa as imagens extras
 
             } catch (error) {
                 console.error("Erro ao salvar produto: ", error);
@@ -2482,6 +2579,14 @@
                     return; // Encerra
                 }
 
+                // --- AÇÃO: Baixar Fotos da Consignação em ZIP (NOVO) ---
+                const downloadPhotosConsignBtn = e.target.closest('.btn-download-photos-consign');
+                if (downloadPhotosConsignBtn && downloadPhotosConsignBtn.dataset.id) {
+                    const consignmentId = downloadPhotosConsignBtn.dataset.id;
+                    downloadConsignmentPhotos(consignmentId);
+                    return;
+                }
+
                 // --- AÇÃO: Exportar Consignação para Excel (NOVO) ---
                 const exportConsignBtn = e.target.closest('.btn-export-consign-excel');
                 if (exportConsignBtn && exportConsignBtn.dataset.id) {
@@ -2554,6 +2659,7 @@
                 allCheckboxes.forEach(cb => {
                     cb.checked = isChecked;
                 });
+                if (typeof updateBillSelectionState === 'function') updateBillSelectionState();
                 return; // Encerra, pois não é um clique em outro botão
             }
             
@@ -2566,6 +2672,120 @@
                 } else {
                     showBatchBillDeleteConfirmation(idsToDelete);
                 }
+                return;
+            }
+
+            // --- AÇÃO: Imprimir Relatório Contas Pendentes (NOVO) ---
+            const printPendingBillsBtn = e.target.closest('#btn-print-pending-bills');
+            if (printPendingBillsBtn) {
+                e.preventDefault();
+                
+                const filterStartDate = document.getElementById('bills-filter-start')?.value;
+                const filterEndDate = document.getElementById('bills-filter-end')?.value;
+                const filterPlano = document.getElementById('bills-filter-plano')?.value || 'Todos';
+                const searchTerm = document.getElementById('bills-search-input')?.value.toLowerCase().trim() || '';
+                const periodText = document.getElementById('bills-to-pay-period')?.textContent || 'Todo o período';
+                const sortOrder = document.getElementById('bills-sort-order')?.value || 'vencimento';
+
+                let billsToPay = allFinancialEntries.filter(bill => !bill.pago && (bill.tipo === 'Saída' || bill.tipo === 'Entrada'));
+
+                if (filterPlano !== 'Todos') {
+                    billsToPay = billsToPay.filter(bill => (bill.planoContas || 'Despesas Gerais') === filterPlano);
+                }
+
+                if (filterStartDate || filterEndDate) {
+                    billsToPay = billsToPay.filter(bill => {
+                        if (!bill.vencimento) return false;
+                        let isValid = true;
+                        if (filterStartDate && bill.vencimento < filterStartDate) isValid = false;
+                        if (filterEndDate && bill.vencimento > filterEndDate) isValid = false;
+                        return isValid;
+                    });
+                }
+
+                if (searchTerm) {
+                    billsToPay = billsToPay.filter(bill => bill.descricao && bill.descricao.toLowerCase().includes(searchTerm));
+                }
+
+                billsToPay.sort((a, b) => {
+                    if (sortOrder === 'valor_desc') return (b.valor || 0) - (a.valor || 0);
+                    if (sortOrder === 'valor_asc') return (a.valor || 0) - (b.valor || 0);
+                    const dateA = a.vencimento ? new Date(a.vencimento) : new Date(9999, 0, 1);
+                    const dateB = b.vencimento ? new Date(b.vencimento) : new Date(9999, 0, 1);
+                    return dateA - dateB;
+                });
+
+                let finalBills = [];
+                billsToPay.forEach(bill => {
+                    let diffDays = Infinity;
+                    if (bill.vencimento) {
+                        const dueDate = new Date(bill.vencimento + 'T00:00:00');
+                        const diffTime = dueDate.getTime() - new Date().setHours(0, 0, 0, 0);
+                        diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+                    let showRow = true;
+                    if (currentBillMetricFilter === 'late' && diffDays >= 0) showRow = false;
+                    if (currentBillMetricFilter === 'soon' && (diffDays < 0 || diffDays > 10)) showRow = false;
+                    if (currentBillMetricFilter === 'receivable' && bill.tipo !== 'Entrada') showRow = false;
+                    if (showRow) finalBills.push(bill);
+                });
+
+                if (finalBills.length === 0) {
+                    showModal("Atenção", "Nenhuma conta pendente encontrada para imprimir com os filtros atuais.");
+                    return;
+                }
+                generatePendingBillsReportPDF(finalBills, periodText);
+                return;
+            }
+
+            // --- AÇÃO: Imprimir Relatório Contas Pagas (NOVO) ---
+            const printPaidBillsBtn = e.target.closest('#btn-print-paid-bills');
+            if (printPaidBillsBtn) {
+                e.preventDefault();
+                
+                const filterStartDate = document.getElementById('bills-filter-start')?.value;
+                const filterEndDate = document.getElementById('bills-filter-end')?.value;
+                const filterPlano = document.getElementById('bills-filter-plano')?.value || 'Todos';
+                const searchTerm = document.getElementById('bills-search-input')?.value.toLowerCase().trim() || '';
+                const periodText = document.getElementById('bills-paid-period')?.textContent || 'Todo o período';
+
+                let paidBills = allFinancialEntries.filter(bill => bill.pago && bill.tipo === 'Saída' && bill.data && bill.data.toDate);
+
+                if (filterPlano !== 'Todos') {
+                    paidBills = paidBills.filter(bill => (bill.planoContas || 'Despesas Gerais') === filterPlano);
+                }
+
+                if (filterStartDate || filterEndDate) {
+                    let startObj = null, endObj = null;
+                    if (filterStartDate) {
+                        const [y, m, d] = filterStartDate.split('-');
+                        startObj = new Date(y, m - 1, d, 0, 0, 0);
+                    }
+                    if (filterEndDate) {
+                        const [y, m, d] = filterEndDate.split('-');
+                        endObj = new Date(y, m - 1, d, 23, 59, 59);
+                    }
+
+                    paidBills = paidBills.filter(bill => {
+                        const paymentDate = bill.data.toDate();
+                        if (startObj && paymentDate < startObj) return false;
+                        if (endObj && paymentDate > endObj) return false;
+                        return true;
+                    });
+                }
+
+                if (searchTerm) {
+                    paidBills = paidBills.filter(bill => bill.descricao && bill.descricao.toLowerCase().includes(searchTerm));
+                }
+
+                paidBills.sort((a, b) => b.data.toDate() - a.data.toDate());
+
+                if(paidBills.length === 0) {
+                    showModal("Atenção", "Nenhuma conta paga encontrada para imprimir com os filtros atuais.");
+                    return;
+                }
+
+                generatePaidBillsReportPDF(paidBills, periodText);
                 return;
             }
 
@@ -2721,6 +2941,21 @@
                 updateMaletasAverages();
             });
         }
+        
+        const billsListTableEl = document.getElementById('bills-list-table');
+        if (billsListTableEl) {
+            billsListTableEl.addEventListener('change', (e) => {
+                if (e.target.classList.contains('bill-checkbox')) {
+                    if (typeof updateBillSelectionState === 'function') updateBillSelectionState();
+                    const selectAllCb = document.getElementById('select-all-bills');
+                    if (selectAllCb) {
+                        const totalCb = document.querySelectorAll('#bills-list-table input.bill-checkbox').length;
+                        const checkedCb = document.querySelectorAll('#bills-list-table input.bill-checkbox:checked').length;
+                        selectAllCb.checked = (totalCb > 0 && totalCb === checkedCb);
+                    }
+                }
+            });
+        }
         // --- LÓGICA DE AÇÕES EM LOTE (PRODUTOS) ---
 
         const btnBatchDelete = document.getElementById('btn-batch-delete');
@@ -2832,6 +3067,26 @@
                 }
             };
         }
+
+/**
+ * Atualiza a visibilidade dos botões de ação em lote das Contas a Pagar
+ */
+function updateBillSelectionState() {
+    const selectedCount = document.querySelectorAll('#bills-list-table input.bill-checkbox:checked').length;
+    const btnBatchEdit = document.getElementById('btn-batch-edit-bills');
+    const btnBatchDelete = document.getElementById('btn-batch-delete-bills');
+    const batchContainer = document.getElementById('bills-batch-actions-container');
+    
+    if (selectedCount > 0) {
+        if (btnBatchEdit) btnBatchEdit.classList.remove('hidden');
+        if (btnBatchDelete) btnBatchDelete.classList.remove('hidden');
+        if (batchContainer) batchContainer.classList.remove('hidden');
+    } else {
+        if (btnBatchEdit) btnBatchEdit.classList.add('hidden');
+        if (btnBatchDelete) btnBatchDelete.classList.add('hidden');
+        if (batchContainer) batchContainer.classList.add('hidden');
+    }
+}
 
 /**
  * Helper: Pega os IDs de todas as CONTAS selecionadas
@@ -3654,26 +3909,28 @@ function showBatchBillEditModal(ids) {
                 return;
             }
 
+            const isRecebimento = bill.tipo === 'Entrada';
+
             // 2. Constrói o HTML do Modal
-            modalTitle.textContent = 'Confirmar Pagamento da Conta';
+            modalTitle.textContent = isRecebimento ? 'Confirmar Recebimento' : 'Confirmar Pagamento da Conta';
             modalBody.innerHTML = `
-        <p class="text-sm text-gray-600">Confirme o pagamento para:</p>
+        <p class="text-sm text-gray-600">Confirme o ${isRecebimento ? 'recebimento' : 'pagamento'} para:</p>
         <p class="text-lg font-medium my-2">${bill.descricao}</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
-                <label for="bill-payment-value" class="block text-sm font-medium">Valor Total Pago (R$)</label>
-                <input type="number" step="0.01" id="bill-payment-value" class="w-full px-3 py-2 mt-1 border rounded-md font-bold text-lg text-red-600" value="${bill.valor.toFixed(2)}" required>
+                <label for="bill-payment-value" class="block text-sm font-medium">Valor Total ${isRecebimento ? 'Recebido' : 'Pago'} (R$)</label>
+                <input type="number" step="0.01" id="bill-payment-value" class="w-full px-3 py-2 mt-1 border rounded-md font-bold text-lg text-${isRecebimento ? 'green' : 'red'}-600" value="${bill.valor.toFixed(2)}" required>
                 <p class="text-xs text-gray-500 mt-1">Previsto: R$ ${bill.valor.toFixed(2).replace('.', ',')}</p>
             </div>
             <div>
-                <label for="bill-payment-date" class="block text-sm font-medium">Data do Pagamento</label>
+                <label for="bill-payment-date" class="block text-sm font-medium">Data do ${isRecebimento ? 'Recebimento' : 'Pagamento'}</label>
                 <input type="date" id="bill-payment-date" class="w-full px-3 py-2 mt-1 border rounded-md" required>
             </div>
         </div>
 
         <div class="mt-4">
-            <label class="block text-sm font-medium mb-2">Formas de Pagamento</label>
+            <label class="block text-sm font-medium mb-2">Formas de ${isRecebimento ? 'Recebimento' : 'Pagamento'}</label>
             <div id="payment-splits-container" class="space-y-2">
                 <!-- JS vai popular -->
             </div>
@@ -3685,22 +3942,22 @@ function showBatchBillEditModal(ids) {
         
         <div class="mt-6 text-right space-x-2">
             <button type="button" id="btn-cancel-pay" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Cancelar</button>
-            <button type="button" id="btn-confirm-pay" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">Confirmar Pagamento</button>
+            <button type="button" id="btn-confirm-pay" class="px-4 py-2 text-sm font-medium text-white ${isRecebimento ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} rounded-md">${isRecebimento ? 'Confirmar Recebimento' : 'Confirmar Pagamento'}</button>
         </div>
     `;
-
+    
             // 3. Mostra o Modal
             modalContainer.style.display = 'flex';
-            document.getElementById('bill-payment-date').value = formatDateToYYYYMMDD(new Date());
+            document.getElementById('bill-payment-date').value = bill.vencimento && bill.vencimento < formatDateToYYYYMMDD(new Date()) ? formatDateToYYYYMMDD(new Date()) : (bill.vencimento || formatDateToYYYYMMDD(new Date()));
             
             const container = document.getElementById('payment-splits-container');
             const btnAddSplit = document.getElementById('btn-add-payment-split');
             const totalInput = document.getElementById('bill-payment-value');
             const errorP = document.getElementById('split-error');
 
-            function addSplitRow(method, value) {
+            function addSplitRow(method, value, expectedDate = '') {
                 const row = document.createElement('div');
-                row.className = 'flex items-center space-x-2 split-row';
+                row.className = 'flex flex-wrap sm:flex-nowrap items-center gap-2 split-row mt-2';
                 row.innerHTML = `
                     <select class="split-method flex-1 px-3 py-2 border rounded-md">
                         <option value="Dinheiro" ${method === 'Dinheiro' ? 'selected' : ''}>Dinheiro</option>
@@ -3709,15 +3966,28 @@ function showBatchBillEditModal(ids) {
                         <option value="Cartão de Crédito" ${method === 'Cartão de Crédito' ? 'selected' : ''}>Cartão de Crédito</option>
                         <option value="Cartão de Débito" ${method === 'Cartão de Débito' ? 'selected' : ''}>Cartão de Débito</option>
                         <option value="Boleto" ${method === 'Boleto' ? 'selected' : ''}>Boleto</option>
+                        <option value="A Receber" ${method === 'A Receber' ? 'selected' : ''}>A Receber (Ficará pendente)</option>
                     </select>
                     <input type="number" step="0.01" class="split-value w-32 px-3 py-2 border rounded-md" value="${value.toFixed(2)}">
-                    <button type="button" class="btn-remove-split text-red-500 hover:text-red-700 px-2">
+                    <input type="date" class="split-date w-36 px-3 py-2 text-sm border rounded-md ${method === 'A Receber' ? '' : 'hidden'}" value="${expectedDate}" title="Previsão de Recebimento">
+                    <button type="button" class="btn-remove-split text-red-500 hover:text-red-700 px-2 shrink-0">
                         <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 `;
                 container.appendChild(row);
                 lucide.createIcons();
-                row.querySelector('.btn-remove-split').onclick = () => row.remove();
+                row.querySelector('.btn-remove-split').onclick = () => { row.remove(); if(container.children.length === 0) addSplitRow('Dinheiro', 0); };
+                
+                const methodSelect = row.querySelector('.split-method');
+                const dateInput = row.querySelector('.split-date');
+                methodSelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'A Receber') {
+                        dateInput.classList.remove('hidden');
+                        if (!dateInput.value) dateInput.value = getFutureDateString(30);
+                    } else {
+                        dateInput.classList.add('hidden');
+                    }
+                });
             }
 
             // Inicializa com uma linha
@@ -3746,7 +4016,7 @@ function showBatchBillEditModal(ids) {
             document.getElementById('btn-confirm-pay').onclick = async () => {
                 const saveBtn = document.getElementById('btn-confirm-pay');
                 saveBtn.disabled = true;
-                saveBtn.textContent = 'Pagando...';
+                saveBtn.textContent = isRecebimento ? 'Recebendo...' : 'Pagando...';
                 errorP.classList.add('hidden');
                 
                 const newValor = parseFloat(totalInput.value);
@@ -3773,8 +4043,10 @@ function showBatchBillEditModal(ids) {
                 splitRows.forEach(row => {
                     const method = row.querySelector('.split-method').value;
                     const val = parseFloat(row.querySelector('.split-value').value) || 0;
+                    const dateInput = row.querySelector('.split-date');
+                    const expectedDate = (method === 'A Receber' && dateInput) ? dateInput.value : null;
                     if (val > 0) {
-                        paymentSplits.push({ method, value: val });
+                        paymentSplits.push({ method, value: val, expectedDate });
                         splitsTotal += val;
                     }
                 });
@@ -3783,7 +4055,7 @@ function showBatchBillEditModal(ids) {
                     errorP.textContent = "Adicione pelo menos uma forma de pagamento com valor maior que zero.";
                     errorP.classList.remove('hidden');
                     saveBtn.disabled = false;
-                    saveBtn.textContent = 'Confirmar Pagamento';
+                    saveBtn.textContent = isRecebimento ? 'Confirmar Recebimento' : 'Confirmar Pagamento';
                     return;
                 }
 
@@ -3791,7 +4063,19 @@ function showBatchBillEditModal(ids) {
                     errorP.textContent = `A soma das formas de pagamento (R$ ${splitsTotal.toFixed(2)}) deve ser igual ao Valor Total (R$ ${newValor.toFixed(2)}).`;
                     errorP.classList.remove('hidden');
                     saveBtn.disabled = false;
-                    saveBtn.textContent = 'Confirmar Pagamento';
+                    saveBtn.textContent = isRecebimento ? 'Confirmar Recebimento' : 'Confirmar Pagamento';
+                    return;
+                }
+                
+                const paidSplits = paymentSplits.filter(s => s.method !== 'A Receber');
+                const pendingSplits = paymentSplits.filter(s => s.method === 'A Receber');
+                let paidTotal = paidSplits.reduce((acc, s) => acc + s.value, 0);
+
+                if (paidTotal === 0 && paymentSplits.length > 0) {
+                    errorP.textContent = "Para registrar recebimento/pagamento, adicione formas de pagamento diferentes de 'A Receber'. Para alterar vencimentos, edite a conta.";
+                    errorP.classList.remove('hidden');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = isRecebimento ? 'Confirmar Recebimento' : 'Confirmar Pagamento';
                     return;
                 }
 
@@ -3800,27 +4084,52 @@ function showBatchBillEditModal(ids) {
                 try {
                     const collectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
                     const billRef = doc(db, collectionPath, billId);
+                    const batch = writeBatch(db);
                     
                     const dateObj = new Date(paymentDateStr + 'T00:00:00');
                     const paymentDateTimestamp = Timestamp.fromDate(dateObj);
 
-                    await updateDoc(billRef, {
+                    batch.update(billRef, {
                         pago: true,
-                        data: paymentDateTimestamp, // Atualiza a data para a escolhida
-                        paymentMethod: mainPaymentMethod,
-                        paymentSplits: paymentSplits,
-                        valor: newValor // Salva o novo valor (com juros/desconto)
+                        data: paymentDateTimestamp,
+                        paymentMethod: paidSplits.length === 1 ? paidSplits[0].method : 'Múltiplas Formas',
+                        paymentSplits: paidSplits,
+                        valor: paidTotal
                     });
 
+                    if (pendingSplits.length > 0) {
+                        pendingSplits.forEach((split, idx) => {
+                            const futureDateStr = split.expectedDate || getFutureDateString(30);
+                            const suffix = pendingSplits.length > 1 ? ` (Restante Parc. ${idx+1})` : ` (Restante)`;
+                            const pendingData = {
+                                descricao: `${bill.descricao}${suffix}`,
+                                valor: split.value,
+                                tipo: bill.tipo,
+                                data: serverTimestamp(),
+                                vencimento: futureDateStr,
+                                pago: false,
+                                ownerId: userId,
+                                paymentMethod: 'A Receber',
+                                paymentSplits: [split],
+                                planoContas: bill.planoContas || 'Despesas Gerais',
+                                saleId: bill.saleId || null
+                            };
+                            const newDocRef = doc(collection(db, collectionPath));
+                            batch.set(newDocRef, pendingData);
+                        });
+                    }
+
+                    await batch.commit();
+
                     hideModal();
-                    showModal("Sucesso!", "Conta marcada como paga e registrada com sucesso.");
+                    showModal("Sucesso!", isRecebimento ? "Valor recebido e registrado com sucesso." : "Conta marcada como paga e registrada com sucesso.");
                     // O onSnapshot (loadFinancialHistory) vai atualizar as tabelas!
 
                 } catch (error) {
                     console.error("Erro ao marcar conta como paga:", error);
                     showModal("Erro", "Não foi possível marcar a conta como paga: " + error.message);
                     saveBtn.disabled = false;
-                    saveBtn.textContent = 'Confirmar Pagamento';
+                    saveBtn.textContent = isRecebimento ? 'Confirmar Recebimento' : 'Confirmar Pagamento';
                 }
             };
         }
@@ -3864,19 +4173,19 @@ function showBatchBillEditModal(ids) {
             // 1. Busca a conta na cache (allFinancialEntries)
             const bill = allFinancialEntries.find(entry => entry.id === billId);
             if (!bill) {
-                showModal("Erro", "Conta não encontrada na lista atual.");
+                showModal("Erro", "Lançamento não encontrado na lista atual.");
                 return;
             }
 
             // 2. Pergunta ao usuário
-            modalTitle.textContent = 'Confirmar Exclusão da Conta';
+            modalTitle.textContent = 'Confirmar Exclusão do Lançamento';
             modalBody.innerHTML = `
-        <p>Você tem certeza que deseja excluir a conta:</p>
+        <p>Você tem certeza que deseja excluir o lançamento:</p>
         <p class="mt-2 text-lg font-bold">"${bill.descricao}" - R$ ${bill.valor.toFixed(2).replace('.', ',')}</p>
         <p class="font-medium text-red-600 mt-2">Esta ação não pode ser desfeita.</p>
         <div class="mt-6 text-right space-x-2">
             <button type="button" id="btn-confirm-cancel" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Cancelar</button>
-            <button type="button" id="btn-confirm-delete" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Sim, Excluir Conta</button>
+            <button type="button" id="btn-confirm-delete" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Sim, Excluir</button>
         </div>
     `;
 
@@ -3897,10 +4206,10 @@ function showBatchBillEditModal(ids) {
                     // O 'onSnapshot' (loadFinancialHistory) vai atualizar tudo automaticamente!
 
                 } catch (error) {
-                    console.error("Erro ao excluir conta:", error);
-                    showModal("Erro", "Não foi possível excluir a conta: " + error.message);
+                    console.error("Erro ao excluir lançamento:", error);
+                    showModal("Erro", "Não foi possível excluir o lançamento: " + error.message);
                     deleteBtn.disabled = false;
-                    deleteBtn.textContent = 'Sim, Excluir Conta';
+                    deleteBtn.textContent = 'Sim, Excluir';
                 }
             };
         }
@@ -4211,17 +4520,17 @@ function showBatchBillEditModal(ids) {
         // --- LÓGICA DE EXCLUIR CONTA (Ação Principal) ---
         async function handleDeleteBill(billId) {
             if (!userId || !billId) {
-                throw new Error("ID da conta inválido para exclusão.");
-            }
+                throw new Error("ID do lançamento inválido para exclusão.");
+           }
 
             try {
                 const collectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
                 const billRef = doc(db, collectionPath, billId);
                 await deleteDoc(billRef);
 
-                console.log("Conta excluída com sucesso:", billId);
+                console.log("Lançamento excluído com sucesso:", billId);
             } catch (error) {
-                console.error("Erro ao excluir conta:", error);
+                console.error("Erro ao excluir lançamento:", error);
                 throw error; // Re-lança para ser pego pelo catch da confirmação
             }
         }
@@ -4398,6 +4707,8 @@ function showBatchBillEditModal(ids) {
 
             // Fazemos cópias profundas dos itens para edição
             let editConsignmentItems = JSON.parse(JSON.stringify(originalConsignment.items || []));
+            let editRemovedItems = JSON.parse(JSON.stringify(originalConsignment.removedItems || [])); // Guarda todos os removidos
+            let editRevertedItems = JSON.parse(JSON.stringify(originalConsignment.revertedItems || [])); // Guarda os revertidos/repostos
 
             // Criamos um mapa do estado ORIGINAL para consulta de estoque
             const originalQtyMap = new Map();
@@ -4468,7 +4779,63 @@ function showBatchBillEditModal(ids) {
                     });
                     lucide.createIcons();
                 }
+                   // Atualiza a tabela de Itens Removidos / Devolvidos
+                const removedContainer = document.getElementById('edit-removed-items-container');
+                const removedList = document.getElementById('edit-removed-items-list');
+                if (removedContainer && removedList) {
+                    if (editRemovedItems.length > 0) {
+                        removedContainer.classList.remove('hidden');
+                        removedList.innerHTML = '';
+                        editRemovedItems.forEach((item, index) => {
+                            const actionHtml = item.reverted ? 
+                                `<span class="text-xs font-medium text-gray-500">Reposto</span>` : 
+                                `<button type="button" class="btn-revert-removed-item text-blue-600 hover:text-blue-800 text-xs font-medium bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded" data-index="${index}">
+                                    Reverter
+                                </button>`;
+                            
+                            const textClass = item.reverted ? 'text-gray-400 line-through' : 'text-gray-800';
+                            const refClass = item.reverted ? 'text-gray-400 line-through' : 'text-gray-600';
+
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td class="py-2 px-2 text-sm ${textClass}">${item.quantity}x ${item.nomeComercial || item.nome}</td>
+                                <td class="py-2 px-2 text-sm ${refClass}">${item.ref}</td>
+                                <td class="py-2 px-2 text-xs text-gray-500 italic">${item.justification || 'Sem justificativa'}</td>
+                                <td class="py-2 px-2 text-right">
+                                    ${actionHtml}
+                                </td>
+                            `;
+                            removedList.appendChild(tr);
+                        });
+                    } else {
+                        removedContainer.classList.add('hidden');
+                    }
+                }
+
+                // Atualiza a tabela de Itens Repostos / Revertidos
+                const revertedContainer = document.getElementById('edit-reverted-items-container');
+                const revertedList = document.getElementById('edit-reverted-items-list');
+                if (revertedContainer && revertedList) {
+                    if (editRevertedItems.length > 0) {
+                        revertedContainer.classList.remove('hidden');
+                        revertedList.innerHTML = '';
+                        editRevertedItems.forEach((item) => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td class="py-2 px-2 text-sm text-gray-800">${item.quantity}x ${item.nomeComercial || item.nome}</td>
+                                <td class="py-2 px-2 text-sm text-gray-600">${item.ref}</td>
+                                <td class="py-2 px-2 text-xs text-gray-500 italic">${item.revertJustification || 'Sem justificativa'}</td>
+                            `;
+                            revertedList.appendChild(tr);
+                        });
+                    } else {
+                        revertedContainer.classList.add('hidden');
+                    }
+                }
+                
                 updateEditTotals();
+                lucide.createIcons();
+
             };
 
             // 3. Adiciona um NOVO item (chamado pelo botão "Adicionar")
@@ -4505,6 +4872,7 @@ function showBatchBillEditModal(ids) {
                             } else {
                                 editConsignmentItems.push({ ...product, quantity: 1 }); // Adiciona novo com quantity: 1
                             }
+
 
                             renderEditItems(); // Atualiza a tabela de itens
                             addItemInput.value = ''; // Limpa o input
@@ -4543,6 +4911,42 @@ function showBatchBillEditModal(ids) {
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- NOVA SEÇÃO PARA ITENS REMOVIDOS -->
+                <div id="edit-removed-items-container" class="mt-6 hidden">
+                    <h4 class="text-sm font-medium text-red-700 mb-2 flex items-center"><i data-lucide="package-minus" class="w-4 h-4 mr-1"></i> Itens Removidos / Devolvidos</h4>
+                    <div class="overflow-x-auto border rounded-lg border-red-200">
+                        <table class="min-w-full divide-y divide-red-200 bg-red-50">
+                            <thead>
+                                <tr>
+                                    <th class="py-2 px-2 text-left text-xs font-medium text-red-700">Produto</th>
+                                    <th class="py-2 px-2 text-left text-xs font-medium text-red-700">Ref.</th>
+                                    <th class="py-2 px-2 text-left text-xs font-medium text-red-700">Justificativa</th>
+                                    <th class="py-2 px-2 text-right text-xs font-medium text-red-700">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="edit-removed-items-list" class="divide-y divide-red-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- NOVA SEÇÃO PARA ITENS REVERTIDOS -->
+                <div id="edit-reverted-items-container" class="mt-6 hidden">
+                    <h4 class="text-sm font-medium text-blue-700 mb-2 flex items-center"><i data-lucide="package-plus" class="w-4 h-4 mr-1"></i> Histórico de Itens Repostos</h4>
+                    <div class="overflow-x-auto border rounded-lg border-blue-200">
+                        <table class="min-w-full divide-y divide-blue-200 bg-blue-50">
+                            <thead>
+                                <tr>
+                                    <th class="py-2 px-2 text-left text-xs font-medium text-blue-700">Produto</th>
+                                    <th class="py-2 px-2 text-left text-xs font-medium text-blue-700">Ref.</th>
+                                    <th class="py-2 px-2 text-left text-xs font-medium text-blue-700">Justificativa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="edit-reverted-items-list" class="divide-y divide-blue-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <div>
                     <label class="block text-sm font-medium">Nova Data do Acerto</label>
                     <input type="date" id="edit-sale-due-date" class="w-full px-3 py-2 mt-1 border rounded-md" value="${originalConsignment.dueDate && originalConsignment.dueDate.toDate ? originalConsignment.dueDate.toDate().toISOString().split('T')[0] : ''}">
@@ -4560,11 +4964,11 @@ function showBatchBillEditModal(ids) {
                 <div class="pt-4 border-t">
                     <div class="flex justify-between font-medium">
                         <span>Subtotal de Itens:</span>
-                        <span id="edit-consign-subtotal">R$ 0,00</span>
+                    <span id="edit-consign-subtotal" class="sensitive-value">R$ 0,00</span>
                     </div>
                     <div class="flex justify-between font-bold text-xl mt-2">
                         <span>VALOR TOTAL:</span>
-                        <span id="edit-consign-total">R$ 0,00</span>
+                    <span id="edit-consign-total" class="sensitive-value">R$ 0,00</span>
                     </div>
                 </div>
                 <p class="text-sm text-red-600 pt-4 border-t">Atenção: A atualização irá alterar o estoque.</p>
@@ -4630,11 +5034,16 @@ function showBatchBillEditModal(ids) {
 
                         // --- INÍCIO DA MODIFICAÇÃO (Lógica do "0") ---
                         if (newQuantity === 0) {
-                            // NÃO DELETA AINDA. Pergunta primeiro.
-                            const confirmed = confirm(`Tem certeza que deseja remover "${item.nome}" desta consignação?\n\nIsso irá zerar a quantidade e remover o item da lista ao salvar.`);
+                            // NÃO DELETA AINDA. Pergunta primeiro com justificativa.
+                            const justification = window.prompt(`Tem certeza que deseja remover "${item.nomeComercial || item.nome}" desta consignação?\n\nDigite a justificativa para a exclusão:`);
 
-                            if (confirmed) {
+                            if (justification !== null) {
                                 // Sim, deletar
+                                editRemovedItems.push({
+                                    ...item,
+                                    justification: justification.trim() || 'Sem justificativa',
+                                    removedAt: new Date().toISOString()
+                                });
                                 editConsignmentItems = editConsignmentItems.filter(i => i.id !== itemId);
                                 renderEditItems(); // Redesenha (sem o item)
                             } else {
@@ -4652,18 +5061,79 @@ function showBatchBillEditModal(ids) {
                     }
                 });
 
-                // Lidar com clique no botão de excluir (lógica inalterada)
+                // Lidar com clique no botão de excluir
                 formEdit.addEventListener('click', (e) => {
                     const removeBtn = e.target.closest('.btn-remove-edit-item');
                     if (removeBtn && removeBtn.dataset.id) {
                         const itemId = removeBtn.dataset.id;
+                        const item = editConsignmentItems.find(i => i.id === itemId);
 
-                        // Filtra a lista, removendo o item
-                        editConsignmentItems = editConsignmentItems.filter(i => i.id !== itemId);
-
-                        // Redesenha a lista inteira
-                        renderEditItems();
+                        if (item) {
+                            const justification = window.prompt(`Por favor, digite a justificativa para a exclusão do produto "${item.nomeComercial || item.nome}":`);
+                            if (justification !== null) {
+                                editRemovedItems.push({
+                                    ...item,
+                                    justification: justification.trim() || 'Sem justificativa',
+                                    removedAt: new Date().toISOString()
+                                });
+                                editConsignmentItems = editConsignmentItems.filter(i => i.id !== itemId);
+                                renderEditItems();
+                                updateEditTotals();
+                            }
+                        }
                         e.preventDefault();
+                    }
+                });
+
+                // Lidar com clique no botão de reverter
+                formEdit.addEventListener('click', (e) => {
+                    const revertBtn = e.target.closest('.btn-revert-removed-item');
+                    if (revertBtn) {
+                        e.preventDefault();
+                        const index = revertBtn.dataset.index;
+                        const itemToRevert = editRemovedItems[index];
+                        if (!itemToRevert || itemToRevert.reverted) return;
+
+                        const productId = itemToRevert.id;
+                        const productInDB = allUserProducts.find(p => p.id === productId);
+                        const availableStock = productInDB ? productInDB.estoque : 0;
+                        const originalQty = originalQtyMap.get(productId) || 0;
+                        const maxAllowed = originalQty + availableStock;
+                        
+                        const existingItemInCart = editConsignmentItems.find(i => i.id === productId);
+                        const currentQtyInCart = existingItemInCart ? existingItemInCart.quantity : 0;
+                        
+                        const requiredQty = itemToRevert.quantity || 1;
+
+                        if (currentQtyInCart + requiredQty > maxAllowed) {
+                            window.alert(`Não é possível reverter. Estoque insuficiente para "${itemToRevert.nome}".\nNecessário: ${requiredQty} un.\nDisponível: ${maxAllowed - currentQtyInCart} un.`);
+                            return;
+                        }
+
+                        // --- NOVO: Justificativa de Reversão ---
+                        const justification = window.prompt(`Por favor, digite a justificativa para a reposição/reversão do produto "${itemToRevert.nomeComercial || itemToRevert.nome}":`);
+                        if (justification === null) return; // Se cancelar, não faz nada
+
+                        itemToRevert.reverted = true;
+
+                        // Salva no histórico de revertidos
+                        editRevertedItems.push({
+                            ...itemToRevert,
+                            revertJustification: justification.trim() || 'Sem justificativa',
+                            revertedAt: new Date().toISOString()
+                        });
+
+                        if (existingItemInCart) {
+                            existingItemInCart.quantity += requiredQty;
+                        } else {
+                            const itemToAdd = { ...itemToRevert };
+                            delete itemToAdd.justification;
+                            delete itemToAdd.removedAt;
+                            delete itemToAdd.reverted;
+                            editConsignmentItems.push(itemToAdd);
+                        }
+
+                        renderEditItems();
                     }
                 });
             }
@@ -4729,6 +5199,8 @@ function showBatchBillEditModal(ids) {
                     batch.update(saleRef, {
                         dueDate: newDueDateTimestamp,
                         items: editConsignmentItems, // Salva a nova lista (filtrada)
+                        removedItems: editRemovedItems,
+                        revertedItems: editRevertedItems,
                         subtotal: newSubtotal,
                         total: newSubtotal,
                         clientId: newClientId
@@ -4743,7 +5215,10 @@ function showBatchBillEditModal(ids) {
                         id: consignmentId,
                         clientId: newClientId,
                         items: editConsignmentItems,
-                        total: newSubtotal
+                        removedItems: editRemovedItems,
+                        revertedItems: editRevertedItems,
+                        total: newSubtotal,
+                        createdAt: originalConsignment.createdAt
                     };
                     showPrintConsignConfirmation(updatedSaleDataForPDF, newDueDate, true);
 
@@ -4865,7 +5340,7 @@ function showBatchBillEditModal(ids) {
             <div class="space-y-3 mt-4">
                 <div class="flex justify-between font-medium">
                     <span>Total Vendido:</span>
-                    <span id="settle-total-sold">R$ 0,00</span>
+                    <span id="settle-total-sold" class="sensitive-value">R$ 0,00</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <label for="settle-commission" class="text-sm font-medium">Comissão do Revendedor (%):</label>
@@ -4881,7 +5356,7 @@ function showBatchBillEditModal(ids) {
                 </div>
                 <div class="flex justify-between font-bold text-lg text-green-600 mt-4">
                     <span>VALOR A PAGAR:</span>
-                    <span id="settle-final-amount">R$ 0,00</span>
+                    <span id="settle-final-amount" class="sensitive-value">R$ 0,00</span>
                 </div>
                 <div class="mt-4 border-t pt-4">
                     <label class="block text-sm font-medium mb-2">Formas de Pagamento</label>
@@ -4926,9 +5401,9 @@ function showBatchBillEditModal(ids) {
             const btnAddSplit = document.getElementById('btn-add-settle-payment-split');
             const splitErrorP = document.getElementById('settle-split-error');
 
-            function addSettleSplitRow(method = 'Pix', value = 0) {
+            function addSettleSplitRow(method = 'Pix', value = 0, expectedDate = '') {
                 const row = document.createElement('div');
-                row.className = 'flex items-center space-x-2 settle-split-row mt-2';
+                row.className = 'flex flex-wrap sm:flex-nowrap items-center gap-2 settle-split-row mt-2';
                 row.innerHTML = `
                     <select class="settle-split-method flex-1 px-3 py-2 border rounded-md">
                         <option value="Dinheiro" ${method === 'Dinheiro' ? 'selected' : ''}>Dinheiro (Caixa Físico)</option>
@@ -4936,15 +5411,28 @@ function showBatchBillEditModal(ids) {
                         <option value="Transferência Bancária" ${method === 'Transferência Bancária' ? 'selected' : ''}>Transferência Bancária (Conta Bancária)</option>
                         <option value="Cartão de Crédito" ${method === 'Cartão de Crédito' ? 'selected' : ''}>Cartão de Crédito (Conta Bancária)</option>
                         <option value="Cartão de Débito" ${method === 'Cartão de Débito' ? 'selected' : ''}>Cartão de Débito (Conta Bancária)</option>
+                        <option value="A Receber" ${method === 'A Receber' ? 'selected' : ''}>A Receber (Ficará pendente)</option>
                     </select>
                     <input type="number" step="0.01" class="settle-split-value w-32 px-3 py-2 border rounded-md" value="${value.toFixed(2)}">
-                    <button type="button" class="btn-remove-settle-split text-red-500 hover:text-red-700 px-2">
+                    <input type="date" class="settle-split-date w-36 px-3 py-2 text-sm border rounded-md ${method === 'A Receber' ? '' : 'hidden'}" value="${expectedDate}" title="Previsão de Recebimento">
+                    <button type="button" class="btn-remove-settle-split text-red-500 hover:text-red-700 px-2 shrink-0">
                         <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 `;
                 container.appendChild(row);
                 lucide.createIcons();
                 row.querySelector('.btn-remove-settle-split').onclick = () => { row.remove(); if (container.children.length === 0) addSettleSplitRow('Pix', 0); };
+                
+                const methodSelect = row.querySelector('.settle-split-method');
+                const dateInput = row.querySelector('.settle-split-date');
+                methodSelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'A Receber') {
+                        dateInput.classList.remove('hidden');
+                        if (!dateInput.value) dateInput.value = getFutureDateString(30);
+                    } else {
+                        dateInput.classList.add('hidden');
+                    }
+                });
             }
             addSettleSplitRow('Pix', 0);
             btnAddSplit.onclick = () => addSettleSplitRow('Dinheiro', 0);
@@ -4990,7 +5478,7 @@ function showBatchBillEditModal(ids) {
                         const item = soldGroups[ref];
                         listSold.innerHTML += `<li class="flex justify-between text-sm p-1">
                     <span>${item.nomeComercial || item.nome} (${item.ref}) x ${item.count}</span> 
-                    <span>R$ ${item.totalValue.toFixed(2).replace('.', ',')}</span>
+                    <span class="sensitive-value">R$ ${item.totalValue.toFixed(2).replace('.', ',')}</span>
                 </li>`;
                     }
                 }
@@ -5019,16 +5507,33 @@ function showBatchBillEditModal(ids) {
 
                 // --- 3. Lista de CONSIGNADOS (Originais) ---
                 // Mostra a lista original (agrupada) do que foi pego
-                if (consignment.items.length === 0) {
+                if ((!consignment.items || consignment.items.length === 0) && (!consignment.removedItems || consignment.removedItems.length === 0)) {
                     listConsigned.innerHTML = '<p class="text-sm text-gray-500 p-1">Nenhum item nesta consignação.</p>';
                 } else {
-                    consignment.items.forEach(item => {
-                        const qty = item.quantity || 1;
-                        countConsigned += qty;
-                        listConsigned.innerHTML += `<li class="text-sm p-1 text-gray-700">
-                    ${item.nomeComercial || item.nome} (${item.ref}) x ${qty}
-                </li>`;
-                    });
+                    if (consignment.items) {
+                        consignment.items.forEach(item => {
+                            const qty = item.quantity || 1;
+                            countConsigned += qty;
+                            listConsigned.innerHTML += `<li class="text-sm p-1 text-gray-700">
+                        ${item.nomeComercial || item.nome} (${item.ref}) x ${qty}
+                    </li>`;
+                        });
+                    }
+                    if (consignment.removedItems && consignment.removedItems.length > 0) {
+                        consignment.removedItems.forEach(item => {
+                            const qty = item.quantity || 1;
+                            if (!item.reverted) {
+                                countConsigned += qty;
+                            }
+                            
+                            const textClass = item.reverted ? 'text-gray-400 line-through' : 'text-red-600 line-through';
+                            const repostoText = item.reverted ? ' (Reposto)' : ' (Excluído)';
+
+                            listConsigned.innerHTML += `<li class="text-sm p-1 ${textClass}" title="Motivo: ${item.justification || 'Sem justificativa'}">
+                        ${item.nomeComercial || item.nome} (${item.ref}) x ${qty} ${repostoText}
+                    </li>`;
+                        });
+                    }
                 }
 
                 // --- Atualiza os Contadores na Interface ---
@@ -5039,9 +5544,10 @@ function showBatchBillEditModal(ids) {
                 // --- 4. Cálculo Financeiro (atualizado) ---
                 const commissionPercent = parseFloat(commissionInput.value) || 0;
                 const discountValue = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
-                const baseAmount = totalSold - discountValue;
-                const commissionAmount = (baseAmount > 0 ? baseAmount : 0) * (commissionPercent / 100);
-                const finalAmount = baseAmount - commissionAmount;
+                totalSold = parseFloat(totalSold.toFixed(2));
+                const baseAmount = parseFloat((totalSold - discountValue).toFixed(2));
+                const commissionAmount = parseFloat(((baseAmount > 0 ? baseAmount : 0) * (commissionPercent / 100)).toFixed(2));
+                const finalAmount = parseFloat((baseAmount - commissionAmount).toFixed(2));
 
                 totalSoldSpan.textContent = `R$ ${totalSold.toFixed(2).replace('.', ',')}`;
                 finalAmountSpan.textContent = `R$ ${finalAmount.toFixed(2).replace('.', ',')}`;
@@ -5159,8 +5665,10 @@ function showBatchBillEditModal(ids) {
                     splitRows.forEach(row => {
                         const method = row.querySelector('.settle-split-method').value;
                         const splitVal = parseFloat(row.querySelector('.settle-split-value').value) || 0;
+                        const dateInput = row.querySelector('.settle-split-date');
+                        const expectedDate = (method === 'A Receber' && dateInput) ? dateInput.value : null;
                         if (splitVal > 0) {
-                            paymentSplits.push({ method, value: splitVal });
+                            paymentSplits.push({ method, value: splitVal, expectedDate });
                             splitsTotal += splitVal;
                         }
                     });
@@ -5223,20 +5731,47 @@ function showBatchBillEditModal(ids) {
                     });
 
                     // --- 2c. Criar o Lançamento Financeiro ---
-                    const financeData = {
-                        descricao: `Acerto Consignação (Rev: ${consignment.clientId})`,
-                        valor: finalAmountPaid,
-                        tipo: 'Entrada',
-                        data: serverTimestamp(),
-                        vencimento: null,
-                        pago: true,
-                        saleId: consignmentId,
-                        ownerId: userId,
-                        paymentMethod: mainPaymentMethod,
-                        paymentSplits: paymentSplits
-                    };
-                    const newFinanceRef = doc(collection(db, financeCollectionPath));
-                    batch.set(newFinanceRef, financeData);
+                    const paidSplits = paymentSplits.filter(s => s.method !== 'A Receber');
+                    const pendingSplits = paymentSplits.filter(s => s.method === 'A Receber');
+                    
+                    let paidTotal = paidSplits.reduce((acc, s) => acc + s.value, 0);
+                    let pendingTotal = pendingSplits.reduce((acc, s) => acc + s.value, 0);
+
+                    if (paidTotal > 0) {
+                        const financeData = {
+                            descricao: `Acerto Consignação (Rev: ${consignment.clientId})`,
+                            valor: paidTotal,
+                            tipo: 'Entrada',
+                            data: serverTimestamp(),
+                            vencimento: null,
+                            pago: true,
+                            saleId: consignmentId,
+                            ownerId: userId,
+                            paymentMethod: paidSplits.length === 1 ? paidSplits[0].method : 'Múltiplas Formas',
+                            paymentSplits: paidSplits
+                        };
+                        batch.set(doc(collection(db, financeCollectionPath)), financeData);
+                    }
+
+                    if (pendingTotal > 0) {
+                        pendingSplits.forEach((split, idx) => {
+                            const futureDateStr = split.expectedDate || getFutureDateString(30);
+                            const descPrefix = pendingSplits.length > 1 ? `A Receber (${idx+1}/${pendingSplits.length})` : `A Receber`;
+                            const pendingData = {
+                                descricao: `${descPrefix}: Acerto (Rev: ${consignment.clientId})`,
+                                valor: split.value,
+                                tipo: 'Entrada',
+                                data: serverTimestamp(),
+                                vencimento: futureDateStr,
+                                pago: false,
+                                saleId: consignmentId,
+                                ownerId: userId,
+                                paymentMethod: 'A Receber',
+                                paymentSplits: [split]
+                            };
+                            batch.set(doc(collection(db, financeCollectionPath)), pendingData);
+                        });
+                    }
 
                     // --- 3. Executar o Lote ---
                     await batch.commit();
@@ -5403,6 +5938,107 @@ function showBatchBillEditModal(ids) {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
+            // --- 3.5. Tabela de Itens Excluídos Previamente ---
+            if (consignment.removedItems && consignment.removedItems.length > 0) {
+                // Checar quebra de página
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
+
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Itens Excluídos Previamente', leftMargin, currentY);
+                currentY += 7;
+
+                const removedHead = [['Data', 'Qtd.', 'Ref.', 'Produto', 'Justificativa']];
+                let totalRemovedQty = 0;
+                const removedBody = consignment.removedItems.map(item => {
+                    const qty = item.quantity || 1;
+                    totalRemovedQty += qty;
+                    const dataStr = item.removedAt ? new Date(item.removedAt).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : 'N/D';
+                    const nomeProduto = (item.nomeComercial || item.nome) + (item.reverted ? ' (Reposto)' : '');
+                    return [
+                        dataStr,
+                        qty,
+                        item.ref,
+                        nomeProduto,
+                        item.justification || 'Sem justificativa'
+                    ];
+                });
+
+                removedBody.push([
+                    { content: 'Total Excluído:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+                    { content: `${totalRemovedQty} un.`, styles: { fontStyle: 'bold', halign: 'center' } }
+                ]);
+
+                doc.autoTable({
+                    startY: currentY,
+                    head: removedHead,
+                    body: removedBody,
+                    theme: 'grid',
+                    headStyles: { fillColor: [150, 150, 150] }, // Cor Cinza
+                    columnStyles: {
+                        0: { halign: 'center' }, // Data
+                        1: { halign: 'center' }  // Qtd
+                    }
+                });
+                currentY = doc.lastAutoTable.finalY + 10;
+            }
+
+            // --- 3.6. Tabela de Itens Repostos / Revertidos ---
+            if (consignment.revertedItems && consignment.revertedItems.length > 0) {
+                // Checar quebra de página
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
+
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Itens Repostos / Revertidos', leftMargin, currentY);
+                currentY += 7;
+
+                const revertedHead = [['Data', 'Qtd.', 'Ref.', 'Produto', 'Justificativa']];
+                let totalRevertedQty = 0;
+                const revertedBody = consignment.revertedItems.map(item => {
+                    const qty = item.quantity || 1;
+                    totalRevertedQty += qty;
+                    const dataStr = item.revertedAt ? new Date(item.revertedAt).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : 'N/D';
+                    return [
+                        dataStr,
+                        qty,
+                        item.ref,
+                        item.nomeComercial || item.nome,
+                        item.revertJustification || 'Sem justificativa'
+                    ];
+                });
+
+                revertedBody.push([
+                    { content: 'Total Reposto:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+                    { content: `${totalRevertedQty} un.`, styles: { fontStyle: 'bold', halign: 'center' } }
+                ]);
+
+                doc.autoTable({
+                    startY: currentY,
+                    head: revertedHead,
+                    body: revertedBody,
+                    theme: 'grid',
+                    headStyles: { fillColor: [79, 70, 229] }, // Cor Indigo
+                    columnStyles: {
+                        0: { halign: 'center' }, // Data
+                        1: { halign: 'center' }  // Qtd
+                    }
+                });
+                currentY = doc.lastAutoTable.finalY + 10;
+            }
+
+            // Checar quebra de página antes do resumo financeiro
+            if (currentY > 240) {
+                doc.addPage();
+                currentY = 20;
+            }
+
             // --- 4. Resumo Financeiro (atualizado) ---
             doc.setFontSize(14);
             doc.setFont(undefined, 'bold');
@@ -5499,6 +6135,89 @@ function showBatchBillEditModal(ids) {
                 currentY = doc.lastAutoTable.finalY + 10;
             }
 
+            // --- 2.5 Tabela de Itens Excluídos / Devolvidos ---
+            if (sale.type === 'consignacao' && sale.removedItems && sale.removedItems.length > 0) {
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
+
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Itens Excluídos / Devolvidos', 15, currentY);
+                currentY += 7;
+
+                const removedHead = [['Data', 'Qtd.', 'Ref.', 'Produto', 'Justificativa']];
+                let totalRemovedQty = 0;
+                const removedBody = sale.removedItems.map(item => {
+                    const qty = parseInt(item.quantity) || 1;
+                    totalRemovedQty += qty;
+                    const dataStr = item.removedAt ? new Date(item.removedAt).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : 'N/D';
+                    const nomeProduto = (item.nomeComercial || item.nome) + (item.reverted ? ' (Reposto)' : '');
+                    return [
+                        dataStr,
+                        qty,
+                        item.ref,
+                        nomeProduto,
+                        item.justification || 'Sem justificativa'
+                    ];
+                });
+
+                doc.autoTable({
+                    startY: currentY,
+                    head: removedHead,
+                    body: removedBody,
+                    theme: 'striped',
+                    headStyles: { fillColor: [150, 150, 150] },
+                    columnStyles: { 
+                        0: { halign: 'center' },
+                        1: { halign: 'center' } 
+                    }
+                });
+                currentY = doc.lastAutoTable.finalY + 10;
+            }
+
+            // --- 2.6 Tabela de Itens Repostos / Revertidos ---
+            if (sale.type === 'consignacao' && sale.revertedItems && sale.revertedItems.length > 0) {
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
+
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Itens Repostos / Revertidos', 15, currentY);
+                currentY += 7;
+
+                const revertedHead = [['Data', 'Qtd.', 'Ref.', 'Produto', 'Justificativa']];
+                let totalRevertedQty = 0;
+                const revertedBody = sale.revertedItems.map(item => {
+                    const qty = parseInt(item.quantity) || 1;
+                    totalRevertedQty += qty;
+                    const dataStr = item.revertedAt ? new Date(item.revertedAt).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : 'N/D';
+                    return [
+                        dataStr,
+                        qty,
+                        item.ref,
+                        item.nomeComercial || item.nome,
+                        item.revertJustification || 'Sem justificativa'
+                    ];
+                });
+
+                doc.autoTable({
+                    startY: currentY,
+                    head: revertedHead,
+                    body: revertedBody,
+                    theme: 'striped',
+                    headStyles: { fillColor: [79, 70, 229] }, // Azul
+                    columnStyles: { 
+                        0: { halign: 'center' },
+                        1: { halign: 'center' }
+                    }
+                });
+                currentY = doc.lastAutoTable.finalY + 10;
+            }
+
             // --- 3. Resumo Financeiro ---
             doc.setFontSize(14);
             doc.setFont(undefined, 'bold');
@@ -5546,6 +6265,129 @@ function showBatchBillEditModal(ids) {
             window.open(pdfUrl, '_blank');
         }
         // --- FIM DA GERAÇÃO DE RELATÓRIO DE VENDA ---
+        
+        /**
+         * Gera um Relatório de Contas Pagas em PDF filtradas
+         */
+        async function generatePaidBillsReportPDF(bills, periodText) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const formatCurrency = (val) => `R$ ${val !== undefined && val !== null ? val.toFixed(2).replace('.', ',') : '0,00'}`;
+
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('Relatório de Contas Pagas', 105, 20, { align: 'center' });
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Período: ${periodText}`, 15, 30);
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 15, 37);
+
+            let currentY = 45;
+            let totalVal = 0;
+
+            const head = [['Data Pag.', 'Descrição', 'Plano de Contas', 'Forma(s) de Pag.', 'Valor (R$)']];
+            const body = bills.map(bill => {
+                totalVal += bill.valor;
+                const paymentDate = bill.data ? bill.data.toDate().toLocaleDateString('pt-BR') : 'N/D';
+                
+                const splits = (bill.paymentSplits && bill.paymentSplits.length > 0) ? bill.paymentSplits : [{ method: bill.paymentMethod || 'Dinheiro', value: bill.valor }];
+                const paymentMethods = splits.map(s => s.method).join(', ');
+
+                return [
+                    paymentDate,
+                    bill.descricao || '',
+                    bill.planoContas || 'Despesas Gerais',
+                    paymentMethods,
+                    formatCurrency(bill.valor)
+                ];
+            });
+
+            doc.autoTable({
+                startY: currentY,
+                head: head,
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [22, 160, 133] }, // Cor Verde
+                columnStyles: {
+                    0: { halign: 'center' },
+                    4: { halign: 'right' }
+                }
+            });
+
+            currentY = doc.lastAutoTable.finalY + 10;
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Resumo:', 15, currentY);
+            currentY += 7;
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de Contas Pagas: ${bills.length}`, 15, currentY);
+            currentY += 7;
+            doc.setFont(undefined, 'bold');
+            doc.text(`Valor Total Pago: ${formatCurrency(totalVal)}`, 15, currentY);
+
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
+        }
+
+        /**
+         * Gera um Relatório de Contas Pendentes em PDF filtradas
+         */
+        async function generatePendingBillsReportPDF(bills, periodText) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const formatCurrency = (val) => `R$ ${val !== undefined && val !== null ? val.toFixed(2).replace('.', ',') : '0,00'}`;
+
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('Relatório de Lançamentos Pendentes', 105, 20, { align: 'center' });
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Período do Vencimento: ${periodText}`, 15, 30);
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 15, 37);
+
+            let currentY = 45;
+            let totalVal = 0;
+
+            const head = [['Vencimento', 'Descrição', 'Plano de Contas', 'Tipo', 'Valor (R$)']];
+            const body = bills.map(bill => {
+                totalVal += bill.valor;
+                const dueDateStr = bill.vencimento ? new Date(bill.vencimento + 'T00:00:00').toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/D';
+                const isSaida = bill.tipo === 'Saída';
+                const typeStr = isSaida ? 'A Pagar' : 'A Receber';
+
+                return [dueDateStr, bill.descricao || '', bill.planoContas || 'Despesas Gerais', typeStr, formatCurrency(bill.valor)];
+            });
+
+            doc.autoTable({
+                startY: currentY,
+                head: head,
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [230, 126, 34] }, // Cor Laranja/Avermelhada
+                columnStyles: { 0: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'right' } }
+            });
+
+            currentY = doc.lastAutoTable.finalY + 10;
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Resumo:', 15, currentY);
+            currentY += 7;
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de Lançamentos Pendentes: ${bills.length}`, 15, currentY);
+            currentY += 7;
+            doc.setFont(undefined, 'bold');
+            doc.text(`Valor Total Pendente: ${formatCurrency(totalVal)}`, 15, currentY);
+
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
+        }
+
         // --- LÓGICA DE GERAR ETIQUETAS (PDF) ---
 
         // --- LÓGICA DO MENU LATERAL (SIDEBAR) ---
@@ -5978,33 +6820,64 @@ function showBatchBillEditModal(ids) {
                 return;
             }
 
-            // Prepara os dados
-            const dataToExport = sale.items.map(item => {
+            // Pré-processa os itens para buscar todas as URLs e definir o número máximo de colunas de imagem
+            const processedItems = sale.items.map(item => {
                 let categoria = item.categoria || "";
                 let ref2 = item.ref2 || "";
                 let fotoUrl = item.fotoUrl || "";
+                let fotosExtras = [];
 
-                if (!categoria || !ref2 || !fotoUrl) {
-                    const productInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
-                    if (productInCache) {
-                        if (!categoria) categoria = productInCache.categoria;
-                        if (!ref2) ref2 = productInCache.ref2;
-                        if (!fotoUrl) fotoUrl = productInCache.fotoUrl || "";
+                const productInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
+                if (productInCache) {
+                    if (!categoria) categoria = productInCache.categoria;
+                    if (!ref2) ref2 = productInCache.ref2;
+                    if (!fotoUrl) fotoUrl = productInCache.fotoUrl || "";
+                    if (productInCache.fotosExtras && Array.isArray(productInCache.fotosExtras)) {
+                        fotosExtras = productInCache.fotosExtras;
                     }
                 }
                 
                 if (!categoria) categoria = "N/D";
 
+                // Agrupa todas as URLs (principal + extras) removendo vazias
+                const allUrls = [];
+                if (fotoUrl) allUrls.push(fotoUrl);
+                fotosExtras.forEach(url => {
+                    if (url && !allUrls.includes(url)) allUrls.push(url);
+                });
+
                 return {
+                    ...item,
+                    _exportCategoria: categoria,
+                    _exportRef2: ref2,
+                    _allUrls: allUrls
+                };
+            });
+
+            // Encontra qual produto tem o maior número de URLs
+            const maxUrls = Math.max(...processedItems.map(item => item._allUrls.length), 0);
+
+            // Prepara os dados finais
+            const dataToExport = processedItems.map(item => {
+                const row = {
                     "Nome Comercial": item.nomeComercial || "",
                     "Nome Técnico": item.nome || "",
                     "Código": item.ref,
-                    "Ref. 2": ref2 || "",
-                    "Categoria": categoria,
+                    "Ref. 2": item._exportRef2 || "",
+                    "Categoria": item._exportCategoria,
                     "Quantidade": item.quantity || 1,
-                    "Preço": item.venda,
-                    "Link da Imagem": fotoUrl
                 };
+
+                // Cria as colunas dinamicamente (URL 1, URL 2...)
+                if (maxUrls === 0) {
+                    row["URL 1"] = ""; // Deixa pelo menos uma coluna se não houver imagens
+                } else {
+                    for (let i = 0; i < maxUrls; i++) {
+                        row[`URL ${i + 1}`] = item._allUrls[i] || "";
+                    }
+                }
+
+                return row;
             });
 
             // Cria a planilha
@@ -6021,6 +6894,101 @@ function showBatchBillEditModal(ids) {
 
             // Download
             XLSX.writeFile(wb, filename);
+        }
+
+        /**
+         * Baixa as fotos de todos os itens de uma consignação em um arquivo ZIP
+         */
+        async function downloadConsignmentPhotos(consignmentId) {
+            const sale = allSales.find(s => s.id === consignmentId);
+            if (!sale) {
+                showModal("Erro", "Consignação não encontrada.");
+                return;
+            }
+
+            if (!sale.items || sale.items.length === 0) {
+                showModal("Aviso", "Esta consignação não possui itens para baixar fotos.");
+                return;
+            }
+
+            showModal("Preparando Download", "Baixando e compactando as imagens. Isso pode levar alguns segundos...");
+
+            try {
+                // Verifica se as bibliotecas globais foram carregadas corretamente
+                if (!window.JSZip || !window.saveAs) {
+                    hideModal();
+                    setTimeout(() => showModal("Erro", "As bibliotecas de ZIP não foram carregadas. Verifique a conexão com a internet, atualize a página e tente novamente."), 300);
+                    return;
+                }
+
+                const zip = new window.JSZip();
+                const folderName = `Fotos ${sale.clientId || 'Consignacao'}`.replace(/[<>:"\/\\|?*]/g, '').trim();
+                const folder = zip.folder(folderName);
+                let hasImages = false;
+
+                const downloadPromises = sale.items.map(async (item, index) => {
+                    let fotoUrl = item.fotoUrl;
+                    let fotosExtras = [];
+                    
+                    const productInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
+                    if (productInCache) {
+                        if (!fotoUrl) fotoUrl = productInCache.fotoUrl;
+                        if (productInCache.fotosExtras && Array.isArray(productInCache.fotosExtras)) {
+                            fotosExtras = productInCache.fotosExtras;
+                        }
+                    }
+
+                    const allUrls = [];
+                    if (fotoUrl) allUrls.push(fotoUrl);
+                    fotosExtras.forEach(url => {
+                        if (url && !allUrls.includes(url)) allUrls.push(url);
+                    });
+
+                    const itemPromises = allUrls.map(async (url, urlIndex) => {
+                        try {
+                            const fetchUrl = 'https://images.weserv.nl/?url=' + encodeURIComponent(url);
+                            const response = await fetch(fetchUrl);
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const safeName = (item.nomeComercial || item.nome || `produto ${index}`).replace(/[<>:"\/\\|?*]/g, '').trim();
+                                const safeRef = (item.ref || '').replace(/[<>:"\/\\|?*]/g, '').trim();
+                                
+                                let extension = 'jpg';
+                                if (blob.type === 'image/png') extension = 'png';
+                                else if (blob.type === 'image/webp') extension = 'webp';
+
+                                const suffix = allUrls.length > 1 ? ` foto ${urlIndex + 1}` : '';
+                                const filename = safeRef ? `${safeRef} - ${safeName}${suffix}.${extension}` : `${safeName}${suffix}.${extension}`;
+                                
+                                folder.file(filename, blob);
+                                hasImages = true;
+                            }
+                        } catch (err) {
+                            console.error(`Erro ao baixar a imagem ${urlIndex+1} do produto ${item.ref}:`, err);
+                        }
+                    });
+
+                    return Promise.all(itemPromises);
+                });
+
+                await Promise.all(downloadPromises);
+
+                if (hasImages) {
+                    const content = await zip.generateAsync({ type: "blob" });
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    const zipFilename = `${folderName} ${dateStr}.zip`;
+                    window.saveAs(content, zipFilename);
+                    hideModal();
+                } else {
+                    hideModal();
+                    setTimeout(() => showModal("Aviso", "Nenhuma imagem foi encontrada para os produtos desta consignação."), 300);
+                }
+
+            } catch (error) {
+                console.error("Erro ao gerar o ZIP de fotos:", error);
+                hideModal();
+                setTimeout(() => showModal("Erro", "Falha ao gerar o arquivo ZIP: " + error.message), 300);
+            }
         }
 
         /**
@@ -6237,6 +7205,99 @@ function showBatchBillEditModal(ids) {
 
                 doc.autoTable(autoTableConfig);
                 currentY = doc.lastAutoTable.finalY + 15; // Atualiza o Y para depois da tabela
+            }
+
+            // --- 2.5 Tabela de Itens Excluídos Previamente ---
+            if (saleData.removedItems && saleData.removedItems.length > 0) {
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
+
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Itens Excluídos / Devolvidos', leftMargin, currentY);
+                currentY += 7;
+
+                const removedHead = [['Data', 'Qtd.', 'Ref.', 'Produto', 'Justificativa']];
+                let totalRemovedQty = 0;
+                const removedBody = saleData.removedItems.map(item => {
+                    const qty = parseInt(item.quantity) || 1;
+                    totalRemovedQty += qty;
+                    const dataStr = item.removedAt ? new Date(item.removedAt).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : 'N/D';
+                    const nomeProduto = (item.nomeComercial || item.nome) + (item.reverted ? ' (Reposto)' : '');
+                    return [
+                        dataStr,
+                        qty,
+                        item.ref,
+                        nomeProduto,
+                        item.justification || 'Sem justificativa'
+                    ];
+                });
+
+                removedBody.push([
+                    { content: 'Total Excluído:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } },
+                    { content: `${totalRemovedQty} un.`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [240, 240, 240] } }
+                ]);
+
+                doc.autoTable({
+                    startY: currentY,
+                    head: removedHead,
+                    body: removedBody,
+                    theme: 'striped',
+                    headStyles: { fillColor: [150, 150, 150] },
+                    columnStyles: {
+                        0: { halign: 'center' },
+                        1: { halign: 'center' }
+                    }
+                });
+                currentY = doc.lastAutoTable.finalY + 15;
+            }
+
+            // --- 2.6 Tabela de Itens Repostos / Revertidos ---
+            if (saleData.revertedItems && saleData.revertedItems.length > 0) {
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
+
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Itens Repostos / Revertidos', leftMargin, currentY);
+                currentY += 7;
+
+                const revertedHead = [['Data', 'Qtd.', 'Ref.', 'Produto', 'Justificativa']];
+                let totalRevertedQty = 0;
+                const revertedBody = saleData.revertedItems.map(item => {
+                    const qty = parseInt(item.quantity) || 1;
+                    totalRevertedQty += qty;
+                    const dataStr = item.revertedAt ? new Date(item.revertedAt).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : 'N/D';
+                    return [
+                        dataStr,
+                        qty,
+                        item.ref,
+                        item.nomeComercial || item.nome,
+                        item.revertJustification || 'Sem justificativa'
+                    ];
+                });
+
+                revertedBody.push([
+                    { content: 'Total Reposto:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } },
+                    { content: `${totalRevertedQty} un.`, styles: { fontStyle: 'bold', halign: 'center', fillColor: [240, 240, 240] } }
+                ]);
+
+                doc.autoTable({
+                    startY: currentY,
+                    head: revertedHead,
+                    body: revertedBody,
+                    theme: 'striped',
+                    headStyles: { fillColor: [79, 70, 229] }, // Azul Indigo
+                    columnStyles: {
+                        0: { halign: 'center' },
+                        1: { halign: 'center' }
+                    }
+                });
+                currentY = doc.lastAutoTable.finalY + 15;
             }
 
             // --- 3. Linhas de Assinatura (COM CORREÇÃO DE QUEBRA DE LINHA) ---
@@ -6892,7 +7953,7 @@ async function checkAndExtendFixedBills() {
             
             <td class="px-6 py-4 whitespace-nowrap ${dateClass}">${dateString} ${daysText}</td>
             
-            <td class="px-6 py-4 whitespace-nowrap">R$ ${c.total ? c.total.toFixed(2).replace('.', ',') : '0,00'}</td>
+            <td class="px-6 py-4 whitespace-nowrap sensitive-value">R$ ${c.total ? c.total.toFixed(2).replace('.', ',') : '0,00'}</td>
             
             <td class="sticky right-0 px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 bg-white bg-opacity-95 shadow-sm">
                 
@@ -6902,6 +7963,10 @@ async function checkAndExtendFixedBills() {
                 
                 <button class="btn-print-consign-report text-gray-500 hover:text-gray-800" data-id="${c.id}" title="Imprimir Comprovante">
                     <i data-lucide="printer" class="w-5 h-5 pointer-events-none"></i>
+                </button>
+                
+                <button class="btn-download-photos-consign text-blue-600 hover:text-blue-900" data-id="${c.id}" title="Baixar Fotos em ZIP">
+                    <i data-lucide="image" class="w-5 h-5 pointer-events-none"></i>
                 </button>
                 
                 <button class="btn-export-consign-excel text-green-600 hover:text-green-800" data-id="${c.id}" title="Exportar Excel">
@@ -6949,7 +8014,7 @@ async function checkAndExtendFixedBills() {
             <td class="px-6 py-4">${s.createdAt.toDate().toLocaleDateString('pt-BR')}</td>
             <td class="px-6 py-4">${s.clientId || 'Consumidor Final'}</td>
             <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-medium ${typeBadge} rounded-full">${typeName}</span></td>
-            <td class="px-6 py-4">R$ ${s.total.toFixed(2).replace('.', ',')}</td>
+            <td class="px-6 py-4 sensitive-value">R$ ${s.total.toFixed(2).replace('.', ',')}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
     <button class="btn-view-sale-report px-3 py-1 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200" data-id="${s.id}"><i data-lucide="file-text" class="w-4 h-4 inline mr-1 pointer-events-none"></i>Ver</button>
     <button class="btn-delete-sale text-red-600 hover:text-red-900" data-id="${s.id}"><i data-lucide="trash-2" class="w-5 h-5 pointer-events-none"></i></button>
@@ -7048,7 +8113,7 @@ async function checkAndExtendFixedBills() {
             if (metricBalance) {
                 const balance = totalIn - totalOut;
                 metricBalance.textContent = `R$ ${balance.toFixed(2).replace('.', ',')}`;
-                metricBalance.className = `text-xl font-bold ${balance >= 0 ? 'text-blue-700' : 'text-red-700'}`;
+                metricBalance.className = `text-xl font-bold sensitive-value ${balance >= 0 ? 'text-blue-700' : 'text-red-700'}`;
             }
 
             renderFinancialHistoryList(filtered);
@@ -7082,7 +8147,7 @@ async function checkAndExtendFixedBills() {
                 const splits = (entry.paymentSplits && entry.paymentSplits.length > 0) ? entry.paymentSplits : [{ method: entry.paymentMethod || 'Dinheiro', value: entry.valor }];
                 let paymentStr = splits.map(s => {
                     let badgeColor = s.method === 'Dinheiro' ? 'bg-gray-100 text-gray-800 border-gray-300' : 'bg-indigo-50 text-indigo-700 border-indigo-200';
-                    return `<span class="inline-block px-2 py-0.5 text-[10px] font-medium rounded border ${badgeColor} mr-1 mb-1 shadow-sm">${s.method}: R$ ${s.value.toFixed(2).replace('.',',')}</span>`;
+                return `<span class="inline-block px-2 py-0.5 text-[10px] font-medium rounded border ${badgeColor} mr-1 mb-1 shadow-sm sensitive-value">${s.method}: R$ ${s.value.toFixed(2).replace('.',',')}</span>`;
                 }).join('');
 
                
@@ -7091,10 +8156,13 @@ async function checkAndExtendFixedBills() {
             <td class="px-6 py-4 text-sm text-gray-900 font-medium">${entry.descricao}</td>
             <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-[11px] font-medium ${typeBadge} rounded-full shadow-sm">${entry.tipo}</span></td>
             <td class="px-6 py-4 text-sm">${paymentStr}</td>
-            <td class="px-6 py-4 whitespace-nowrap font-bold ${typeClass}">${typePrefix} R$ ${entry.valor.toFixed(2).replace('.', ',')}</td>
+            <td class="px-6 py-4 whitespace-nowrap font-bold ${typeClass} sensitive-value">${typePrefix} R$ ${entry.valor.toFixed(2).replace('.', ',')}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button class="btn-edit-finance-entry text-indigo-600 hover:text-indigo-900" data-id="${entry.id}" title="Editar Lançamento">
                     <i data-lucide="edit-2" class="w-5 h-5 pointer-events-none"></i>
+                </button>
+                <button class="btn-delete-bill text-red-500 hover:text-red-700 ml-2" data-id="${entry.id}" title="Excluir Lançamento">
+                    <i data-lucide="trash-2" class="w-5 h-5 pointer-events-none"></i>
                 </button>
             </td>
         `;
@@ -7146,7 +8214,7 @@ async function checkAndExtendFixedBills() {
                     if (includeEntry) {
                         const splits = (entry.paymentSplits && entry.paymentSplits.length > 0) ? entry.paymentSplits : [{ method: entry.paymentMethod, value: entry.valor }];
 
-                        if (entry.tipo === 'Entrada') {
+                        if (entry.tipo === 'Entrada' && entry.pago === true) {
                             monthlyRevenue += entry.valor;
                             splits.forEach(s => {
                                 if (s.method === 'Dinheiro') caixaFisicoVal += s.value;
@@ -7219,11 +8287,11 @@ async function checkAndExtendFixedBills() {
             const caixaBancoEl = document.getElementById('summary-caixa-banco');
             if (caixaFisicoEl) {
                 caixaFisicoEl.textContent = formatCurrency(caixaFisicoVal);
-                caixaFisicoEl.className = `text-2xl font-bold ${caixaFisicoVal < 0 ? 'text-red-600' : 'text-gray-800'}`;
+                caixaFisicoEl.className = `text-2xl font-bold sensitive-value ${caixaFisicoVal < 0 ? 'text-red-600' : 'text-gray-800'}`;
             }
             if (caixaBancoEl) {
                 caixaBancoEl.textContent = formatCurrency(caixaBancoVal);
-                caixaBancoEl.className = `text-2xl font-bold ${caixaBancoVal < 0 ? 'text-red-600' : 'text-gray-800'}`;
+                caixaBancoEl.className = `text-2xl font-bold sensitive-value ${caixaBancoVal < 0 ? 'text-red-600' : 'text-gray-800'}`;
             }
             
             // Atualizar os titulos
@@ -7332,13 +8400,11 @@ function renderBillsTab(entries) {
         </tr>
     `;
     
-    // Filtra apenas as Saídas
-    const allBills = entries.filter(entry => entry.tipo === 'Saída');
 
-    // Separa em A Pagar e Pagas
-    let billsToPay = allBills.filter(bill => !bill.pago);
+    // Filtra Pendências e Pagas
+    let billsToPay = entries.filter(bill => !bill.pago && (bill.tipo === 'Saída' || bill.tipo === 'Entrada'));
 
-    let billsPaidFiltered = allBills.filter(bill => bill.pago && bill.data && bill.data.toDate);
+    let billsPaidFiltered = entries.filter(bill => bill.pago && bill.tipo === 'Saída' && bill.data && bill.data.toDate);
     const searchTerm = document.getElementById('bills-search-input')?.value.toLowerCase().trim() || '';
 
     const filterPlano = document.getElementById('bills-filter-plano')?.value || 'Todos';
@@ -7422,6 +8488,7 @@ function renderBillsTab(entries) {
     let totalPaidSum = 0;
     let totalLateSum = 0;
     let totalSoonSum = 0;
+    let totalReceivableSum = 0;
     let visibleToPaySum = 0; // Soma apenas o que aparecer na tabela
     let visibleRowsCount = 0; // Conta quantas linhas apareceram
 
@@ -7468,11 +8535,15 @@ function renderBillsTab(entries) {
             }
             
             totalToPaySum += bill.valor;
+            if (bill.tipo === 'Entrada') {
+                totalReceivableSum += bill.valor;
+            }
 
             // --- FILTRO DO MICRO-CARD (Oculta a linha se não bater com a métrica ativa) ---
             let showRow = true;
             if (currentBillMetricFilter === 'late' && diffDays >= 0) showRow = false;
             if (currentBillMetricFilter === 'soon' && (diffDays < 0 || diffDays > 10)) showRow = false;
+            if (currentBillMetricFilter === 'receivable' && bill.tipo !== 'Entrada') showRow = false;
 
             if (!showRow) return; // Pula este item se o filtro estiver barrando
 
@@ -7487,6 +8558,9 @@ function renderBillsTab(entries) {
             }
             const planoBadge = `<span class="badge-plano-filter cursor-pointer hover:bg-indigo-200 transition-colors ${corBadge} px-2 py-0.5 rounded text-[10px] font-medium mr-1" data-plano="${planoNome}" title="Filtrar por ${planoNome}">${planoNome}</span>`;
 
+            const isSaida = bill.tipo === 'Saída';
+            const typeBadge = isSaida ? '<span class="px-2 py-0.5 text-[10px] font-medium text-red-800 bg-red-100 rounded border border-red-200">A Pagar</span>' : '<span class="px-2 py-0.5 text-[10px] font-medium text-green-800 bg-green-100 rounded border border-green-200">A Receber</span>';
+
             // --- NOVO: Botão de Cancelar Assinatura (só aparece se tiver groupId) ---
             let cancelSubBtnHtml = '';
             if (bill.groupId) {
@@ -7499,12 +8573,12 @@ function renderBillsTab(entries) {
                 
                 <td class="px-4 py-3">
                     <div class="font-medium">${bill.descricao}</div>
-                    <div class="text-xs text-gray-500 mt-0.5">${planoBadge} ${bill.paymentMethod || 'Não definido'}</div>
+                    <div class="text-xs mt-0.5 flex items-center gap-1">${typeBadge} <span class="text-gray-500">${planoBadge} ${bill.paymentMethod || 'Não definido'}</span></div>
                 </td>
                 <td class="px-4 py-3 ${dateClass}">${dueDateString}</td>
-                <td class="px-4 py-3">R$ ${bill.valor.toFixed(2).replace('.', ',')}</td>
+                <td class="px-4 py-3 sensitive-value">R$ ${bill.valor.toFixed(2).replace('.', ',')}</td>
                 <td class="px-4 py-3 whitespace-nowrap">
-                    <button class="btn-mark-paid px-3 py-1 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700" data-id="${bill.id}">Pagar</button>
+                    <button class="btn-mark-paid px-3 py-1 text-sm font-medium text-white ${isSaida ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} rounded-md" data-id="${bill.id}">${isSaida ? 'Pagar' : 'Receber'}</button>
                     
                     <button class="btn-edit-bill text-indigo-600 hover:text-indigo-900 ml-2" data-id="${bill.id}" title="Editar Conta">
                         <i data-lucide="edit-2" class="w-4 h-4 pointer-events-none"></i>
@@ -7528,9 +8602,11 @@ function renderBillsTab(entries) {
     const metricLateEl = document.getElementById('metric-bills-late');
     const metricSoonEl = document.getElementById('metric-bills-soon');
     const metricTotalEl = document.getElementById('metric-bills-total');
+    const metricReceivableEl = document.getElementById('metric-bills-receivable');
     if (metricLateEl) metricLateEl.textContent = `R$ ${totalLateSum.toFixed(2).replace('.', ',')}`;
     if (metricSoonEl) metricSoonEl.textContent = `R$ ${totalSoonSum.toFixed(2).replace('.', ',')}`;
     if (metricTotalEl) metricTotalEl.textContent = `R$ ${totalToPaySum.toFixed(2).replace('.', ',')}`;
+    if (metricReceivableEl) metricReceivableEl.textContent = `R$ ${totalReceivableSum.toFixed(2).replace('.', ',')}`;
 
     // --- Renderiza Tabela PAGAS (Filtradas) ---
     if (billsPaidFiltered.length === 0) {
@@ -7554,7 +8630,7 @@ function renderBillsTab(entries) {
                     <div class="text-xs text-gray-500 mt-0.5">${planoBadge}</div>
                 </td>
                 <td class="px-4 py-3 text-gray-500">${paymentDate}</td>
-                <td class="px-4 py-3 text-gray-500">R$ ${bill.valor.toFixed(2).replace('.', ',')}</td>
+                <td class="px-4 py-3 text-gray-500 sensitive-value">R$ ${bill.valor.toFixed(2).replace('.', ',')}</td>
                 <td class="px-4 py-3">
                     <button class="btn-unmark-paid px-3 py-1 text-sm font-medium text-white bg-yellow-600 rounded-md hover:bg-yellow-700" data-id="${bill.id}">Estornar</button>
                 </td>
@@ -7567,8 +8643,10 @@ function renderBillsTab(entries) {
     // Atualiza os totais no rodapé das tabelas
     const totalToPayEl = document.getElementById('bills-to-pay-total');
     const totalPaidEl = document.getElementById('bills-paid-total');
-    if (totalToPayEl) totalToPayEl.textContent = `R$ ${totalToPaySum.toFixed(2).replace('.', ',')}`;
+    if (totalToPayEl) totalToPayEl.textContent = `R$ ${visibleToPaySum.toFixed(2).replace('.', ',')}`;
     if (totalPaidEl) totalPaidEl.textContent = `R$ ${totalPaidSum.toFixed(2).replace('.', ',')}`;
+
+    if (typeof updateBillSelectionState === 'function') updateBillSelectionState();
 
     lucide.createIcons(); // Recria icones
 }
@@ -7877,7 +8955,7 @@ function renderBillsTab(entries) {
             </div>
             </td>
             <td class="py-2 px-2">${item.ref}</td>
-            <td class="py-2 px-2">R$ ${item.venda.toFixed(2).replace('.', ',')}</td>
+            <td class="py-2 px-2 sensitive-value">R$ ${item.venda.toFixed(2).replace('.', ',')}</td>
             
             <!-- Nova Coluna Qtd. -->
             <td class="py-2 px-2">
@@ -7891,7 +8969,7 @@ function renderBillsTab(entries) {
             </td>
             
             <!-- Nova Coluna Preço Total -->
-            <td class="py-2 px-2 font-medium">R$ ${itemTotal.toFixed(2).replace('.', ',')}</td>
+            <td class="py-2 px-2 font-medium sensitive-value">R$ ${itemTotal.toFixed(2).replace('.', ',')}</td>
             
             <td class="py-2 pl-2 text-right">
                 <!-- Botão agora usa o ID, não o index -->
@@ -7922,10 +9000,11 @@ function renderBillsTab(entries) {
             currentSaleItems.forEach(item => {
                 subtotal += (item.venda * item.quantity); // Multiplica pela quantidade
             });
+            subtotal = parseFloat(subtotal.toFixed(2));
 
             const discountPercent = parseFloat(saleDiscountInput.value) || 0;
-            const discountAmount = subtotal * (discountPercent / 100);
-            const total = subtotal - discountAmount;
+            const discountAmount = parseFloat((subtotal * (discountPercent / 100)).toFixed(2));
+            const total = parseFloat((subtotal - discountAmount).toFixed(2));
 
             // --- Atualiza o HTML ---
             saleSubtotalSpan.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
@@ -7986,8 +9065,8 @@ function renderBillsTab(entries) {
                         </div>
                     </div>
                     <div class="shrink-0 pl-2 text-right">
-                        <div class="text-[10px] font-bold px-2 py-0.5 rounded border ${stockColor} whitespace-nowrap mb-0.5">${prod.estoque} un.</div>
-                        <div class="text-xs font-bold text-gray-700 whitespace-nowrap">R$ ${prod.venda.toFixed(2).replace('.', ',')}</div>
+                        <div class="text-[10px] font-bold px-2 py-0.5 rounded border ${stockColor} whitespace-nowrap mb-0.5 sensitive-value">${prod.estoque} un.</div>
+                        <div class="text-xs font-bold text-gray-700 whitespace-nowrap sensitive-value">R$ ${prod.venda.toFixed(2).replace('.', ',')}</div>
                     </div>
                 `;
                 
@@ -8057,7 +9136,7 @@ function renderBillsTab(entries) {
             }
         }
         
-        function addSaleSplitRow(method = 'Dinheiro', value = 0) {
+        function addSaleSplitRow(method = 'Dinheiro', value = 0, expectedDate = '') {
             const container = document.getElementById('sale-payment-splits-container');
             if(!container) return;
             const row = document.createElement('div');
@@ -8069,15 +9148,28 @@ function renderBillsTab(entries) {
                     <option value="Transferência Bancária" ${method === 'Transferência Bancária' ? 'selected' : ''}>Transferência Bancária (Conta Bancária)</option>
                     <option value="Cartão de Crédito" ${method === 'Cartão de Crédito' ? 'selected' : ''}>Cartão de Crédito (Conta Bancária)</option>
                     <option value="Cartão de Débito" ${method === 'Cartão de Débito' ? 'selected' : ''}>Cartão de Débito (Conta Bancária)</option>
+                    <option value="A Receber" ${method === 'A Receber' ? 'selected' : ''}>A Receber (Ficará pendente)</option>
                 </select>
                 <input type="number" step="0.01" class="sale-split-value w-32 px-3 py-2 border rounded-md" value="${value.toFixed(2)}">
-                <button type="button" class="btn-remove-sale-split text-red-500 hover:text-red-700 px-2">
+                <input type="date" class="sale-split-date w-36 px-3 py-2 text-sm border rounded-md ${method === 'A Receber' ? '' : 'hidden'}" value="${expectedDate}" title="Previsão de Recebimento">
+                <button type="button" class="btn-remove-sale-split text-red-500 hover:text-red-700 px-2 shrink-0">
                     <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                 </button>
             `;
             container.appendChild(row);
             lucide.createIcons();
             row.querySelector('.btn-remove-sale-split').onclick = () => { row.remove(); if (container.children.length === 0) addSaleSplitRow('Dinheiro', 0); };
+            
+            const methodSelect = row.querySelector('.sale-split-method');
+            const dateInput = row.querySelector('.sale-split-date');
+            methodSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'A Receber') {
+                    dateInput.classList.remove('hidden');
+                    if (!dateInput.value) dateInput.value = getFutureDateString(30);
+                } else {
+                    dateInput.classList.add('hidden');
+                }
+            });
         }
 
         renderSaleItems();
@@ -8139,9 +9231,14 @@ function renderBillsTab(entries) {
             modalTitle.textContent = isEdit ? 'Editar Maleta' : 'Nova Maleta';
             modalBody.innerHTML = `
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium">Nome do Kit / Maleta</label>
-                        <input type="text" id="maleta-name" class="w-full px-3 py-2 mt-1 border rounded-md" value="${initialName}" placeholder="Ex: Maleta Prata Mês 10" required>
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium">Nome do Kit / Maleta</label>
+                            <input type="text" id="maleta-name" class="w-full px-3 py-2 mt-1 border rounded-md" value="${initialName}" placeholder="Ex: Maleta Prata Mês 10" required>
+                        </div>
+                        <button type="button" id="btn-export-maleta-pdf" class="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200 flex items-center justify-center shrink-0 h-[42px]">
+                            <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> PDF Selecionados
+                        </button>
                     </div>
                     <div class="flex mt-4 space-x-2">
                         <input type="text" id="maleta-item-ref" list="sale-item-datalist" placeholder="Adicionar Nome, Cód. de Ref. ou usar leitor" class="flex-1 px-3 py-2 border rounded-md">
@@ -8152,6 +9249,7 @@ function renderBillsTab(entries) {
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50 sticky top-0">
                                 <tr>
+                                    <th class="w-10 px-4 py-2 text-left"><input type="checkbox" id="select-all-maleta-items" class="rounded"></th>
                                     <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Produto</th>
                                     <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Ref.</th>
                                     <th class="px-4 py-2 text-left text-sm font-medium text-gray-500 w-24">Qtd.</th>
@@ -8177,6 +9275,38 @@ function renderBillsTab(entries) {
             const btnSave = document.getElementById('btn-save-maleta');
             const btnCancel = document.getElementById('btn-cancel-maleta');
             const errorP = document.getElementById('maleta-error');
+
+            // --- Lógica de Geração de PDF ---
+            const btnExportPdf = document.getElementById('btn-export-maleta-pdf');
+            if (btnExportPdf) {
+                btnExportPdf.onclick = () => {
+                    const selected = document.querySelectorAll('#maleta-items-list .maleta-item-select-checkbox:checked');
+                    if (selected.length === 0) {
+                        alert("Selecione pelo menos um produto na lista abaixo para gerar o PDF.");
+                        return;
+                    }
+                    const ids = Array.from(selected).map(cb => cb.dataset.id);
+                    const itemsToExport = currentMaletaItems.filter(i => ids.includes(i.id));
+                    const mName = document.getElementById('maleta-name').value || 'Maleta sem nome';
+                    
+                    btnExportPdf.disabled = true;
+                    const originalText = btnExportPdf.innerHTML;
+                    btnExportPdf.innerHTML = `<i class="animate-spin inline-block w-4 h-4 border-[2px] border-current border-t-transparent rounded-full mr-2" role="status"></i>Gerando...`;
+                    
+                    setTimeout(async () => {
+                        try {
+                            await generateMaletaReportPDF(mName, itemsToExport);
+                        } catch(err) {
+                            console.error(err);
+                            alert("Falha ao gerar o PDF: " + err.message);
+                        } finally {
+                            btnExportPdf.disabled = false;
+                            btnExportPdf.innerHTML = originalText;
+                            lucide.createIcons();
+                        }
+                    }, 50);
+                };
+            }
 
             const addItemToMaleta = async () => {
                 const ref = inputRef.value.trim();
@@ -8258,7 +9388,7 @@ function renderBillsTab(entries) {
             if (!tbody) return;
             tbody.innerHTML = '';
             if (currentMaletaItems.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-gray-500">Nenhum item adicionado à maleta.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500">Nenhum item adicionado à maleta.</td></tr>';
                 return;
             }
             // Calcula a demanda total de cada produto em TODAS as maletas
@@ -8333,7 +9463,7 @@ function renderBillsTab(entries) {
 
                     const catTr = document.createElement('tr');
                     catTr.className = 'bg-gray-100 font-semibold text-gray-700 uppercase tracking-wider text-xs';
-                    catTr.innerHTML = `<td colspan="4" class="px-4 py-2">
+                    catTr.innerHTML = `<td colspan="5" class="px-4 py-2">
                         <div class="flex justify-between items-center">
                             <span class="flex items-center">${categoryHtml}</span>
                             <span class="normal-case tracking-normal text-[11px] text-gray-500 font-medium">(${stats.available}/${stats.total} disp.)</span>
@@ -8359,7 +9489,8 @@ function renderBillsTab(entries) {
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="px-4 py-2 pl-6">
+                    <td class="px-4 py-2"><input type="checkbox" class="maleta-item-select-checkbox rounded" data-id="${item.id}"></td>
+                    <td class="px-4 py-2 pl-2">
                         <div class="flex items-center space-x-3">
                             <div class="relative group shrink-0">
                                 <img src="${imgSrc}" alt="Foto" class="w-8 h-8 rounded-md object-cover border border-gray-200 cursor-pointer fullscreen-trigger" data-full-src="${previewSrc}" onerror="this.src='https://placehold.co/40x40/e2e8f0/adb5bd?text=Erro'">
@@ -8429,6 +9560,17 @@ function renderBillsTab(entries) {
                     }
                 });
             });
+            
+            // Lógica do Checkbox "Selecionar Todos"
+            const selectAllMaletaItems = document.getElementById('select-all-maleta-items');
+            if (selectAllMaletaItems) {
+                selectAllMaletaItems.addEventListener('change', (e) => {
+                    const isChecked = e.target.checked;
+                    document.querySelectorAll('#maleta-items-list .maleta-item-select-checkbox').forEach(cb => {
+                        cb.checked = isChecked;
+                    });
+                });
+            }
         }
 
         // --- MODAL DE TROCA DE PRODUTO DA MALETA ---
@@ -8515,7 +9657,7 @@ function renderBillsTab(entries) {
                         <span class="text-xs font-semibold text-gray-800 leading-tight w-full line-clamp-2 mt-0.5 mb-1" title="${prod.nomeComercial || prod.nome}">${prod.nomeComercial || prod.nome}</span>
                         <div class="mt-auto pt-1 w-full border-t border-gray-100 flex justify-between items-center text-[10px]">
                             <span class="text-gray-500">Estoque: ${prod.estoque}</span>
-                            <span class="text-green-600 font-bold">R$ ${prod.venda.toFixed(2).replace('.',',')}</span>
+                        <span class="text-green-600 font-bold sensitive-value">R$ ${prod.venda.toFixed(2).replace('.',',')}</span>
                         </div>
                     `;
                     
@@ -8582,6 +9724,95 @@ function renderBillsTab(entries) {
                     renderSwapCatalog(e.target.value);
                 });
             }
+        }
+        
+        /**
+         * Gera um Relatório em PDF com os itens selecionados de uma Maleta
+         */
+        async function generateMaletaReportPDF(maletaName, items) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const formatCurrency = (val) => `R$ ${val !== undefined && val !== null ? val.toFixed(2).replace('.', ',') : '0,00'}`;
+
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('Relação de Peças (Maleta / Kit)', 105, 20, { align: 'center' });
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Nome: ${maletaName}`, 15, 30);
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 15, 37);
+
+            let currentY = 45;
+            let totalQty = 0;
+            let totalValue = 0;
+
+            const itemsWithImages = await Promise.all(items.map(async (item) => {
+                let base64 = null;
+                if (item.fotoUrl) {
+                    base64 = await getBase64FromImage(item.fotoUrl);
+                }
+                return { ...item, base64 };
+            }));
+
+            const head = [['Qtd.', 'Foto', 'Ref.', 'Produto', 'V. Unit.', 'V. Total']];
+            const body = itemsWithImages.map(item => {
+                const qty = item.quantity || 1;
+                const venda = item.venda || 0;
+                totalQty += qty;
+                totalValue += (venda * qty);
+
+                return [
+                    `${qty} un.`,
+                    '', // Placeholder para imagem
+                    item.ref || '',
+                    item.nomeComercial || item.nome || '',
+                    venda.toFixed(2).replace('.', ','),
+                    (venda * qty).toFixed(2).replace('.', ',')
+                ];
+            });
+
+            doc.autoTable({
+                startY: currentY,
+                head: head,
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [79, 70, 229] },
+                bodyStyles: { minCellHeight: 15 },
+                columnStyles: {
+                    0: { halign: 'center' },
+                    1: { halign: 'center', cellWidth: 18 },
+                    4: { halign: 'right' },
+                    5: { halign: 'right' }
+                },
+                didDrawCell: function (data) {
+                    if (data.section === 'body' && data.column.index === 1) {
+                        const item = itemsWithImages[data.row.index];
+                        if (item && item.base64) {
+                            const dim = 12;
+                            const x = data.cell.x + (data.cell.width - dim) / 2;
+                            const y = data.cell.y + (data.cell.height - dim) / 2;
+                            try { doc.addImage(item.base64, 'JPEG', x, y, dim, dim); } catch (e) {}
+                        }
+                    }
+                }
+            });
+
+            currentY = doc.lastAutoTable.finalY + 10;
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Resumo:', 15, currentY);
+            currentY += 7;
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de Peças Selecionadas: ${totalQty} un.`, 15, currentY);
+            currentY += 7;
+            doc.setFont(undefined, 'bold');
+            doc.text(`Valor Total: ${formatCurrency(totalValue)}`, 15, currentY);
+
+            const pdfBlob = doc.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
         }
 
         function showMaletaDeleteConfirmation(maletaId) {
@@ -9341,10 +10572,11 @@ function renderBillsTab(entries) {
                 // --- Cálculo de Total (COM QTD) ---
                 let subtotal = 0;
                 currentSaleItems.forEach(item => { subtotal += (item.venda * item.quantity); });
+                subtotal = parseFloat(subtotal.toFixed(2));
 
                 const discountPercent = parseFloat(saleDiscountInput.value) || 0;
-                const discountAmount = subtotal * (discountPercent / 100);
-                const total = subtotal - discountAmount;
+                const discountAmount = parseFloat((subtotal * (discountPercent / 100)).toFixed(2));
+                const total = parseFloat((subtotal - discountAmount).toFixed(2));
 
                 let paymentSplits = [];
                 let mainPaymentMethod = null;
@@ -9355,8 +10587,10 @@ function renderBillsTab(entries) {
                     splitRows.forEach(row => {
                         const method = row.querySelector('.sale-split-method').value;
                         const val = parseFloat(row.querySelector('.sale-split-value').value) || 0;
+                        const dateInput = row.querySelector('.sale-split-date');
+                        const expectedDate = (method === 'A Receber' && dateInput) ? dateInput.value : null;
                         if (val > 0) {
-                            paymentSplits.push({ method, value: val });
+                            paymentSplits.push({ method, value: val, expectedDate });
                             splitsTotal += val;
                         }
                     });
@@ -9429,20 +10663,47 @@ function renderBillsTab(entries) {
 
                 // --- 2c. Criar o Lançamento Financeiro (Apenas para Venda Direta) ---
                 if (saleType === 'direta') {
-                    const financeData = {
-                        descricao: `Venda Direta #${newSaleRef.id.substring(0, 6)}`,
-                        valor: total, // Valor final com desconto
-                        tipo: 'Entrada',
-                        data: serverTimestamp(), // Data em que a venda foi finalizada
-                        vencimento: null, // Venda direta não tem vencimento
-                        pago: true, // Venda direta já entra como paga
-                        saleId: newSaleRef.id, // Link para a venda
-                        ownerId: userId,
-                            paymentMethod: mainPaymentMethod,
-                            paymentSplits: paymentSplits
-                    };
-                    const newFinanceRef = doc(collection(db, financeCollectionPath));
-                    batch.set(newFinanceRef, financeData);
+                    const paidSplits = paymentSplits.filter(s => s.method !== 'A Receber');
+                    const pendingSplits = paymentSplits.filter(s => s.method === 'A Receber');
+
+                    let paidTotal = paidSplits.reduce((acc, s) => acc + s.value, 0);
+                    let pendingTotal = pendingSplits.reduce((acc, s) => acc + s.value, 0);
+
+                    if (paidTotal > 0) {
+                        const financeData = {
+                            descricao: `Venda Direta #${newSaleRef.id.substring(0, 6)}`,
+                            valor: paidTotal,
+                            tipo: 'Entrada',
+                            data: serverTimestamp(),
+                            vencimento: null,
+                            pago: true,
+                            saleId: newSaleRef.id,
+                            ownerId: userId,
+                            paymentMethod: paidSplits.length === 1 ? paidSplits[0].method : 'Múltiplas Formas',
+                            paymentSplits: paidSplits
+                        };
+                        batch.set(doc(collection(db, financeCollectionPath)), financeData);
+                    }
+                    
+                    if (pendingTotal > 0) {
+                        pendingSplits.forEach((split, idx) => {
+                            const futureDateStr = split.expectedDate || getFutureDateString(30);
+                            const descPrefix = pendingSplits.length > 1 ? `A Receber (${idx+1}/${pendingSplits.length})` : `A Receber`;
+                            const pendingData = {
+                                descricao: `${descPrefix}: Venda #${newSaleRef.id.substring(0, 6)}`,
+                                valor: split.value,
+                                tipo: 'Entrada',
+                                data: serverTimestamp(),
+                                vencimento: futureDateStr,
+                                pago: false,
+                                saleId: newSaleRef.id,
+                                ownerId: userId,
+                                paymentMethod: 'A Receber',
+                                paymentSplits: [split]
+                            };
+                            batch.set(doc(collection(db, financeCollectionPath)), pendingData);
+                        });
+                    }
                 }
 
                 // --- 3. Executar o Pacote (Batch) ---
@@ -9667,9 +10928,9 @@ function renderBillsTab(entries) {
                 const totalInput = document.getElementById('income-value');
                 const errorP = document.getElementById('income-split-error');
 
-                function addSplitRow(method, value) {
+            function addSplitRow(method, value, expectedDate = '') {
                     const row = document.createElement('div');
-                    row.className = 'flex items-center space-x-2 split-row';
+                row.className = 'flex flex-wrap sm:flex-nowrap items-center gap-2 split-row mt-2';
                     row.innerHTML = `
                         <select class="split-method flex-1 px-3 py-2 border rounded-md">
                             <option value="Dinheiro" ${method === 'Dinheiro' ? 'selected' : ''}>Dinheiro (Caixa Físico)</option>
@@ -9678,15 +10939,28 @@ function renderBillsTab(entries) {
                             <option value="Cartão de Crédito" ${method === 'Cartão de Crédito' ? 'selected' : ''}>Cartão de Crédito (Conta Bancária)</option>
                             <option value="Cartão de Débito" ${method === 'Cartão de Débito' ? 'selected' : ''}>Cartão de Débito (Conta Bancária)</option>
                             <option value="Boleto" ${method === 'Boleto' ? 'selected' : ''}>Boleto (Conta Bancária)</option>
+                            <option value="A Receber" ${method === 'A Receber' ? 'selected' : ''}>A Receber (Ficará pendente)</option>
                         </select>
                         <input type="number" step="0.01" class="split-value w-32 px-3 py-2 border rounded-md" value="${value.toFixed(2)}">
-                        <button type="button" class="btn-remove-split text-red-500 hover:text-red-700 px-2">
+                    <input type="date" class="split-date w-36 px-3 py-2 text-sm border rounded-md ${method === 'A Receber' ? '' : 'hidden'}" value="${expectedDate}" title="Previsão de Recebimento">
+                    <button type="button" class="btn-remove-split text-red-500 hover:text-red-700 px-2 shrink-0">
                             <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                         </button>
                     `;
                     container.appendChild(row);
                     lucide.createIcons();
                     row.querySelector('.btn-remove-split').onclick = () => { row.remove(); if(container.children.length === 0) addSplitRow('Dinheiro', 0); };
+                
+                const methodSelect = row.querySelector('.split-method');
+                const dateInput = row.querySelector('.split-date');
+                methodSelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'A Receber') {
+                        dateInput.classList.remove('hidden');
+                        if (!dateInput.value) dateInput.value = getFutureDateString(30);
+                    } else {
+                        dateInput.classList.add('hidden');
+                    }
+                });
                 }
 
                 addSplitRow('Dinheiro', 0);
@@ -9733,8 +11007,10 @@ function renderBillsTab(entries) {
                         splitRows.forEach(row => {
                             const method = row.querySelector('.split-method').value;
                             const splitVal = parseFloat(row.querySelector('.split-value').value) || 0;
+                        const dateInput = row.querySelector('.split-date');
+                        const expectedDate = (method === 'A Receber' && dateInput) ? dateInput.value : null;
                             if (splitVal > 0) {
-                                paymentSplits.push({ method, value: splitVal });
+                            paymentSplits.push({ method, value: splitVal, expectedDate });
                                 splitsTotal += splitVal;
                             }
                         });
@@ -9759,21 +11035,50 @@ function renderBillsTab(entries) {
 
                         const dateObj = new Date(dateStr + 'T00:00:00');
                         const timestamp = Timestamp.fromDate(dateObj);
-
-                        const financeData = {
-                            descricao: desc,
-                            valor: val,
-                            tipo: 'Entrada',
-                            data: timestamp,
-                            vencimento: null,
-                            pago: true, // Entradas avulsas já entram como pagas (recebidas)
-                            ownerId: userId,
-                            paymentMethod: mainPaymentMethod,
-                            paymentSplits: paymentSplits
-                        };
-
+                        
+                        const paidSplits = paymentSplits.filter(s => s.method !== 'A Receber');
+                        const pendingSplits = paymentSplits.filter(s => s.method === 'A Receber');
+                        let paidTotal = paidSplits.reduce((acc, s) => acc + s.value, 0);
+                        let pendingTotal = pendingSplits.reduce((acc, s) => acc + s.value, 0);
+                        
+                        const batch = writeBatch(db);
                         const collectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
-                        await addDoc(collection(db, collectionPath), financeData);
+
+                        if (paidTotal > 0) {
+                            const financeData = {
+                                descricao: desc,
+                                valor: paidTotal,
+                                tipo: 'Entrada',
+                                data: timestamp,
+                                vencimento: null,
+                                pago: true,
+                                ownerId: userId,
+                                paymentMethod: paidSplits.length === 1 ? paidSplits[0].method : 'Múltiplas Formas',
+                                paymentSplits: paidSplits
+                            };
+                            batch.set(doc(collection(db, collectionPath)), financeData);
+                        }
+                        
+                        if (pendingTotal > 0) {
+                            pendingSplits.forEach((split, idx) => {
+                                const futureDateStr = split.expectedDate || getFutureDateString(30);
+                                const descPrefix = pendingSplits.length > 1 ? `A Receber (${idx+1}/${pendingSplits.length})` : `A Receber`;
+                                const pendingData = {
+                                    descricao: `${descPrefix}: ${desc}`,
+                                    valor: split.value,
+                                    tipo: 'Entrada',
+                                    data: timestamp,
+                                    vencimento: futureDateStr,
+                                    pago: false,
+                                    ownerId: userId,
+                                    paymentMethod: 'A Receber',
+                                    paymentSplits: [split]
+                                };
+                                batch.set(doc(collection(db, collectionPath)), pendingData);
+                            });
+                        }
+
+                        await batch.commit();
 
                         hideModal();
                         showModal("Sucesso!", "Entrada avulsa registrada com sucesso.");
@@ -9901,14 +11206,41 @@ function renderBillsTab(entries) {
             });
         }
 
+        // --- "LIGA" O DROPDOWN DE NOVA TRANSAÇÃO ---
+        const btnOpenNewTransaction = document.getElementById('btn-open-new-transaction');
+        const dropdownNewTransaction = document.getElementById('dropdown-new-transaction');
+        const btnOpenAddIncomeDrop = document.getElementById('btn-open-add-income-drop');
+
+        if (btnOpenNewTransaction && dropdownNewTransaction) {
+            btnOpenNewTransaction.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdownNewTransaction.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!dropdownNewTransaction.contains(e.target)) {
+                    dropdownNewTransaction.classList.add('hidden');
+                }
+            });
+        }
+        
+        if (btnOpenAddIncomeDrop) {
+            btnOpenAddIncomeDrop.addEventListener('click', () => {
+                dropdownNewTransaction.classList.add('hidden');
+                const btnNewIncomeOriginal = document.getElementById('btn-new-income');
+                if (btnNewIncomeOriginal) btnNewIncomeOriginal.click();
+            });
+        }
+
         // --- "LIGA" O MODAL DE NOVA CONTA ---
-        const btnOpenAddBill = document.getElementById('btn-open-add-bill');
+        const btnOpenAddBillDrop = document.getElementById('btn-open-add-bill-drop');
         const modalAddBill = document.getElementById('modal-add-bill');
         const btnCloseModalAddBill = document.getElementById('btn-close-modal-add-bill');
         const btnCancelFormBill = document.getElementById('btn-cancel-form-bill');
 
-        if (btnOpenAddBill && modalAddBill) {
-            btnOpenAddBill.addEventListener('click', () => {
+        if (btnOpenAddBillDrop && modalAddBill) {
+            btnOpenAddBillDrop.addEventListener('click', () => {
+                if (dropdownNewTransaction) dropdownNewTransaction.classList.add('hidden');
                 modalAddBill.classList.remove('hidden');
                 lucide.createIcons(); // Garante a renderização dos ícones (ex: botão de adicionar plano)
                 const billDueDateInput = document.getElementById('bill-due-date');
@@ -10160,10 +11492,11 @@ function renderBillsTab(entries) {
         const cardFilterLate = document.getElementById('card-filter-late');
         const cardFilterSoon = document.getElementById('card-filter-soon');
         const cardFilterAll = document.getElementById('card-filter-all');
+        const cardFilterReceivable = document.getElementById('card-filter-receivable');
 
         function updateBillMetricCardsUI() {
             // Tira o destaque de todos e aplica uma opacidade leve para mostrar que estão inativos
-            [cardFilterLate, cardFilterSoon, cardFilterAll].forEach(card => {
+            [cardFilterLate, cardFilterSoon, cardFilterAll, cardFilterReceivable].forEach(card => {
                 if (card) {
                     card.classList.remove('ring-2', 'ring-indigo-500', 'scale-105');
                     card.style.opacity = '0.5';
@@ -10174,6 +11507,7 @@ function renderBillsTab(entries) {
             let activeCard = cardFilterAll;
             if (currentBillMetricFilter === 'late') activeCard = cardFilterLate;
             if (currentBillMetricFilter === 'soon') activeCard = cardFilterSoon;
+            if (currentBillMetricFilter === 'receivable') activeCard = cardFilterReceivable;
 
             // Dá destaque ao ativo
             if (activeCard) {
@@ -10192,6 +11526,7 @@ function renderBillsTab(entries) {
 
         if (cardFilterLate) cardFilterLate.addEventListener('click', () => toggleMetricFilter('late'));
         if (cardFilterSoon) cardFilterSoon.addEventListener('click', () => toggleMetricFilter('soon'));
+        if (cardFilterReceivable) cardFilterReceivable.addEventListener('click', () => toggleMetricFilter('receivable'));
         if (cardFilterAll) cardFilterAll.addEventListener('click', () => { currentBillMetricFilter = 'all'; updateBillMetricCardsUI(); if (allFinancialEntries) renderBillsTab(allFinancialEntries); });
 
         updateBillMetricCardsUI(); // Chama na inicialização para ativar visualmente o card de "Total"
@@ -10482,7 +11817,7 @@ function renderBillsTab(entries) {
                         </div>                        
                     </div>
                     <div>
-                        <label class="block text-sm font-medium">URL da Imagem (Opcional)</label>
+                        <label class="block text-sm font-medium">URL da Imagem Principal (Opcional)</label>
                     <div class="flex items-start space-x-4 mt-1">
                         <div class="flex-1">
                             <input type="url" id="edit-prod-foto" class="w-full px-3 py-2 border rounded-md" value="${product.fotoUrl || ''}" placeholder="https://exemplo.com/imagem.jpg">
@@ -10494,6 +11829,12 @@ function renderBillsTab(entries) {
                             </div>
                         </div>
                     </div>
+                    <div id="edit-extra-images-container" class="mt-2 space-y-2">
+                        <!-- Imagens extras renderizadas aqui -->
+                    </div>
+                    <button type="button" id="btn-edit-add-extra-image" class="mt-2 text-sm text-indigo-600 hover:underline flex items-center">
+                        <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Adicionar imagem extra
+                    </button>
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Descrição</label>
@@ -10554,6 +11895,16 @@ function renderBillsTab(entries) {
                 // Seta o valor correto do <select>
                 document.getElementById('edit-prod-categoria').value = product.categoria;
                 document.getElementById('edit-prod-fornecedor').value = product.fornecedor || ''; // <-- ADICIONE ESTA LINHA
+
+                // Imagens Extras
+                if (product.fotosExtras && Array.isArray(product.fotosExtras)) {
+                    product.fotosExtras.forEach(url => {
+                        createExtraImageField('edit-extra-images-container', 'edit-extra-prod-foto', 'edit-extra-foto', url);
+                    });
+                }
+                document.getElementById('btn-edit-add-extra-image').onclick = () => {
+                    createExtraImageField('edit-extra-images-container', 'edit-extra-prod-foto', 'edit-extra-foto');
+                };
 
                 // Lógica para calcular preço de venda (igual à do form principal)
                 const editCusto = document.getElementById('edit-prod-custo');
@@ -10680,6 +12031,14 @@ function renderBillsTab(entries) {
                             }
                         }
                         // --- FIM DA VERIFICAÇÃO ---
+                        
+                        const extraImageInputs = document.querySelectorAll('.edit-extra-prod-foto');
+                        const extraFotos = [];
+                        extraImageInputs.forEach(input => {
+                            const url = input.value.trim();
+                            if(url) extraFotos.push(formatImageUrl(url));
+                        });
+
                         // Monta o objeto atualizado
                         const updatedProduct = {
                             nome: document.getElementById('edit-prod-nome').value,
@@ -10695,6 +12054,7 @@ function renderBillsTab(entries) {
                             descricao: document.getElementById('edit-prod-desc').value,
                             // Não mexemos na fotoUrl aqui, ela permanece a mesma
                             fotoUrl: formatImageUrl(document.getElementById('edit-prod-foto').value.trim()),
+                            fotosExtras: extraFotos
                         };
 
                         // Envia a atualização
@@ -10747,7 +12107,7 @@ function renderBillsTab(entries) {
             </div>
             <div>
                 <label class="block text-sm font-medium">Valor (R$)</label>
-                <input type="number" id="edit-bill-value" step="0.01" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${bill.valor}">
+                <input type="number" id="edit-bill-value" step="0.01" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${Number(bill.valor).toFixed(2)}">
             </div>
             <div>
                 <label class="block text-sm font-medium">Data de Vencimento</label>
@@ -10855,7 +12215,7 @@ function renderBillsTab(entries) {
             
             const existingSplits = entry.paymentSplits && entry.paymentSplits.length > 0 
                 ? entry.paymentSplits 
-                : [{ method: entry.paymentMethod || 'Dinheiro', value: entry.valor }];
+                : [{ method: entry.paymentMethod || 'Dinheiro', value: parseFloat(Number(entry.valor).toFixed(2)) }];
 
             modalTitle.textContent = 'Editar Lançamento Financeiro';
             modalBody.innerHTML = `
@@ -10867,7 +12227,7 @@ function renderBillsTab(entries) {
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium">Valor Total (R$)</label>
-                            <input type="number" id="edit-entry-value" step="0.01" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${entry.valor}">
+                            <input type="number" id="edit-entry-value" step="0.01" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${Number(entry.valor).toFixed(2)}">
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Data</label>
@@ -10900,9 +12260,9 @@ function renderBillsTab(entries) {
             const totalInput = document.getElementById('edit-entry-value');
             const errorP = document.getElementById('edit-split-error');
 
-            function addSplitRow(method, value) {
+            function addSplitRow(method, value, expectedDate = '') {
                 const row = document.createElement('div');
-                row.className = 'flex items-center space-x-2 split-row';
+                row.className = 'flex flex-wrap sm:flex-nowrap items-center gap-2 split-row mt-2';
                 row.innerHTML = `
                     <select class="split-method flex-1 px-3 py-2 border rounded-md">
                         <option value="Dinheiro" ${method === 'Dinheiro' ? 'selected' : ''}>Dinheiro (Caixa Físico)</option>
@@ -10911,18 +12271,31 @@ function renderBillsTab(entries) {
                         <option value="Cartão de Crédito" ${method === 'Cartão de Crédito' ? 'selected' : ''}>Cartão de Crédito (Conta Bancária)</option>
                         <option value="Cartão de Débito" ${method === 'Cartão de Débito' ? 'selected' : ''}>Cartão de Débito (Conta Bancária)</option>
                         <option value="Boleto" ${method === 'Boleto' ? 'selected' : ''}>Boleto (Conta Bancária)</option>
+                        <option value="A Receber" ${method === 'A Receber' ? 'selected' : ''}>A Receber (Ficará pendente)</option>
                     </select>
                     <input type="number" step="0.01" class="split-value w-32 px-3 py-2 border rounded-md" value="${value.toFixed(2)}">
-                    <button type="button" class="btn-remove-split text-red-500 hover:text-red-700 px-2">
+                    <input type="date" class="split-date w-36 px-3 py-2 text-sm border rounded-md ${method === 'A Receber' ? '' : 'hidden'}" value="${expectedDate}" title="Previsão de Recebimento">
+                    <button type="button" class="btn-remove-split text-red-500 hover:text-red-700 px-2 shrink-0">
                         <i data-lucide="x" class="w-5 h-5 pointer-events-none"></i>
                     </button>
                 `;
                 container.appendChild(row);
                 lucide.createIcons();
-                row.querySelector('.btn-remove-split').onclick = () => row.remove();
+                row.querySelector('.btn-remove-split').onclick = () => { row.remove(); if(container.children.length === 0) addSplitRow('Dinheiro', 0); };
+                
+                const methodSelect = row.querySelector('.split-method');
+                const dateInput = row.querySelector('.split-date');
+                methodSelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'A Receber') {
+                        dateInput.classList.remove('hidden');
+                        if (!dateInput.value) dateInput.value = getFutureDateString(30);
+                    } else {
+                        dateInput.classList.add('hidden');
+                    }
+                });
             }
 
-            existingSplits.forEach(split => addSplitRow(split.method, split.value));
+            existingSplits.forEach(split => addSplitRow(split.method, split.value, split.expectedDate || ''));
             btnAddSplit.onclick = () => addSplitRow('Pix', 0);
 
             setupTwoSplitsLogic(
@@ -10965,8 +12338,10 @@ function renderBillsTab(entries) {
                     splitRows.forEach(row => {
                         const method = row.querySelector('.split-method').value;
                         const splitVal = parseFloat(row.querySelector('.split-value').value) || 0;
+                        const dateInput = row.querySelector('.split-date');
+                        const expectedDate = (method === 'A Receber' && dateInput) ? dateInput.value : null;
                         if (splitVal > 0) {
-                            paymentSplits.push({ method, value: splitVal });
+                            paymentSplits.push({ method, value: splitVal, expectedDate });
                             splitsTotal += splitVal;
                         }
                     });
@@ -11452,7 +12827,7 @@ async function drawTotalReportPDF(reportData, options) {
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${entryDate}</td>
                             <td class="px-4 py-3 text-sm text-gray-900">${entry.descricao}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm"><span class="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">${entry.tipo}</span></td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-green-600 text-right">+ R$ ${entry.valor.toFixed(2).replace('.', ',')}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-green-600 text-right sensitive-value">+ R$ ${entry.valor.toFixed(2).replace('.', ',')}</td>
                         </tr>
                     `;
                 });
@@ -11460,7 +12835,7 @@ async function drawTotalReportPDF(reportData, options) {
                 tableHTML += `
                         <tr class="bg-gray-50 font-bold border-t-2">
                             <td colspan="3" class="px-4 py-3 text-right text-gray-900 uppercase text-xs tracking-wider">Total:</td>
-                            <td class="px-4 py-3 text-right text-green-600">R$ ${total.toFixed(2).replace('.', ',')}</td>
+                            <td class="px-4 py-3 text-right text-green-600 sensitive-value">R$ ${total.toFixed(2).replace('.', ',')}</td>
                         </tr>
                 `;
             }
@@ -11545,7 +12920,7 @@ async function drawTotalReportPDF(reportData, options) {
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${entryDate}</td>
                             <td class="px-4 py-3 text-sm text-gray-900">${entry.descricao}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm"><span class="px-2 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">${entry.tipo}</span></td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-red-600 text-right">- R$ ${entry.valor.toFixed(2).replace('.', ',')}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-red-600 text-right sensitive-value">- R$ ${entry.valor.toFixed(2).replace('.', ',')}</td>
                         </tr>
                     `;
                 });
@@ -11553,7 +12928,7 @@ async function drawTotalReportPDF(reportData, options) {
                 tableHTML += `
                         <tr class="bg-gray-50 font-bold border-t-2">
                             <td colspan="3" class="px-4 py-3 text-right text-gray-900 uppercase text-xs tracking-wider">Total:</td>
-                            <td class="px-4 py-3 text-right text-red-600">- R$ ${total.toFixed(2).replace('.', ',')}</td>
+                            <td class="px-4 py-3 text-right text-red-600 sensitive-value">- R$ ${total.toFixed(2).replace('.', ',')}</td>
                         </tr>
                 `;
             }
@@ -11653,7 +13028,7 @@ async function drawTotalReportPDF(reportData, options) {
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${entryDateString}</td>
                             <td class="px-4 py-3 text-sm text-gray-900">${entry.descricao}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm">${statusBadge}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-red-600 text-right">R$ ${entry.valor.toFixed(2).replace('.', ',')}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-red-600 text-right sensitive-value">R$ ${entry.valor.toFixed(2).replace('.', ',')}</td>
                         </tr>
                     `;
                 });
@@ -11661,7 +13036,7 @@ async function drawTotalReportPDF(reportData, options) {
                 tableHTML += `
                         <tr class="bg-gray-50 font-bold border-t-2">
                             <td colspan="3" class="px-4 py-3 text-right text-gray-900 uppercase text-xs tracking-wider">Total a Pagar:</td>
-                            <td class="px-4 py-3 text-right text-red-600">R$ ${total.toFixed(2).replace('.', ',')}</td>
+                            <td class="px-4 py-3 text-right text-red-600 sensitive-value">R$ ${total.toFixed(2).replace('.', ',')}</td>
                         </tr>
                 `;
             }
@@ -11765,7 +13140,7 @@ async function drawTotalReportPDF(reportData, options) {
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${entryDate}</td>
                             <td class="px-4 py-3 text-sm text-gray-900">${entry.descricao}${paymentMethodLabel}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm"><span class="px-2 py-1 text-xs font-medium ${badgeClass} rounded-full">${entry.tipo}</span></td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium ${valClass} text-right">${valPrefix} R$ ${valueForType.toFixed(2).replace('.', ',')}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium ${valClass} text-right sensitive-value">${valPrefix} R$ ${valueForType.toFixed(2).replace('.', ',')}</td>
                         </tr>
                     `;
                 });
@@ -11840,4 +13215,15 @@ async function drawTotalReportPDF(reportData, options) {
             const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             sumStart.value = formatDateToYYYYMMDD(firstDay);
             sumEnd.value = formatDateToYYYYMMDD(lastDay);
+        }
+        
+        // Inicializa as datas de Contas Pendentes para o mês atual + próximo mês
+        const billsStart = document.getElementById('bills-filter-start');
+        const billsEnd = document.getElementById('bills-filter-end');
+        if (billsStart && billsEnd && !billsStart.value && !billsEnd.value) {
+            const now = new Date();
+            const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDayNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+            billsStart.value = formatDateToYYYYMMDD(firstDayThisMonth);
+            billsEnd.value = formatDateToYYYYMMDD(lastDayNextMonth);
         }
