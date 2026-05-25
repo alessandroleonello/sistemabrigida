@@ -6866,6 +6866,7 @@ function showBatchBillEditModal(ids) {
                     "Ref. 2": item._exportRef2 || "",
                     "Categoria": item._exportCategoria,
                     "Quantidade": item.quantity || 1,
+                    "Preço": item.venda || 0,
                 };
 
                 // Cria as colunas dinamicamente (URL 1, URL 2...)
