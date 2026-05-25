@@ -12363,21 +12363,71 @@ function renderBillsTab(entries) {
                         return;
                     }
 
-                    let mainPaymentMethod = paymentSplits.length === 1 ? paymentSplits[0].method : 'Múltiplas Formas';
-
                     const dateObj = new Date(dateVal + 'T00:00:00');
                     const timestamp = Timestamp.fromDate(dateObj);
 
+                    const paidSplits = paymentSplits.filter(s => s.method !== 'A Receber');
+                    const pendingSplits = paymentSplits.filter(s => s.method === 'A Receber');
+                    let paidTotal = paidSplits.reduce((acc, s) => acc + s.value, 0);
+                    let pendingTotal = pendingSplits.reduce((acc, s) => acc + s.value, 0);
+
+                    const batch = writeBatch(db);
                     const collectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
                     const entryRef = doc(db, collectionPath, entryId);
 
-                    await updateDoc(entryRef, {
-                        descricao: desc,
-                        valor: val,
-                        data: timestamp,
-                        paymentMethod: mainPaymentMethod,
-                        paymentSplits: paymentSplits
-                    });
+                    if (paidTotal > 0 && pendingTotal > 0) {
+                        // Misto: Atualiza a atual para o valor pago e cria novas pendentes
+                        batch.update(entryRef, {
+                            descricao: desc,
+                            valor: paidTotal,
+                            data: timestamp,
+                            pago: true,
+                            paymentMethod: paidSplits.length === 1 ? paidSplits[0].method : 'Múltiplas Formas',
+                            paymentSplits: paidSplits
+                        });
+
+                        pendingSplits.forEach((split, idx) => {
+                            const futureDateStr = split.expectedDate || getFutureDateString(30);
+                            const descPrefix = pendingSplits.length > 1 ? `A Receber (${idx+1}/${pendingSplits.length})` : `A Receber`;
+                            const newDocRef = doc(collection(db, collectionPath));
+                            batch.set(newDocRef, {
+                                descricao: `${descPrefix}: ${desc}`,
+                                valor: split.value,
+                                tipo: entry.tipo, // Mantém o tipo original (Entrada/Saída)
+                                data: timestamp,
+                                vencimento: futureDateStr,
+                                pago: false,
+                                ownerId: userId,
+                                paymentMethod: 'A Receber',
+                                paymentSplits: [split],
+                                saleId: entry.saleId || null,
+                                planoContas: entry.planoContas || 'Despesas Gerais'
+                            });
+                        });
+                    } else if (pendingTotal > 0) {
+                        // Tudo A Receber (Reverte para Pendente)
+                        batch.update(entryRef, {
+                            descricao: desc,
+                            valor: val,
+                            data: timestamp,
+                            vencimento: pendingSplits[0].expectedDate || getFutureDateString(30),
+                            pago: false,
+                            paymentMethod: pendingSplits.length === 1 ? pendingSplits[0].method : 'Múltiplas Formas',
+                            paymentSplits: paymentSplits
+                        });
+                    } else {
+                        // Tudo Pago
+                        batch.update(entryRef, {
+                            descricao: desc,
+                            valor: val,
+                            data: timestamp,
+                            pago: true,
+                            paymentMethod: paidSplits.length === 1 ? paidSplits[0].method : 'Múltiplas Formas',
+                            paymentSplits: paymentSplits
+                        });
+                    }
+
+                    await batch.commit();
 
                     hideModal();
                     showModal("Sucesso!", "Lançamento atualizado com sucesso.");
