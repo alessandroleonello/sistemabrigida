@@ -1,1984 +1,568 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Brígida - Controle</title>
-
-    <!-- Favicon do Site -->
-    <link rel="icon" type="image/png"
-        href="https://i.ibb.co/Z6XQpZzQ/Green-and-Brown-Minimalist-Studio-Logo-Design-Template-1.png">
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Ícones (Lucide) -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-
-    <!-- Biblioteca para Gráficos (Chart.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Biblioteca para ler arquivos Excel (.xlsx) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- Biblioteca para ler arquivos CSV (PapaParse) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-
-    <!-- Fontes (Inter) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Bibliotecas para Funcionalidades -->
-    <!-- jsBarcode para códigos de barra -->
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <!-- jsPDF e jsPDF-AutoTable para relatórios em PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-
-    <!-- JSZip e FileSaver para gerar arquivos ZIP -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-    <link rel="stylesheet" href="style.css">
+    <title>Gestão de Revendas - Semijoias</title>
+    <link rel="icon" href="https://i.ibb.co/Z6XQpZzQ/Green-and-Brown-Minimalist-Studio-Logo-Design-Template-1.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-
-<body class="bg-gray-100 hide-values">
-
-    <!-- =========== TELA DE AUTENTICAÇÃO =========== -->
-    <div id="page-auth" class="flex items-center justify-center min-h-screen">
-        <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-            <h2 class="text-3xl font-bold text-center text-gray-900">Sistema Brígida</h2>
-
-            <!-- Abas de Login / Registrar -->
-            <div class="flex border-b">
-                <button id="tab-login"
-                    class="flex-1 py-2 font-medium text-center text-indigo-600 border-b-2 border-indigo-600">Entrar</button>
-                <button id="tab-register" class="flex-1 py-2 font-medium text-center text-gray-500">Registrar</button>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-brand">
+                <div class="brand-icon">💎</div>
+                <h1 class="brand-title">Gestão Semijoias</h1>
+                <p class="brand-subtitle">Sistema de Vendas em Consignação</p>
             </div>
-
-            <!-- Formulário de Login -->
-            <form id="form-login" class="space-y-6">
-                <div>
-                    <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input id="login-email" type="email" required
-                        class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="login-password" class="block text-sm font-medium text-gray-700">Senha</label>
-                    <input id="login-password" type="password" required
-                        class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <button type="submit"
-                    class="w-full px-4 py-2 font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Entrar
-                </button>
-            </form>
-
-            <!-- Formulário de Registro (escondido por padrão) -->
-            <form id="form-register" class="hidden space-y-6">
-                <div>
-                    <label for="register-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input id="register-email" type="email" required
-                        class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="register-password" class="block text-sm font-medium text-gray-700">Senha</label>
-                    <input id="register-password" type="password" required
-                        class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <button type="submit"
-                    class="w-full px-4 py-2 font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Criar Conta
-                </button>
-            </form>
-            <p id="auth-error" class="text-sm text-center text-red-600"></p>
+            
+            <div class="login-form">
+                <input type="email" id="loginEmail" placeholder="E-mail" class="input-field">
+                <input type="password" id="loginPassword" placeholder="Senha" class="input-field">
+                <button onclick="handleLogin()" class="btn-primary">Entrar</button>
+                <p class="login-footer">Não tem cadastro? Entre em contato com o administrador</p>
+            </div>
         </div>
     </div>
 
-    <!-- =========== APLICAÇÃO PRINCIPAL (Escondida até o login) =========== -->
-    <div id="page-main-app" class="hidden">
-        <div class="flex h-screen w-full overflow-hidden">
-            <!-- Overlay para Mobile -->
-            <div id="mobile-overlay" class="fixed inset-0 z-20 hidden bg-black bg-opacity-50 md:hidden"
-                onclick="toggleMobileSidebar()"></div>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Carregando...</p>
+    </div>
 
-            <!-- Menu Lateral (Sidebar) -->
-            <nav id="sidebar"
-                class="fixed inset-y-0 left-0 z-30 flex flex-col w-64 text-white transition-all duration-300 transform -translate-x-full bg-gray-800 md:relative md:translate-x-0">
-                <div class="flex items-center justify-between h-16 px-4 border-b border-gray-700">
-                    <!-- Botão de Recolher (Desktop) -->
-                    <button id="btn-collapse-desktop"
-                        class="hidden pt-2 mt-4 text-gray-400  md:flex items-center justify-center hover:text-white"
-                        onclick="toggleDesktopSidebar()">
-                        <i data-lucide="chevron-left" id="collapse-icon"></i>
-                    </button>
-                    <h1 id="sidebar-title" class="text-xl font-bold whitespace-nowrap overflow-hidden">Sistema Brígida
-                    </h1>
-                    <button class="text-gray-400 md:hidden hover:text-white" onclick="toggleMobileSidebar()">
-                        <i data-lucide="x"></i>
-                    </button>
+    <!-- Admin Screen -->
+    <div id="adminScreen" class="screen">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-brand">
+                    <img src="https://i.ibb.co/Z6XQpZzQ/Green-and-Brown-Minimalist-Studio-Logo-Design-Template-1.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
+                    <h1 class="header-title">Painel Administrativo</h1>
                 </div>
-                <div class="flex-1 p-4 space-y-2 overflow-y-auto">
-                    <a href="#" data-page="page-dashboard"
-                        class="sidebar-link active flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
-                        <i data-lucide="layout-dashboard" class="flex-shrink-0"></i>
-                        <span class="sidebar-text whitespace-nowrap">Dashboard</span>
-                    </a>
-                    <a href="#" data-page="page-produtos"
-                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
-                        <i data-lucide="package" class="flex-shrink-0"></i>
-                        <span class="sidebar-text whitespace-nowrap">Produtos</span>
-                    </a>
-                     <a href="#" data-page="page-maletas"
-                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
-                        <i data-lucide="briefcase" class="flex-shrink-0"></i>
-                        <span class="sidebar-text whitespace-nowrap">Maletas</span>
-                    </a>
-                    <a href="#" data-page="page-vendas"
-                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
-                        <i data-lucide="shopping-cart" class="flex-shrink-0"></i>
-                        <span class="sidebar-text whitespace-nowrap">Vendas</span>
-                    </a>
-                    <a href="#" data-page="page-pessoas"
-                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
-                        <i data-lucide="users" class="flex-shrink-0"></i>
-                        <span class="sidebar-text whitespace-nowrap">Pessoas</span>
-                    </a>
-                    <a href="#" data-page="page-financeiro"
-                        class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
-                        <i data-lucide="dollar-sign" class="flex-shrink-0"></i>
-                        <span class="sidebar-text whitespace-nowrap">Financeiro</span>
-                    </a>
-
-                    <!-- Imagens do Logotipo / Favicon -->
-                    <div class="mt-8 pb-4 flex justify-center items-center relative group">
-                        <!-- Substitua a URL no 'src' abaixo pela URL do seu Logotipo -->
-                        <img id="sidebar-logo" src="https://i.ibb.co/wZgsfJ6m/LOGO-ATUALIZADO-Photoroom.png"
-                            alt="Logotipo da Empresa" class="max-h-40 w-auto transition-opacity duration-300">
-                        <!-- Substitua a URL no 'src' abaixo pela URL do seu Favicon -->
-                        <img id="sidebar-favicon"
-                            src="https://i.ibb.co/Z6XQpZzQ/Green-and-Brown-Minimalist-Studio-Logo-Design-Template-1.png"
-                            alt="Favicon da Empresa" class="max-h-8 w-auto hidden transition-opacity duration-300">
-                        <button id="btn-edit-logo" class="absolute top-0 right-4 p-1.5 bg-gray-700 rounded-md text-gray-300 hover:text-white hidden group-hover:block transition-colors shadow-sm border border-gray-600" title="Alterar Logotipo">
-                            <i data-lucide="edit-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button id="toggleSoundBtn" onclick="toggleAdminSound()" style="padding: 6px 12px; font-size: 0.9em; background: transparent; border: 1px solid rgba(255,255,255,0.5); color: white; border-radius: 4px; cursor: pointer; transition: all 0.2s;" title="Ligar/Desligar Som">🔊 </button>
+                    <button id="testSoundBtn" onclick="testAdminSound()" style="padding: 6px 12px; font-size: 0.9em; background: transparent; border: 1px solid rgba(255,255,255,0.5); color: white; border-radius: 4px; cursor: pointer; transition: all 0.2s;" title="Ouvir Som de Venda Manualmente">▶️</button>
+                    <button onclick="logout()" class="btn-logout">Sair</button>
                 </div>
-                <div class="p-4 border-t border-gray-700">
-                    <div id="user-info" class="mb-2 text-sm text-gray-400 whitespace-nowrap overflow-hidden">Carregando
-                    </div>
-                    <button id="btn-logout"
-                        class="flex items-center justify-center w-full px-3 py-2 space-x-2 text-white bg-red-600 rounded-md hover:bg-red-700">
-                        <i data-lucide="log-out" class="flex-shrink-0"></i>
-                        <span class="sidebar-text whitespace-nowrap">Sair</span>
-                    </button>
+            </div>
+        </header>
 
-                </div>
-            </nav>
-
-            <!-- Conteúdo Principal -->
-            <main class="flex-1 min-w-0 p-6 overflow-x-hidden overflow-y-auto bg-gray-100 md:p-10">
-                <!-- Top Header (Menu Mobile + Toggle Visibilidade) -->
-                <div class="flex items-center justify-between mb-6">
-                    <button onclick="toggleMobileSidebar()"
-                        class="p-2 text-gray-600 bg-white rounded-md shadow hover:text-gray-900 md:hidden">
-                        <i data-lucide="menu"></i>
-                    </button>
-                    <div class="hidden md:block"></div>
-                    <button id="btn-toggle-values" class="p-2 text-gray-600 bg-white rounded-md shadow hover:text-gray-900 flex items-center space-x-2 ml-auto" title="Mostrar/Ocultar Valores">
-                        <i data-lucide="eye-off" id="icon-toggle-values"></i>
-                        <span class="text-sm font-medium hidden sm:inline" id="text-toggle-values">Valores Ocultos</span>
-                    </button>
-                </div>
-
-                <!-- =========== PÁGINA: DASHBOARD (COM LINKS) =========== -->
-                <div id="page-dashboard" class="page active">
-                    <h2 class="text-3xl font-semibold text-gray-800">Dashboard</h2>
-
-                    <!-- CARDS COM ATALHOS -->
-                    <div class="grid grid-cols-1 gap-6 mt-6 md:grid-cols-2 lg:grid-cols-4">
-
-
-
-                        <!-- Card de Avisos (Não clicável, apenas informa) -->
-                        <div class="p-6 bg-white rounded-lg shadow-md">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 uppercase">Avisos Pendentes</p>
-                                    <p id="dashboard-warnings-count" class="text-3xl font-bold text-red-600">0</p>
-                                </div>
-                                <div class="p-3 text-red-600 bg-red-100 rounded-full">
-                                    <i data-lucide="alert-triangle"></i>
-                                </div>
-                            </div>
-                            <p id="dashboard-warnings-details" class="mt-2 text-sm text-gray-500">Nenhum aviso.</p>
-                        </div>
-
-                        <!-- Card de Vendas (Clicável) -->
-                        <div id="card-link-vendas"
-                            class="p-6 bg-white rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 uppercase">Vendas (Mês)</p>
-                                    <p id="dashboard-sales-value" class="text-3xl font-bold text-green-600 sensitive-value">R$ 0,00</p>
-                                </div>
-                                <div class="p-3 text-green-600 bg-green-100 rounded-full">
-                                    <i data-lucide="trending-up"></i>
-                                </div>
-                            </div>
-                            <p id="dashboard-sales-count" class="mt-2 text-sm text-gray-500">0 vendas realizadas</p>
-                        </div>
-
-                        <!-- Card de Caixa (Clicável) -->
-                        <div id="card-link-financeiro"
-                            class="p-6 bg-white rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 uppercase">Caixa (Mês)</p>
-                                    <p id="dashboard-balance-value" class="text-3xl font-bold text-blue-600 sensitive-value">R$ 0,00</p>
-                                </div>
-                                <div class="p-3 text-blue-600 bg-blue-100 rounded-full">
-                                    <i data-lucide="scale"></i>
-                                </div>
-                            </div>
-                            <p id="dashboard-balance-details" class="mt-2 text-sm text-gray-500 sensitive-value">Ent: R$0, Saí: R$0</p>
-                        </div>
-
-                        <!-- Card de Estoque Baixo (Clicável) -->
-                        <div id="card-link-produtos"
-                            class="p-6 bg-white rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500 uppercase">Estoque Zerado/Baixo</p>
-                                    <p id="dashboard-lowstock-count" class="text-3xl font-bold text-yellow-600">0</p>
-                                </div>
-                                <div class="p-3 text-yellow-600 bg-yellow-100 rounded-full">
-                                    <i data-lucide="package-check"></i>
-                                </div>
-                            </div>
-                            <p class="mt-2 text-sm text-gray-500">Itens com 5 un. ou menos</p>
-                        </div>
-
-
-                    </div>
-
-                    <!-- WIDGETS COM ATALHOS -->
-                    <div class="grid grid-cols-1 gap-6 mt-8 lg:grid-cols-3">
-                        <!-- Card de Ações Rápidas -->
-                        <div class="p-6 bg-white rounded-lg shadow-md">
-                            <p class="text-sm font-medium text-gray-500 uppercase mb-3">Ações Rápidas</p>
-                            <div class="grid grid-cols-2 gap-3">
-                                <button
-                                    class="dashboard-action-btn flex flex-col items-center justify-center p-3 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
-                                    data-target-page="page-produtos" data-target-tab="tab-produtos-add">
-                                    <i data-lucide="plus-circle" class="w-6 h-6 mb-1"></i>
-                                    Novo Produto
-                                </button>
-                                <button
-                                    class="dashboard-action-btn flex flex-col items-center justify-center p-3 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-                                    data-target-page="page-vendas" data-target-tab="tab-vendas-new">
-                                    <i data-lucide="shopping-cart" class="w-6 h-6 mb-1"></i>
-                                    Nova Venda
-                                </button>
-                                <button
-                                    class="dashboard-action-btn flex flex-col items-center justify-center p-3 text-xs font-medium text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-                                    data-target-page="page-pessoas" data-target-tab="tab-pessoas-add">
-                                    <i data-lucide="user-plus" class="w-6 h-6 mb-1"></i>
-                                    Nova Pessoa
-                                </button>
-                                <button
-                                    class="dashboard-action-btn flex flex-col items-center justify-center p-3 text-xs font-medium text-orange-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
-                                    data-target-page="page-produtos" data-target-tab="tab-produtos-labels">
-                                    <i data-lucide="tag" class="w-6 h-6 mb-1"></i>
-                                    Gerar Etiquetas
-                                </button>
-                                <button id="btn-dashboard-new-income"
-                                    class="flex flex-col items-center justify-center p-3 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
-                                    <i data-lucide="arrow-up-circle" class="w-6 h-6 mb-1"></i>
-                                    Nova Entrada
-                                </button>
-                                <button id="btn-dashboard-new-bill"
-                                    class="flex flex-col items-center justify-center p-3 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-                                    <i data-lucide="receipt" class="w-6 h-6 mb-1"></i>
-                                    Nova Despesa
-                                </button>
-                                <button id="btn-dashboard-new-transfer"
-                                    class="flex flex-col items-center justify-center p-3 text-xs font-medium text-cyan-700 bg-cyan-50 rounded-lg hover:bg-cyan-100 transition-colors col-span-2">
-                                    <i data-lucide="arrow-right-left" class="w-6 h-6 mb-1"></i>
-                                    Transferência
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Lista de Avisos (Itens clicáveis) -->
-                        <div class="p-6 bg-white rounded-lg shadow-md lg:col-span-2">
-                            <h3 class="text-lg font-medium">Avisos Importantes</h3>
-                            <ul id="dashboard-warnings-list" class="mt-4 space-y-3">
-                                <li id="dashboard-warnings-placeholder" class="text-sm text-gray-500">Nenhum aviso
-                                    importante no momento.</li>
-                                <!-- JS irá popular aqui -->
-                            </ul>
-                        </div>
-
-                        <div class="p-6 bg-white rounded-lg shadow-md lg:col-span-1">
-                            <h3 class="text-lg font-medium">Balanço Geral</h3>
-                            <p class="text-sm text-gray-500 mt-2">Gere um relatório em PDF com o balanço completo do
-                                sistema.</p>
-
-                            <div class="mt-4 space-y-3">
-                                <label class="flex items-center">
-                                    <input type="checkbox" id="report-include-products" class="rounded text-indigo-600">
-                                    <span class="ml-2 text-sm">Incluir lista de produtos</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" id="report-include-people" class="rounded text-indigo-600">
-                                    <span class="ml-2 text-sm">Incluir lista de pessoas</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" id="report-include-bills" class="rounded text-indigo-600">
-                                    <span class="ml-2 text-sm">Incluir lista de contas</span>
-                                </label>
-                            </div>
-
-                            <button id="btn-generate-total-report"
-                                class="w-full px-4 py-2 mt-6 font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
-                                <i data-lucide="download" class="inline w-5 h-5 mr-1"></i>
-                                Gerar Relatório em PDF
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- =========== PÁGINA: PRODUTOS =========== -->
-                <div id="page-produtos" class="page">
-                    <h2 class="text-3xl font-semibold text-gray-800">Gestão de Produtos</h2>
-                    <!-- Abas da Seção -->
-                    <div class="mt-4 border-b border-gray-200">
-                        <nav class="flex overflow-x-auto scrollbar-hide -mb-px space-x-6" id="product-tabs">
-                            <button data-tab="tab-produtos-view"
-                                class="product-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">Visualizar
-                                Produtos</button>
-                            <button data-tab="tab-produtos-add"
-                                class="product-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Cadastrar
-                                Produto</button>
-                            <button data-tab="tab-produtos-import"
-                                class="product-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Importar
-                                em Lote (CSV)</button>
-                            <button data-tab="tab-produtos-labels"
-                                class="product-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Gerar
-                                Etiquetas</button>
-                            <button data-tab="tab-produtos-estoque"
-                                class="product-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Resumo
-                                de Estoque</button>
-                        </nav>
-                    </div>
-
-                    <!-- Conteúdo da Aba: Visualizar Produtos -->
-                    <div id="tab-produtos-view" class="product-tab-content mt-6">
-                        <div class="space-y-4">
-                            <div class="flex justify-end space-x-2">
-                                <button id="btn-batch-report"
-                                    class="px-4 py-2 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Gerar Relatório</button>
-                                <button id="btn-batch-edit"
-                                    class="px-4 py-2 font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700">Editar
-                                    em Lote</button>
-                                <button id="btn-batch-delete"
-                                    class="px-4 py-2 font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Excluir
-                                    em Lote</button>
-                            </div>
-                            <div
-                                class="p-4 border rounded-lg bg-gray-50 space-y-3 md:space-y-0 md:flex md:items-center md:gap-4">
-                                <div class="flex-grow">
-                                    <label for="product-search-input"
-                                        class="block text-xs font-medium text-gray-600">Filtrar por Nome, Ref. ou
-                                        Categoria</label>
-                                    <input type="search" id="product-search-input" placeholder="Digitar filtro..."
-                                        class="w-full px-3 py-1.5 mt-1 text-sm border rounded-md md:w-full">
-                                </div>
-                                <div class="flex-1">
-                                    <label for="product-date-start" class="block text-xs font-medium text-gray-600">De
-                                        (Cadastro)</label>
-                                    <input type="date" id="product-date-start"
-                                        class="w-full px-3 py-1.5 mt-1 text-sm border rounded-md">
-                                </div>
-                                <div class="flex-1">
-                                    <label for="product-date-end" class="block text-xs font-medium text-gray-600">Até
-                                        (Cadastro)</label>
-                                    <input type="date" id="product-date-end"
-                                        class="w-full px-3 py-1.5 mt-1 text-sm border rounded-md">
-                                </div>
-                                <div class="flex items-center space-x-4 pt-2 md:pt-5">
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" id="product-in-stock-only" class="rounded text-indigo-600 w-4 h-4 mr-2 focus:ring-indigo-500">
-                                        <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Com Estoque</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" id="product-no-photo-only" class="rounded text-indigo-600 w-4 h-4 mr-2 focus:ring-indigo-500">
-                                        <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Sem Foto</span>
-                                    </label>
-                                </div>
-                                <div class="pt-2 md:pt-5">
-                                    <button id="product-clear-filters"
-                                        class="text-xs text-indigo-600 hover:underline whitespace-nowrap">Limpar filtros</button>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-between items-center px-1 mt-2">
-                                <span id="product-filter-counter" class="text-sm text-gray-600">Carregando...</span>
-                            </div>
-
-                        </div>
-                        <div class="mt-2 overflow-x-auto bg-white rounded-lg shadow">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="w-12 px-6 py-3 text-left"><input type="checkbox"
-                                                id="select-all-products" class="rounded"></th>
-                                        <th
-                                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                            Nome / Ref.</th>
-                                        <th
-                                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                            Categoria</th>
-                                        <th
-                                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                            Estoque</th>
-                                        <th
-                                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                            Preço Venda</th>
-                                        <th
-                                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                            Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="product-list-table" class="bg-white divide-y divide-gray-200">
-                                    <!-- Exemplo de item -->
-                                    <tr>
-                                        <td class="px-6 py-4"><input type="checkbox" class="rounded"></td>
-                                        <td class="px-6 py-4"><img
-                                                src="https://placehold.co/40x40/e2e8f0/adb5bd?text=Foto" alt="Produto"
-                                                class="w-10 h-10 rounded-md"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="font-medium">Brinco Argola Ouro</div>
-                                            <div class="text-sm text-gray-500">REF12345</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">Brincos</td>
-                                        <td class="px-6 py-4 whitespace-nowrap"><span
-                                                class="px-2 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">0
-                                                un.</span></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">R$ 150,00</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                            <button class="text-indigo-600 hover:text-indigo-900"><i
-                                                    data-lucide="edit-2" class="w-5 h-5"></i></button>
-                                            <button class="text-red-600 hover:text-red-900"><i data-lucide="trash-2"
-                                                    class="w-5 h-5"></i></button>
-                                        </td>
-                                    </tr>
-                                    <!-- JS irá popular o resto -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Conteúdo da Aba: Cadastrar Produto -->
-                    <div id="tab-produtos-add"
-                        class="product-tab-content hidden mt-6 p-6 bg-white rounded-lg shadow-md">
-                        <form id="form-add-product" novalidate class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                            <!-- Coluna 1: Infos Principais -->
-                            <div class="space-y-4 md:col-span-2">
-                                <h3 class="text-lg font-medium">Detalhes do Produto</h3>
-                                <div>
-                                    <label class="block text-sm font-medium">Nome Técnico do Produto</label>
-                                    <input type="text" id="prod-nome" required
-                                        class="w-full px-3 py-2 mt-1 border rounded-md">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium">Nome Comercial (Para Vendas e Etiquetas)</label>
-                                    <input type="text" id="prod-nome-comercial"
-                                        class="w-full px-3 py-2 mt-1 border rounded-md">
-                                </div>
-                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                                    <div>
-                                        <label class="block text-sm font-medium">Preço de Custo (R$)</label>
-                                        <input type="number" id="prod-custo" step="0.01"
-                                            class="w-full px-3 py-2 mt-1 border rounded-md">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium">Margem de Lucro (%)</label>
-                                        <input type="number" id="prod-margem" value="100"
-                                            class="w-full px-3 py-2 mt-1 border rounded-md">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium">Preço de Venda (R$)</label>
-                                        <input type="number" id="prod-venda" step="0.01"
-                                            class="w-full px-3 py-2 mt-1 border rounded-md">
-                                    </div>
-                                </div>
-                                <!-- NOVO BLOCO DO FORNECEDOR (INSERIR AQUI) -->
-                                <div>
-                                    <label class="block text-sm font-medium">Fornecedor</label>
-                                    <div class="flex space-x-2">
-                                        <select id="prod-fornecedor" class="w-full px-3 py-2 mt-1 border rounded-md">
-                                            <option value="">Nenhum</option>
-                                            <!-- JS popula com fornecedores -->
-                                        </select>
-                                        <button type="button" id="btn-add-supplier"
-                                            class="px-3 py-2 mt-1 text-white bg-blue-500 rounded-md hover:bg-blue-600">
-                                            <i data-lucide="plus" class="w-5 h-5"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <!-- FIM DO NOVO BLOCO -->
-                                <div>
-                                    <label class="block text-sm font-medium">URL da Imagem Principal (Opcional)</label>
-                                    <div class="flex items-start space-x-4 mt-1">
-                                        <div class="flex-1">
-                                            <input type="url" id="prod-foto" placeholder="https://exemplo.com/imagem.jpg"
-                                                class="w-full px-3 py-2 border rounded-md">
-                                        </div>
-                                        <div class="shrink-0 relative group">
-                                            <img id="prod-foto-preview" src="https://placehold.co/100x100/e2e8f0/adb5bd?text=Preview" alt="Preview da Imagem" class="w-16 h-16 object-cover border rounded-md cursor-pointer fullscreen-trigger" data-full-src="https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview">
-                                            <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
-                                                <img id="prod-foto-preview-large" src="https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview" alt="Preview da Imagem" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="extra-images-container" class="mt-2 space-y-2">
-                                        <!-- Imagens extras renderizadas aqui -->
-                                    </div>
-                                    <button type="button" id="btn-add-extra-image" class="mt-2 text-sm text-indigo-600 hover:underline flex items-center">
-                                        <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Adicionar imagem extra
-                                    </button>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium">Descrição</label>
-                                    <textarea id="prod-desc" rows="4"
-                                        class="w-full px-3 py-2 mt-1 border rounded-md"></textarea>
-                                </div>
-
-                            </div>
-                            <!-- Coluna 2: Estoque e Categoria -->
-                            <div class="space-y-4 md:col-span-1">
-                                <h3 class="text-lg font-medium">Organização</h3>
-                                <div>
-                                    <label class="block text-sm font-medium">Categoria</label>
-                                    <div class="flex space-x-2">
-                                        <select id="prod-categoria" class="w-full px-3 py-2 mt-1 border rounded-md">
-                                            <option>Anéis</option>
-                                            <option>Brincos</option>
-                                            <option>Tornozeleiras</option>
-                                            <option>Pulseiras</option>
-                                            <!-- JS popula mais categorias -->
-                                        </select>
-                                        <button type="button" id="btn-add-category"
-                                            class="px-3 py-2 mt-1 text-white bg-blue-500 rounded-md hover:bg-blue-600">
-                                            <i data-lucide="plus" class="w-5 h-5"></i>
-                                        </button>
-                                        <button type="button" id="btn-manage-category"
-                                            class="px-3 py-2 mt-1 text-white bg-gray-500 rounded-md hover:bg-gray-600">
-                                            <i data-lucide="settings-2" class="w-5 h-5"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <!-- ... (Fim do DIV da Categoria) ... -->
-
-
-                                <div>
-                                    <label class="block text-sm font-medium">Qtd. em Estoque</label>
-                                    <input type="number" id="prod-estoque" value="1"
-                                        class="w-full px-3 py-2 mt-1 border rounded-md">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium">Código de Referência</label>
-                                    <div class="flex space-x-2">
-                                        <input type="text" id="prod-ref" required
-                                            class="w-full px-3 py-2 mt-1 border rounded-md">
-                                        <button type="button" id="btn-gen-ref"
-                                            class="px-3 py-2 mt-1 text-white bg-gray-500 rounded-md hover:bg-gray-600"
-                                            title="Gerar Código Automático">
-                                            <i data-lucide="wand-2" class="w-5 h-5"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium">2ª Referência (Opcional)</label>
-                                    <input type="text" id="prod-ref2" class="w-full px-3 py-2 mt-1 border rounded-md">
-                                </div>
-                                <div class="p-4 border rounded-md">
-                                    <h4 class="font-medium text-center">Código de Barras</h4>
-                                    <svg id="barcode-preview" class="w-full h-auto mt-2"></svg>
-                                </div>
-                            </div>
-                            <!-- Ações -->
-                            <div class="md:col-span-3 text-right">
-                                <button type="submit"
-                                    class="px-6 py-2 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">Salvar
-                                    Produto</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Conteúdo da Aba: Gerar Etiquetas -->
-                    <div id="tab-produtos-labels"
-                        class="product-tab-content hidden mt-6 p-6 bg-white rounded-lg shadow-md">
-                        <h3 class="text-lg font-medium">Gerar Etiquetas</h3>
-                        <p class="text-sm text-gray-600">Selecione os produtos e o formato da etiqueta.</p>
-                        <div class="grid grid-cols-1 gap-6 mt-4 md:grid-cols-2">
-                            <div>
-                                <!-- NOVO: FORMULÁRIO DE FILTRO DAS ETIQUETAS -->
-                                <div class="mb-4 p-4 border rounded-lg bg-gray-50 space-y-3">
-                                    <h4 class="font-medium text-sm">Filtrar Lista de Produtos</h4>
-                                    <!-- Filtro de Nome/Ref -->
-                                    <div>
-                                        <label for="label-search-input"
-                                            class="block text-xs font-medium text-gray-600">Nome ou Ref.</label>
-                                        <input type="search" id="label-search-input"
-                                            placeholder="Filtrar por nome, ref..."
-                                            class="w-full px-3 py-1.5 mt-1 text-sm border rounded-md">
-                                    </div>
-                                    <!-- Filtros de Data -->
-                                    <div class="flex items-center gap-2">
-                                        <div class="flex-1">
-                                            <label for="label-date-start"
-                                                class="block text-xs font-medium text-gray-600">De (Cadastro)</label>
-                                            <input type="date" id="label-date-start"
-                                                class="w-full px-3 py-1.5 mt-1 text-sm border rounded-md">
-                                        </div>
-                                        <div class="flex-1">
-                                            <label for="label-date-end"
-                                                class="block text-xs font-medium text-gray-600">Até (Cadastro)</label>
-                                            <input type="date" id="label-date-end"
-                                                class="w-full px-3 py-1.5 mt-1 text-sm border rounded-md">
-                                        </div>
-                                    </div>
-                                    <button id="label-clear-filters"
-                                        class="text-xs text-indigo-600 hover:underline">Limpar filtros</button>
-                                </div>
-                                <!-- FIM DO NOVO FILTRO -->
-
-                                <div class="flex items-center justify-between mt-4 mb-2">
-                                    <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" id="label-select-all"
-                                            class="rounded text-indigo-600 focus:ring-indigo-500">
-                                        <span class="text-sm font-medium">Selecionar Todos</span>
-                                    </label>
-                                    <div class="flex items-center space-x-2">
-                                        <input type="number" id="label-batch-qty" min="1" value="1"
-                                            class="w-16 px-2 py-1 text-sm border rounded-md" placeholder="Qtd">
-                                        <button type="button" id="btn-apply-batch-qty"
-                                            class="px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700">Aplicar
-                                            Qtd.</button>
-                                    </div>
-                                </div>
-                                <div id="label-product-list"
-                                    class="w-full h-64 p-3 mt-1 overflow-y-auto border rounded-md">
-                                    <!-- JS popula o resto -->
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium">Formato da Etiqueta</label>
-                                <!-- ***** SEÇÃO MODIFICADA ***** -->
-                                <!-- Bloco NOVO com a lista completa -->
-                                <select id="label-format" class="w-full px-3 py-2 mt-1 border rounded-md">
-                                    <optgroup label="PIMACO - Folha A4 (21,0 x 29,7 cm)">
-                                        <option value="A4048">A4048 (3,30 x 1,70 cm)</option>
-                                        <option value="A4049">A4049 (2,60 x 1,50 cm)</option>
-                                        <option value="A4050">A4050 (10,16 x 5,58 cm)</option>
-                                        <option value="A4051">A4051 (4,07 x 2,12 cm)</option>
-                                        <option value="A4054">A4054 (10,16 x 2,54 cm)</option>
-                                        <option value="A4055">A4055 (6,61 x 3,10 cm)</option>
-                                        <option value="A4056">A4056 (6,61 x 2,54 cm)</option>
-                                        <option value="A4060">A4060 (6,61 x 3,81 cm)</option>
-                                        <option value="A4261">A4261 (6,61 x 4,65 cm)</option>
-                                        <option value="A4062">A4062 (10,16 x 3,39 cm)</option>
-                                        <option value="A4063">A4063 (10,16 x 3,81 cm)</option>
-                                        <option value="A4264">A4264 (6,61 x 7,19 cm)</option>
-                                        <option value="A4265">A4265 (10,16 x 6,78 cm)</option>
-                                        <option value="A4067">A4067 (20,00 x 28,85 cm)</option>
-                                        <option value="A4268">A4268 (19,99 x 14,34 cm)</option>
-                                    </optgroup>
-                                    <optgroup label="PIMACO - Folha Carta (21,59 x 27,94 cm)">
-                                        <option value="3080">3080/3180 (6,98 x 2,54 cm)</option>
-                                        <option value="3081">3081/3181 (10,68 x 2,54 cm)</option>
-                                        <option value="3082">3082/3182 (10,68 x 3,39 cm)</option>
-                                        <option value="5580">5580A/5580M/5580V (6,98 x 2,54 cm)</option>
-                                        <option value="6080">6080/6180/6280/62580 (6,98 x 2,54 cm)</option>
-                                        <option value="6081">6081/6181/6281/62581 (10,68 x 2,54 cm)</option>
-                                        <option value="6082">6082/6182/6282/62582 (10,68 x 3,39 cm)</option>
-                                        <option value="6083">6083/6183/6283 (10,68 x 5,08 cm)</option>
-                                        <option value="6084">6084/6184/6284 (10,68 x 8,47 cm)</option>
-                                        <option value="6085">6085/6185/6285 (Página Inteira)</option>
-                                        <option value="6086">6086/6286 (10,64 x 13,81 cm - 2/pág)</option>
-                                        <option value="6087">6087/6187/6287 (4,75 x 1,27 cm)</option>
-                                        <option value="6088">6088/6288 (10,64 x 13,81 cm - 2/pág)</option>
-                                        <option value="6089">6089 (4,75 x 1,69 cm)</option>
-                                        <option value="6092">6092 (2,91 x 1,70 cm)</option>
-                                        <option value="6093">6093/6293 (5,20 x 2,74 cm)</option>
-                                        <option value="6094">6094 (6,75 x 4,85 cm)</option>
-                                        <option value="6095">6095 (9,63 x 5,93 cm)</option>
-                                        <option value="8096">8096/8196/8296 (6,98 x 3,00 cm)</option>
-                                        <option value="8098">8098 (10,16 x 4,23 cm)</option>
-                                        <option value="8099F">8099F (8,38 x 4,66 cm)</option>
-                                        <option value="8099L">8099L (3,41 x 1,69 cm)</option>
-                                    </optgroup>
-                                    <optgroup label="Formatos Comuns (Genéricos)">
-                                        <option value="gen-30x15">Genérico (30 x 15 mm)</option>
-                                        <option value="gen-40x20">Genérico (40 x 20 mm)</option>
-                                        <option value="gen-50x25">Genérico (50 x 25 mm)</option>
-                                        <option value="gen-60x40">Genérico (60 x 40 mm)</option>
-                                    </optgroup>
-                                </select>
-                                <!-- Fim do bloco NOVO -->
-                                <!-- ***** FIM DA SEÇÃO MODIFICADA ***** -->
-                                <div class="grid grid-cols-2 gap-4 mt-3">
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600">Linha Inicial</label>
-                                        <input type="number" id="label-start-row" value="1" min="1"
-                                            class="w-full px-3 py-2 mt-1 text-sm border rounded-md">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-600">Coluna Inicial</label>
-                                        <input type="number" id="label-start-col" value="1" min="1"
-                                            class="w-full px-3 py-2 mt-1 text-sm border rounded-md">
-                                    </div>
-                                </div>
-                                <button id="btn-generate-labels"
-                                    class="w-full px-4 py-2 mt-4 font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
-                                    Gerar PDF para Impressão
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Conteúdo da Aba: Importar em Lote -->
-                    <div id="tab-produtos-import"
-                        class="product-tab-content hidden mt-6 p-6 bg-white rounded-lg shadow-md">
-                        <h3 class="text-lg font-medium">Importar Produtos em Lote</h3>
-                        <p class="text-sm text-gray-600 mt-2">Envie um arquivo no formato CSV (separado por
-                            vírgulas) com as colunas na primeira linha:</p>
-                        <div class="flex flex-wrap gap-2 mt-2">
-                            <code class="text-xs bg-gray-100 p-1 rounded">nome</code>
-                            <code class="text-xs bg-gray-100 p-1 rounded">nomeComercial</code>
-                            <code class="text-xs bg-gray-100 p-1 rounded">ref</code>
-                            <code class="text-xs bg-gray-100 p-1 rounded">custo</code>
-                            <code class="text-xs bg-gray-100 p-1 rounded">margem</code>
-                            <code class="text-xs bg-gray-100 p-1 rounded">estoque</code>
-                            <code class="text-xs bg-gray-100 p-1 rounded">categoria</code>
-                            <code class="text-xs bg-gray-100 p-1 rounded">descricao</code>
-                        </div>
-                        <p class="text-sm text-gray-500 mt-2">O preço de venda será calculado automaticamente (custo
-                            + margem).</p>
-
-                        <div class="mt-6">
-                            <label for="csv-file-input" class="block text-sm font-medium">Arquivo CSV</label>
-                            <input type="file" id="csv-file-input" accept=".csv"
-                                class="w-full max-w-md px-3 py-2 mt-1 text-sm border rounded-md file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        </div>
-
-                        <button id="btn-import-csv"
-                            class="px-6 py-2 mt-6 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50">
-                            <i data-lucide="upload-cloud" class="inline w-5 h-5 mr-1"></i>
-                            Iniciar Importação (do arquivo CSV) </button>
-                        <!-- NOVO BLOCO DE CÓDIGO ABAIXO -->
-                        <div class="mt-6">
-                            <label for="excel-file-input" class="block text-sm font-medium">Ou... Enviar Arquivo Excel
-                                (.xlsx)</label>
-                            <input type="file" id="excel-file-input" accept=".xlsx, .xls"
-                                class="w-full max-w-md px-3 py-2 mt-1 text-sm border rounded-md file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                        </div>
-
-                        <button id="btn-import-excel"
-                            class="px-6 py-2 mt-6 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50">
-                            <i data-lucide="file-spreadsheet" class="inline w-5 h-5 mr-1"></i>
-                            Iniciar Importação (do Excel)
-                        </button>
-                        <hr class="my-8">
-
-                        <h3 class="text-lg font-medium">Ou... Importar Copiando e Colando</h3>
-                        <p class="text-sm text-gray-600 mt-2">
-                            Copie os dados da sua planilha (Excel, Google Sheets) e cole no campo abaixo.
-                            <strong class="font-medium">Importante:</strong> As colunas devem estar na ordem e com os
-                            nomes corretos (ex: `nome`, `ref`, `custo`, `margem`...).
-                        </p>
-
-                        <textarea id="paste-data-input" rows="8"
-                            class="w-full p-2 mt-4 border rounded-md font-mono text-sm"
-                            placeholder="Cole os dados da sua planilha aqui..."></textarea>
-
-                        <button id="btn-import-paste"
-                            class="px-6 py-2 mt-4 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                            <i data-lucide="clipboard-paste" class="inline w-5 h-5 mr-1"></i>
-                            Processar Dados Colados
-                        </button>
-                        <!-- FIM DO NOVO BLOCO -->
-
-                        <div id="import-status" class="mt-4 text-sm"></div>
-                    </div>
-
-                <!-- Conteúdo da Aba: Resumo de Estoque -->
-                <div id="tab-produtos-estoque" class="product-tab-content hidden mt-6">
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                        <!-- Estoque Físico -->
-                        <div class="p-6 bg-white rounded-xl shadow-md border border-gray-200">
-                            <div class="flex items-center mb-4">
-                                <div class="p-3 bg-blue-100 text-blue-600 rounded-full mr-4"><i data-lucide="package" class="w-6 h-6"></i></div>
-                                <div>
-                                    <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Estoque Físico</p>
-                                    <p class="text-xs text-gray-400">Comigo no momento</p>
-                                </div>
-                            </div>
-                            <p id="estoque-fisico-qty" class="text-4xl font-extrabold text-gray-800 mb-4 sensitive-value">0 un.</p>
-                            <div class="space-y-2 border-t pt-4">
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Total:</span><span id="estoque-fisico-cost" class="font-bold text-red-600 sensitive-value">R$ 0,00</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Venda Total:</span><span id="estoque-fisico-sale" class="font-bold text-green-600 sensitive-value">R$ 0,00</span></div>
-                            </div>
-                        </div>
-
-                        <!-- Na Rua (Consignado) -->
-                        <div class="p-6 bg-white rounded-xl shadow-md border border-purple-200">
-                            <div class="flex items-center mb-4">
-                                <div class="p-3 bg-purple-100 text-purple-600 rounded-full mr-4"><i data-lucide="truck" class="w-6 h-6"></i></div>
-                                <div>
-                                    <p class="text-sm font-bold text-purple-600 uppercase tracking-wider">Nas Ruas</p>
-                                    <p class="text-xs text-gray-400">Em consignações ativas</p>
-                                </div>
-                            </div>
-                            <p id="estoque-rua-qty" class="text-4xl font-extrabold text-gray-800 mb-4 sensitive-value">0 un.</p>
-                            <div class="space-y-2 border-t pt-4">
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Total:</span><span id="estoque-rua-cost" class="font-bold text-red-600 sensitive-value">R$ 0,00</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Venda Total:</span><span id="estoque-rua-sale" class="font-bold text-green-600 sensitive-value">R$ 0,00</span></div>
-                            </div>
-                        </div>
-
-                        <!-- Total Geral -->
-                        <div class="p-6 bg-white rounded-xl shadow-md border border-gray-200">
-                            <div class="flex items-center mb-4">
-                                <div class="p-3 bg-gray-100 text-gray-800 rounded-full mr-4"><i data-lucide="layers" class="w-6 h-6"></i></div>
-                                <div>
-                                    <p class="text-sm font-bold text-gray-800 uppercase tracking-wider">Total Geral</p>
-                                    <p class="text-xs text-gray-400">Físico + Nas Ruas</p>
-                                </div>
-                            </div>
-                            <p id="estoque-total-qty" class="text-4xl font-extrabold text-gray-800 mb-4 sensitive-value">0 un.</p>
-                            <div class="space-y-2 border-t pt-4">
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Total:</span><span id="estoque-total-cost" class="font-bold text-red-600 sensitive-value">R$ 0,00</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Venda Total:</span><span id="estoque-total-sale" class="font-bold text-green-600 sensitive-value">R$ 0,00</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Detalhamento por Categorias -->
-                    <div class="mt-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i data-lucide="pie-chart" class="w-5 h-5 mr-2 text-indigo-600"></i> Distribuição por Categorias (Detalhado)</h3>
-                        <div id="estoque-categorias-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-start">
-                            <!-- JS via popular -->
-                        </div>
-                    </div>
-                </div>
-                </div>
-            
-                <!-- =========== PÁGINA: MALETAS =========== -->
-                <div id="page-maletas" class="page">
-                    <h2 class="text-3xl font-semibold text-gray-800">Gestão de Maletas</h2>
-                    
-                    <div class="mt-6 p-6 bg-white rounded-lg shadow-md">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-medium">Kits e Maletas</h3>
-                            <button id="btn-new-maleta" class="px-4 py-2 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> Nova Maleta</button>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-6">Crie kits pré-configurados de produtos para adicioná-los rapidamente em uma Venda Consignada.</p>
-                        <div class="overflow-x-auto border rounded-lg">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="w-12 px-6 py-3 text-left"><input type="checkbox" id="select-all-maletas" class="rounded"></th>
-                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Nome da Maleta</th>
-                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Qtd Itens / Produtos</th>
-                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Valor Total</th>
-                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="maletas-list-table" class="bg-white divide-y divide-gray-200"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- NOVO CARD: MÉDIAS POR CATEGORIA -->
-                    <div class="mt-6 p-6 bg-white rounded-lg shadow-md">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
-                            <h3 class="text-lg font-medium flex items-center"><i data-lucide="bar-chart-2" class="w-5 h-5 mr-2 text-indigo-600"></i> Média de Produtos por Categoria</h3>
-                            <button id="btn-create-maleta-from-avg" class="hidden mt-2 sm:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 flex items-center"><i data-lucide="wand-2" class="w-4 h-4 mr-1"></i> Gerar Maleta com esta Média</button>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-6">Média de peças por categoria com base nas maletas selecionadas.</p>
-                        
-                        <div id="maletas-averages-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">
-                            <!-- JS popula aqui -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- =========== PÁGINA: VENDAS =========== -->
-                <div id="page-vendas" class="page">
-                    <h2 class="text-3xl font-semibold text-gray-800">Gestão de Vendas</h2>
-                    <!-- Abas da Seção -->
-                    <div class="mt-4 border-b border-gray-200">
-                        <nav class="flex overflow-x-auto scrollbar-hide -mb-px space-x-6" id="vendas-tabs">
-                            <button data-tab="tab-vendas-new"
-                                class="vendas-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">Nova
-                                Venda / Consignação</button>
-                            <button data-tab="tab-vendas-consign"
-                                class="vendas-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Consignações
-                                Ativas</button>
-                            <button data-tab="tab-vendas-history"
-                                class="vendas-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Histórico
-                                de Vendas</button>
-                        </nav>
-                    </div>
-
-                    <!-- Conteúdo da Aba: Nova Venda -->
-                    <div id="tab-vendas-new" class="vendas-tab-content mt-6">
-                        <form id="form-new-sale" novalidate class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                            <!-- Coluna 1: Itens -->
-                            <div class="p-6 bg-white rounded-lg shadow-md lg:col-span-2 min-w-0">
-                                <!-- TÍTULO E CONTADOR DE ITENS (CORRIGIDO) -->
-                                <div class="flex items-baseline justify-between flex-wrap gap-2">
-                                    <h3 class="text-lg font-medium">Itens da Venda</h3>
-                                    <span class="text-sm font-medium text-gray-500">
-                                        Total de Itens:
-                                        <span id="sale-item-list-count"
-                                            class="text-lg font-bold text-indigo-600">0</span>
-                                    </span>
-                                </div>
-                                <div class="flex mt-4 space-x-2">
-
-                                    <div class="relative flex-1">
-                                        <input type="text" id="sale-item-ref" autocomplete="off"
-                                            placeholder="Digitar Nome ou Código de Ref. (ou usar leitor)"
-                                            class="w-full px-3 py-2 border rounded-md">
-                                        <div id="sale-item-dropdown" class="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl z-50 hidden max-h-64 overflow-y-auto divide-y divide-gray-100"></div>
-                                    </div>
-                                    <datalist id="sale-item-datalist"></datalist>
-                                    <button type="button" id="btn-add-sale-item"
-                                        class="px-4 py-2 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600">Adicionar</button>
-                                    <button type="button" id="btn-add-maleta-sale"
-                                        class="px-3 py-2 font-medium text-purple-700 bg-purple-100 rounded-md hover:bg-purple-200" title="Adicionar Maleta">
-                                        <i data-lucide="briefcase"></i>
-                                    </button>
-                                </div>
-                                <div class="mt-4 flex justify-between items-center bg-gray-50 p-2 rounded-md border">
-                                    <span class="text-sm font-medium text-gray-600 hidden sm:inline">Buscar na
-                                        lista:</span>
-                                    <input type="search" id="sale-item-search"
-                                        placeholder="Pesquisar item adicionado (Nome ou Ref)"
-                                        class="w-full sm:w-2/3 px-3 py-1.5 text-sm border rounded-md">
-                                </div>
-                                <div class="mt-4 overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead>
-                                            <tr>
-                                                <th class="py-2 text-left text-sm font-medium text-gray-500">Produto
-                                                </th>
-                                                <th class="py-2 text-left text-sm font-medium text-gray-500">Ref.</th>
-                                                <th class="py-2 text-left text-sm font-medium text-gray-500">Preço Unit.
-                                                </th>
-                                                <th class="py-2 text-left text-sm font-medium text-gray-500">Qtd.</th>
-                                                <th class="py-2 text-left text-sm font-medium text-gray-500">Preço Total
-                                                </th>
-                                                <th class="py-2 text-left text-sm font-medium text-gray-500">Ação</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="sale-items-list" class="divide-y">
-                                            <!-- JS popula aqui -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- Coluna 2: Detalhes da Venda -->
-                            <div class="p-6 bg-white rounded-lg shadow-md lg:col-span-1 min-w-0">
-                                <h3 class="text-lg font-medium mb-4">Detalhes Finais</h3>
-
-                                <!-- Este é o DIV agrupador CORRETO -->
-                                <div class="space-y-4">
-
-                                    <!-- Tipo de Venda -->
-                                    <div class="flex flex-wrap gap-4">
-
-                                        <label class="flex items-center">
-                                            <input type="radio" name="sale-type" value="consignacao"
-                                                class="text-indigo-600 focus:ring-indigo-500" checked>
-                                            <span class="ml-2 text-sm font-medium">Consignação</span>
-                                        </label>
-                                        <label class="flex items-center">
-                                            <input type="radio" name="sale-type" value="direta"
-                                                class="text-indigo-600 focus:ring-indigo-500">
-                                            <span class="ml-2 text-sm font-medium">Venda Direta</span>
-                                        </label>
-                                    </div>
-
-                                    <!-- Cliente / Revendedor (Agora dentro do space-y-4) -->
-                                    <div>
-                                        <label class="block text-sm font-medium">Cliente / Revendedor</label>
-                                        <select id="sale-client" class="w-full px-3 py-2 mt-1 border rounded-md">
-                                            <option>Consumidor Final</option>
-                                            <!-- JS popula com clientes/revendedores -->
-                                        </select>
-                                        <button type="button" id="btn-add-new-client-sale"
-                                            class="mt-1 text-sm text-indigo-600 hover:underline">Cadastrar novo
-                                            cliente/revendedor</button>
-                                    </div>
-
-                                    <!-- Campos Venda Direta (Agora dentro do space-y-4) -->
-                                    <div id="fields-venda-direta" class="hidden">
-                                        <div>
-                                            <label class="block text-sm font-medium">Desconto (%)</label>
-                                            <input type="number" id="sale-discount" value="0"
-                                                class="w-full px-3 py-2 mt-1 border rounded-md">
-                                        </div>
-                                    
-                                    <!-- NOVA: Divisão de Pagamento (Fica oculta se for Consignação) -->
-                                    <div class="mt-4 border-t pt-4">
-                                        <label class="block text-sm font-medium mb-2">Formas de Pagamento</label>
-                                        <div id="sale-payment-splits-container" class="space-y-2"></div>
-                                        <button type="button" id="btn-add-sale-payment-split" class="mt-2 text-sm text-indigo-600 hover:underline font-medium flex items-center">
-                                            <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Adicionar outra forma
-                                        </button>
-                                        <p id="sale-split-error" class="text-xs text-red-600 mt-1 hidden"></p>
-                                    </div>
-                                    </div>
-
-                                    <!-- Campos Consignação (Agora dentro do space-y-4) -->
-                                    <div id="fields-consignacao">
-                                        <div>
-                                            <label class="block text-sm font-medium">Data do Acerto</label>
-                                            <input type="date" id="sale-due-date"
-                                                class="w-full px-3 py-2 mt-1 border rounded-md">
-                                        </div>
-                                        <div class="mt-4">
-                                            <label class="flex items-center">
-                                                <input type="checkbox" id="sale-include-images"
-                                                    class="text-indigo-600 focus:ring-indigo-500 rounded">
-                                                <span class="ml-2 text-sm font-medium">Incluir fotos dos produtos no
-                                                    comprovante em PDF</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                </div> <!-- <<<<<< O </div> DO 'space-y-4' DEVE FECHAR AQUI -->
-
-                                <!-- Total (Separado com margem) -->
-                                <div class="pt-4 border-t mt-6">
-
-                                    <div class="flex justify-between text-sm">
-                                        <span>Subtotal</span>
-                                        <span id="sale-subtotal" class="sensitive-value">R$ 0,00</span>
-                                    </div>
-                                    <div class="flex justify-between text-sm text-red-600">
-                                        <span>Desconto</span>
-                                        <span id="sale-discount-value" class="sensitive-value">- R$ 0,00</span>
-                                    </div>
-                                    <div class="flex justify-between text-xl font-bold mt-2">
-                                        <span>TOTAL</span>
-                                        <span id="sale-total" class="sensitive-value">R$ 0,00</span>
-                                    </div>
-                                </div>
-
-                                <!-- Botão (Separado com margem) -->
-                                <button type="submit" id="btn-finalize-sale"
-                                    class="w-full px-4 py-3 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 mt-6">
-                                    Abrir Consignação
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    <!-- Conteúdo da Aba: Consignações Ativas -->
-                    <div id="tab-vendas-consign" class="vendas-tab-content hidden mt-6">
-                        <div class="p-6 bg-white rounded-lg shadow-md">
-                            <h3 class="text-lg font-medium">Consignações em Aberto</h3>
-                            <div class="mt-4 overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th
-                                                class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Revendedor(a)</th>
-                                            <th
-                                                class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Data Abertura</th>
-                                            <th
-                                                class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Data Acerto</th>
-                                            <th
-                                                class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Valor Total</th>
-                                            <th
-                                                class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="consign-list-table" class="bg-white divide-y divide-gray-200">
-                                        <!-- Exemplo -->
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4">Maria Souza</td>
-                                            <td class="px-6 py-4">25/09/2025</td>
-                                            <td class="px-6 py-4 font-medium text-red-600">30/10/2025 (3 dias)
-                                            </td>
-                                            <td class="px-6 py-4">R$ 2.500,00</td>
-                                            <td class="px-6 py-4">
-                                                <button
-                                                    class="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Realizar
-                                                    Acerto</button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-
-                            </div>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <!-- Conteúdo da Aba: Histórico de Vendas -->
-                <div id="tab-vendas-history" class="vendas-tab-content hidden mt-6">
-                    <div class="p-6 bg-white rounded-lg shadow-md">
-                        <h3 class="text-lg font-medium">Histórico de Vendas</h3>
-                        <table class="min-w-full mt-4 divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th
-                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                        Data</th>
-                                    <th
-                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                        Cliente</th>
-                                    <th
-                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                        Tipo</th>
-                                    <th
-                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                        Valor Final</th>
-                                    <th
-                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                        Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="history-list-table" class="bg-white divide-y divide-gray-200">
-                                <!-- Exemplo -->
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4">24/10/2025</td>
-                                    <td class="px-6 py-4">Ana Clara</td>
-                                    <td class="px-6 py-4"><span
-                                            class="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">Venda
-                                            Direta</span></td>
-                                    <td class="px-6 py-4">R$ 150,00</td>
-                                    <td class="px-6 py-4">
-                                        <button
-                                            class="px-3 py-1 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200">Ver
-                                            Relatório</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-        </div>
-
-        <!-- =========== PÁGINA: PESSOAS =========== -->
-        <div id="page-pessoas" class="page">
-            <h2 class="text-3xl font-semibold text-gray-800">Gestão de Pessoas</h2>
-            <!-- Abas da Seção -->
-            <div class="mt-4 border-b border-gray-200">
-                <nav class="flex overflow-x-auto scrollbar-hide -mb-px space-x-6" id="pessoas-tabs">
-                    <button data-tab="tab-pessoas-view"
-                        class="pessoas-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">Visualizar
-                        Pessoas</button>
-                    <button data-tab="tab-pessoas-add"
-                        class="pessoas-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Cadastrar
-                        Pessoa</button>
-                </nav>
+        <div class="container">
+            <div class="admin-tabs">
+                <button class="tab-btn" onclick="switchAdminTab('dashboard')">Dashboard</button>
+                <button class="tab-btn active" onclick="switchAdminTab('products')">Produtos</button>
+                <button class="tab-btn" onclick="switchAdminTab('resellers')">Revendedoras</button>
+                <button class="tab-btn" onclick="switchAdminTab('orders')">Pedidos</button>
+                <button class="tab-btn" onclick="switchAdminTab('clients')">Clientes</button>
             </div>
 
-            <!-- Conteúdo da Aba: Visualizar Pessoas -->
-            <div id="tab-pessoas-view" class="pessoas-tab-content mt-6">
-                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <input type="search" id="people-search-input" placeholder="Filtrar pessoas por nome, e-mail ou CPF"
-                        class="w-full px-4 py-2 border rounded-lg md:w-1/2">
-                    <select id="people-type-filter" class="px-4 py-2 border rounded-lg">
-                        <option value="todos">Todos os Tipos</option>
-                        <option value="cliente">Cliente Direto</option>
-                        <option value="revendedor">Revendedor</option>
-                        <option value="fornecedor">Fornecedor</option>
+            <!-- Dashboard Tab -->
+            <div id="adminDashboard" class="admin-tab-content">
+                <div class="section-header">
+                    <h2>Visão Geral de Vendas</h2>
+                    <div id="admin-filters-container" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"></div>
+                </div>
+                <div class="dashboard-grid" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Vendas Totais (Geral)</p>
+                            <p class="stat-value" id="adminTotalSales">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="openAdminSalesListModal()" style="cursor: pointer; transition: transform 0.2s;" title="Clique para ver os detalhes das vendas">
+                        <div class="stat-icon">🛍️</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Quantidade de Vendas</p>
+                            <p class="stat-value" id="adminTotalCount">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="charts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div class="chart-container" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                    <div class="chart-container" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Tab -->
+            <div id="adminProducts" class="admin-tab-content active">
+                <div class="section-header">
+                    <h2>Gerenciar Produtos</h2>
+                    <button onclick="showImportModal()" class="btn-secondary">Importar Planilha</button>
+                </div>
+
+                <div class="product-form">
+                    <h3>Adicionar Produto Manualmente</h3>
+                    <div class="form-grid">
+                        <input type="text" id="productName" placeholder="Nome do Produto" class="input-field">
+                        <input type="text" id="productCode" placeholder="Código de Referência" class="input-field">
+                        <input type="text" id="productCategory" placeholder="Categoria" class="input-field">
+                        <input type="number" id="productQuantity" placeholder="Quantidade" class="input-field">
+                        <input type="number" id="productPrice" placeholder="Preço (R$)" step="0.01" class="input-field">
+                        <input type="text" id="productBarcode" placeholder="Código de Barras (opcional)" class="input-field">
+                        <input type="url" id="productImage" class="input-field" placeholder="URL da Imagem (Opcional)">
+                    </div>
+                    <button onclick="addProduct()" class="btn-primary">Adicionar Produto</button>
+                </div>
+
+                <div class="products-list">
+                    <h3>Produtos Cadastrados</h3>
+                    <div id="adminProductsList"></div>
+                </div>
+            </div>
+
+            <!-- Resellers Tab -->
+            <div id="adminResellers" class="admin-tab-content">
+                <div class="section-header">
+                    <h2>Gerenciar Revendedoras</h2>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button onclick="showAddResellerModal()" class="btn-secondary" style="width: auto;">Adicionar Revendedora</button>
+                    </div>
+                </div>
+
+                <div id="resellersList"></div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div id="adminOrders" class="admin-tab-content">
+                <div class="section-header">
+                    <h2>Gerenciar Pedidos</h2>
+                </div>
+
+                <div class="order-form">
+                    <h3>Criar Novo Pedido</h3>
+                    <select id="orderReseller" class="input-field">
+                        <option value="">Selecione a Revendedora</option>
+                    </select>
+                    <div id="orderProductsSelection"></div>
+                    <button onclick="createOrder()" class="btn-primary">Criar Pedido</button>
+                </div>
+
+                <div id="ordersList"></div>
+            </div>
+
+            <!-- Clients Tab -->
+            <div id="adminClients" class="admin-tab-content">
+                <div class="section-header">
+                    <h2>Gerenciar Clientes (Geral)</h2>
+                </div>
+                <div class="search-bar">
+                    <input type="text" id="adminClientSearch" placeholder="Pesquisar cliente..." class="input-field" oninput="searchAdminClients()">
+                </div>
+                <div id="adminClientsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reseller Screen -->
+    <div id="resellerScreen" class="screen">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-brand">
+                    <img src="https://i.ibb.co/Z6XQpZzQ/Green-and-Brown-Minimalist-Studio-Logo-Design-Template-1.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
+                    <h1 class="header-title" id="resellerName">Minhas Vendas</h1>
+                </div>
+                <button onclick="logout()" class="btn-logout">Sair</button>
+            </div>
+        </header>
+
+        <nav class="bottom-nav">
+            <button class="nav-btn active" onclick="switchTab('dashboard')" data-tab="dashboard">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Dashboard</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('sales')" data-tab="sales">
+                <span class="nav-icon">🛍️</span>
+                <span class="nav-label">Vendas</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('goals')" data-tab="goals">
+                <span class="nav-icon">🎯</span>
+                <span style="font-size: 1.2em; display: block; margin-bottom: 2px;">Metas</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('payments')" data-tab="payments">
+                <span class="nav-icon">💳</span>
+                <span class="nav-label">Pagamentos</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('clients')" data-tab="clients">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Clientes</span>
+            </button>
+        </nav>
+
+        <div class="container">
+            <!-- Dashboard Tab -->
+            <div id="dashboardTab" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Total em Vendas</p>
+                            <p class="stat-value" id="totalSales">R$ 0,00</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Meta do Mês</p>
+                            <p class="stat-value" id="monthGoal">R$ 0,00</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Minha Comissão</p>
+                            <p class="stat-value" id="totalCommission">R$ 0,00</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Data de Acerto</p>
+                            <p class="stat-value" id="settlementDate">--/--/----</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-info">
+                            <p class="stat-label">Ranking Mensal</p>
+                            <p class="stat-value" id="resellerRankingValue">-</p>
+                            <p id="resellerRankingMessage" style="font-size: 0.8rem; color: #666; margin-top: 2px; line-height: 1.2;">Carregando...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <h3>Progresso da Meta</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">0% da meta atingida</p>
+                </div>
+
+                <div class="recent-sales">
+                    <h3>Vendas Recentes</h3>
+                    <div id="recentSalesList"></div>
+                </div>
+            </div>
+
+            <!-- Sales Tab -->
+            <div id="salesTab" class="tab-content">
+                <div class="section-header">
+                    <h2>Realizar Venda</h2>
+                    <button onclick="showBarcodeScanner()" class="btn-scan">📷 Escanear</button>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" id="productSearch" placeholder="Pesquisar produto..." class="input-field" oninput="searchProducts()">
+                </div>
+
+                <div id="productsList" class="products-grid"></div>
+
+                <div class="sales-history">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0;">Produtos Vendidos</h3>
+                        <button class="btn-secondary" onclick="openProductHistoryModal()" style="padding: 5px 10px; font-size: 0.8em; width: auto; margin: 0;">📜 Histórico Completo</button>
+                    </div>
+                    <div id="soldProductsList"></div>
+                </div>
+            </div>
+
+            <!-- Goals Tab -->
+            <div id="goalsTab" class="tab-content">
+                <div class="section-header">
+                    <h2>Minhas Metas</h2>
+                </div>
+
+                <div class="goal-form">
+                    <h3>Configurar Meta</h3>
+                    <input type="number" id="goalAmount" placeholder="Meta de Lucro (R$)" class="input-field">
+                    <input type="date" id="goalSettlementDate" class="input-field">
+                    <label class="input-label">Data de Acerto</label>
+                    <button onclick="saveGoals()" class="btn-primary">Salvar Configurações</button>
+                </div>
+
+                <div class="commission-tiers">
+                    <h3>Margens de Comissão</h3>
+                    <div id="commissionTiersList"></div>
+                    <button onclick="addCommissionTier()" class="btn-secondary">+ Adicionar Margem</button>
+                </div>
+
+                
+            </div>
+
+            <!-- Payments Tab -->
+            <div id="paymentsTab" class="tab-content">
+                <div class="section-header">
+                    <h2>Controle de Pagamentos</h2>
+                </div>
+
+                <div class="filters">
+                    <select id="paymentFilter" onchange="filterPayments()" class="input-field">
+                        <option value="all">Todos</option>
+                        <option value="paid">Pagos</option>
+                        <option value="pending">Pendentes</option>
+                        <option value="installment">Parcelados</option>
                     </select>
                 </div>
-                <div class="mt-4 overflow-x-auto bg-white rounded-lg shadow">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="w-12 px-6 py-3 text-left"><input type="checkbox" class="rounded">
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    Nome</th>
-                                <th
-                                    class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    Contato (Email / Tel)</th>
-                                <th
-                                    class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    Tipo</th>
-                                <th
-                                    class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="people-list-table" class="bg-white divide-y divide-gray-200">
-                            <!-- Exemplo -->
-                            <tr>
-                                <td class="px-6 py-4"><input type="checkbox" class="rounded"></td>
-                                <td class="px-6 py-4 whitespace-nowrap">Maria Souza</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm">maria@email.com</div>
-                                    <div class="text-sm text-gray-500">(11) 98765-4321</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap"><span
-                                        class="px-2 py-1 text-xs font-medium text-purple-800 bg-purple-100 rounded-full">Revendedor</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                    <button class="text-indigo-600 hover:text-indigo-900"><i data-lucide="edit-2"
-                                            class="w-5 h-5"></i></button>
-                                    <button class="text-red-600 hover:text-red-900"><i data-lucide="trash-2"
-                                            class="w-5 h-5"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+
+                <div id="paymentsList"></div>
             </div>
 
-            <!-- Conteúdo da Aba: Cadastrar Pessoa -->
-            <div id="tab-pessoas-add" class="pessoas-tab-content hidden mt-6 p-6 bg-white rounded-lg shadow-md">
-                <form id="form-add-person" novalidate>
-                    <h3 class="text-lg font-medium">Dados da Pessoa</h3>
-                    <div class="grid grid-cols-1 gap-6 mt-4 md:grid-cols-3">
-                        <div class="md:col-span-3">
-                            <label class="block text-sm font-medium">Tipo de Cadastro</label>
-                            <select id="person-type" required class="w-full px-3 py-2 mt-1 border rounded-md md:w-1/3">
-                                <option value="cliente">Cliente Direto</option>
-                                <option value="revendedor">Revendedor</option>
-                                <option value="fornecedor">Fornecedor</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium">Nome Completo</label>
-                            <input type="text" id="person-name" name="person-name" required
-                                class="w-full px-3 py-2 mt-1 border rounded-md">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium">Email</label>
-                            <input type="email" id="person-email" name="person-email" required
-                                class="w-full px-3 py-2 mt-1 border rounded-md">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium">Telefone</label>
-                            <input type="tel" id="person-phone" name="person-phone" required
-                                class="w-full px-3 py-2 mt-1 border rounded-md">
-                        </div>
-                        <div class="md:col-span-3">
-                            <label class="block text-sm font-medium">Endereço</label>
-                            <input type="text" id="person-address" name="person-address" required
-                                class="w-full px-3 py-2 mt-1 border rounded-md">
-                        </div>
-
-                        <hr class="md:col-span-3">
-                        <h3 class="text-lg font-medium md:col-span-3">Dados Adicionais (Opcional)</h3>
-                        <div>
-                            <label class="block text-sm font-medium">CPF</label>
-                            <input type="text" id="person-cpf" class="w-full px-3 py-2 mt-1 border rounded-md">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium">RG</label>
-                            <input type="text" id="person-rg" class="w-full px-3 py-2 mt-1 border rounded-md">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium">Instagram</label>
-                            <input type="text" id="person-insta" class="w-full px-3 py-2 mt-1 border rounded-md">
-                        </div>
-                        <div class="mt-6 text-right">
-                            <button type="button" id="btn-save-person"
-                                class="px-6 py-2 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">Salvar
-                                Pessoa</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- =========== PÁGINA: FINANCEIRO =========== -->
-        <div id="page-financeiro" class="page">
-            <h2 class="text-3xl font-semibold text-gray-800">Controle Financeiro</h2>
-            <!-- Abas da Seção -->
-            <div class="mt-4 border-b border-gray-200">
-                <nav class="flex overflow-x-auto scrollbar-hide -mb-px space-x-6" id="financeiro-tabs">
-                    <button data-tab="tab-financeiro-summary"
-                        class="financeiro-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">Visão
-                        Geral</button>
-                    <button id="btn-tab-contas-a-pagar" data-tab="tab-financeiro-bills"
-                        class="financeiro-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Gestão de Despesas e Entradas</button>
-                    <button data-tab="tab-financeiro-history"
-                        class="financeiro-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Extrato
-                        Financeiro</button>
-                </nav>
-            </div>
-
-            <!-- Conteúdo da Aba: Resumo do Caixa -->
-            <div id="tab-financeiro-summary" class="financeiro-tab-content mt-6">
-                <!-- Cabeçalho e Filtro -->
-                <div class="mb-6 flex flex-col lg:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-100 gap-4">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800">Painel Geral</h3>
-                        <p class="text-sm text-gray-500">Acompanhe seus indicadores financeiros</p>
-                    </div>
-                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                        <div class="flex items-center space-x-2">
-                            <label class="text-xs font-medium text-gray-600 whitespace-nowrap">Período:</label>
-                            <input type="date" id="summary-filter-start" class="px-2 py-1.5 text-sm border rounded-md bg-white w-full sm:w-auto" title="Data Inicial">
-                            <span class="text-gray-400 text-sm">até</span>
-                            <input type="date" id="summary-filter-end" class="px-2 py-1.5 text-sm border rounded-md bg-white w-full sm:w-auto" title="Data Final">
-                        </div>
-                        <div class="flex space-x-2">
-                            <button id="summary-btn-filter-month" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-md hover:bg-indigo-100 transition-colors">Este Mês</button>
-                            <button id="summary-clear-filters" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200 rounded-md hover:bg-gray-200 transition-colors">Tudo</button>
-                        </div>
-                    </div>
+            <!-- Clients Tab -->
+            <div id="clientsTab" class="tab-content">
+                <div class="section-header">
+                    <h2>Meus Clientes</h2>
+                    <button onclick="showAddClientModal()" class="btn-secondary">+ Adicionar Cliente</button>
                 </div>
 
-                <!-- Bloco 1: Resultado Realizado -->
-                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Resultado Realizado</h4>
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
-                    <div id="card-summary-revenue" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-center" title="Clique para ver os detalhes">
-                        <p id="summary-revenue-title" class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Receita</p>
-                        <p id="summary-revenue" class="text-3xl font-bold text-green-600 sensitive-value">R$ 0,00</p>
-                    </div>
-                    <div id="card-summary-expenses" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-center" title="Clique para ver os detalhes">
-                        <p id="summary-expenses-title" class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Despesas</p>
-                        <p id="summary-expenses" class="text-3xl font-bold text-red-600 sensitive-value">- R$ 0,00</p>
-                    </div>
-                    <div id="card-summary-balance" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-center" title="Ir para o Extrato Analítico">
-                        <p id="summary-balance-title" class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Saldo Líquido</p>
-                        <p id="summary-balance" class="text-3xl font-bold text-blue-600 sensitive-value">R$ 0,00</p>
-                    </div>
+                <div class="search-bar">
+                    <input type="text" id="clientSearch" placeholder="Pesquisar cliente..." class="input-field" oninput="searchClients()">
                 </div>
 
-                <!-- Bloco 2: Liquidez e Caixas -->
-                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Saldos em Conta</h4>
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mb-8">
-                    <div id="card-summary-caixa-fisico" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow" title="Clique para ver os detalhes do Caixa Físico">
-                        <div>
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Caixa Físico (Dinheiro)</p>
-                            <p id="summary-caixa-fisico" class="text-2xl font-bold text-gray-800 sensitive-value">R$ 0,00</p>
-                        </div>
-                        <div class="p-3 bg-green-50 rounded-full">
-                            <i data-lucide="wallet" class="text-green-600 w-6 h-6"></i>
-                        </div>
-                    </div>
-                    <div id="card-summary-caixa-banco" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow" title="Clique para ver os detalhes da Conta Bancária">
-                        <div>
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Conta Bancária (Pix, Cartões...)</p>
-                            <p id="summary-caixa-banco" class="text-2xl font-bold text-gray-800 sensitive-value">R$ 0,00</p>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-full">
-                            <i data-lucide="landmark" class="text-blue-600 w-6 h-6"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bloco 3: Projeções -->
-                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Projeções e Pendências (do Período)</h4>
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
-                    <div id="card-summary-pending-bills" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow" title="Ir para Contas a Pagar">
-                        <div>
-                            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">A Pagar</p>
-                            <p id="summary-pending-bills" class="text-2xl font-bold text-orange-500 sensitive-value">R$ 0,00</p>
-                        </div>
-                        <div class="p-3 bg-orange-50 rounded-full"><i data-lucide="calendar-clock" class="text-orange-500 w-6 h-6"></i></div>
-                    </div>
-                    <div id="card-summary-late-bills" class="p-5 bg-white rounded-xl shadow-sm border border-red-200 flex items-center justify-between relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow" title="Ir para Contas Atrasadas">
-                        <div class="absolute top-0 left-0 w-1.5 h-full bg-red-500"></div>
-                        <div class="pl-2">
-                            <p class="text-[11px] font-bold text-red-600 uppercase tracking-wider mb-1">Contas Atrasadas</p>
-                            <p id="summary-late-bills" class="text-2xl font-bold text-red-600 sensitive-value">R$ 0,00</p>
-                        </div>
-                        <div class="p-3 bg-red-50 rounded-full"><i data-lucide="alert-triangle" class="text-red-600 w-6 h-6"></i></div>
-                    </div>
-                    <div id="card-summary-expected-consign" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow" title="Ir para Consignações Ativas">
-                        <div>
-                            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">A Receber (Consig. e Pendentes)</p>
-                            <p id="summary-expected-consign" class="text-2xl font-bold text-purple-600 sensitive-value">R$ 0,00</p>
-                        </div>
-                        <div class="p-3 bg-purple-50 rounded-full"><i data-lucide="package-open" class="text-purple-600 w-6 h-6"></i></div>
-                    </div>
-                </div>
-
-                <!-- Bloco 4: Gráficos -->
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-base font-semibold text-gray-800">Fluxo de Caixa (Últimos 30 dias)</h3>
-                            <i data-lucide="bar-chart-2" class="text-gray-400 w-5 h-5"></i>
-                        </div>
-                        <div class="w-full h-64 relative">
-                            <canvas id="cash-flow-chart"></canvas>
-                        </div>
-                    </div>
-                    <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-base font-semibold text-gray-800">Despesas por Categoria <span id="summary-pie-title-suffix" class="text-xs font-normal text-gray-500"></span></h3>
-                            <i data-lucide="pie-chart" class="text-gray-400 w-5 h-5"></i>
-                        </div>
-                        <div class="w-full h-64 relative flex justify-center">
-                            <canvas id="expenses-pie-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Conteúdo da Aba: Contas a Pagar (VERSÃO ATUALIZADA) -->
-            <div id="tab-financeiro-bills" class="financeiro-tab-content hidden mt-6">
-                <div class="p-6 bg-white rounded-lg shadow-md space-y-6">
-
-                        <div>
-                            <!-- CABEÇALHO E AÇÕES EM LOTE -->
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
-                                <h3 class="text-lg font-medium flex items-center flex-wrap gap-2">
-                                    Contas Pendentes (Pagar e Receber)
-                                    <span id="bills-to-pay-period" class="text-sm font-normal text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">Todo o período</span>
-                                </h3>
-                                <div class="flex flex-wrap gap-2 justify-end">
-                                    <button id="btn-print-pending-bills" class="px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
-                                        <i data-lucide="printer" class="w-4 h-4 mr-1"></i> <span class="hidden lg:inline">Imprimir Relatório</span>
-                                    </button>
-                                    <div class="relative inline-block text-left">
-                                        <button id="btn-open-new-transaction" class="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center">
-                                            <i data-lucide="plus" class="w-4 h-4 mr-1"></i> <span class="hidden sm:inline">Novo</span>
-                                        </button>
-                                        <div id="dropdown-new-transaction" class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 hidden">
-                                            <div class="py-1">
-                                                <button id="btn-open-add-bill-drop" class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    <i data-lucide="receipt" class="mr-2 w-4 h-4 text-red-500"></i> Nova Despesa
-                                                </button>
-                                                <button id="btn-open-add-income-drop" class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    <i data-lucide="arrow-up-circle" class="mr-2 w-4 h-4 text-green-500"></i> Nova Entrada
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- PAINEL DE FILTROS ORGANIZADO -->
-                            <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-4 space-y-4">
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <!-- Busca -->
-                                    <div>
-                                        <label for="bills-search-input" class="block text-xs font-medium text-gray-600 mb-1">Buscar conta</label>
-                                        <div class="relative">
-                                            <i data-lucide="search" class="absolute left-2.5 top-2 w-4 h-4 text-gray-400"></i>
-                                            <input type="search" id="bills-search-input" placeholder="Ex: Fornecedor X..." class="w-full pl-9 pr-3 py-1.5 text-sm border rounded-md bg-white">
-                                        </div>
-                                    </div>
-                                    <!-- Plano -->
-                                    <div>
-                                        <label for="bills-filter-plano" class="block text-xs font-medium text-gray-600 mb-1">Plano de Contas</label>
-                                    <div class="flex space-x-1">
-                                        <select id="bills-filter-plano" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
-                                            <option value="Todos">Todos os Planos</option>
-                                            <option value="Despesas Gerais">Despesas Gerais</option>
-                                            <!-- JS popula customizados -->
-                                        </select>
-                                        <button type="button" id="btn-add-plano-filter" class="px-2 py-1.5 text-white bg-blue-500 rounded-md hover:bg-blue-600" title="Criar Novo Plano">
-                                            <i data-lucide="plus" class="w-4 h-4"></i>
-                                        </button>
-                                        <button type="button" id="btn-manage-plano-filter" class="px-2 py-1.5 text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-100" title="Gerenciar Planos">
-                                            <i data-lucide="settings-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-                                    </div>
-                                    <!-- Ordenação -->
-                                    <div>
-                                        <label for="bills-sort-order" class="block text-xs font-medium text-gray-600 mb-1">Ordenar por</label>
-                                        <select id="bills-sort-order" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
-                                            <option value="vencimento">Vencimento (Mais próximo)</option>
-                                            <option value="valor_desc">Valor (Maior para o Menor)</option>
-                                            <option value="valor_asc">Valor (Menor para o Maior)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <!-- Período -->
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
-                                    <div class="flex items-center space-x-2">
-                                        <label class="text-xs font-medium text-gray-600 w-8">Data:</label>
-                                        <input type="date" id="bills-filter-start" class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto" title="A partir de (Deixe vazio para ver tudo desde o início)">
-                                        <span class="text-gray-400 text-sm">até</span>
-                                        <input type="date" id="bills-filter-end" class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto" title="Até (Deixe vazio para não ter limite final)">
-                                    </div>
-                                    <button id="bills-clear-date-filter" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center justify-center">
-                                        <i data-lucide="x-circle" class="w-3.5 h-3.5 mr-1"></i> Limpar Filtros
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- NOVO: MINI CARDS DE MÉTRICAS -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                                <div id="card-filter-late" class="bg-red-50 border border-red-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1" title="Filtrar contas atrasadas">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Atrasadas</p>
-                                        <p id="metric-bills-late" class="text-xl font-bold text-red-700 sensitive-value">R$ 0,00</p>
-                                    </div>
-                                    <i data-lucide="alert-circle" class="text-red-400 w-8 h-8 opacity-50"></i>
-                                </div>
-                                <div id="card-filter-soon" class="bg-yellow-50 border border-yellow-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1" title="Filtrar contas que vencem em até 10 dias">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-yellow-600 uppercase tracking-wider">Vencem em breve</p>
-                                        <p id="metric-bills-soon" class="text-xl font-bold text-yellow-700 sensitive-value">R$ 0,00</p>
-                                    </div>
-                                    <i data-lucide="clock" class="text-yellow-400 w-8 h-8 opacity-50"></i>
-                                </div>
-                                <div id="card-filter-receivable" class="bg-green-50 border border-green-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1" title="Filtrar valores a receber">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">A Receber</p>
-                                        <p id="metric-bills-receivable" class="text-xl font-bold text-green-700 sensitive-value">R$ 0,00</p>
-                                    </div>
-                                    <i data-lucide="arrow-down-to-line" class="text-green-400 w-8 h-8 opacity-50"></i>
-                                </div>
-                                <div id="card-filter-all" class="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1" title="Remover filtros de métrica">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Total Filtrado</p>
-                                        <p id="metric-bills-total" class="text-xl font-bold text-blue-700 sensitive-value">R$ 0,00</p>
-                                    </div>
-                                    <i data-lucide="calculator" class="text-blue-400 w-8 h-8 opacity-50"></i>
-                                </div>
-                            </div>
-
-                            <div id="bills-batch-actions-container" class="hidden flex justify-end gap-2 mb-2">
-                                <button id="btn-batch-edit-bills" class="hidden px-3 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition-colors flex items-center">
-                                    <i data-lucide="edit" class="w-4 h-4 mr-1"></i> <span class="hidden sm:inline">Editar Seleção</span>
-                                </button>
-                                <button id="btn-batch-delete-bills" class="hidden px-3 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors flex items-center">
-                                    <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> <span class="hidden sm:inline">Excluir Seleção</span>
-                                </button>
-                            </div>
-
-                            <div class="mt-4 overflow-x-auto border rounded-lg">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                    </thead>
-                                    <tbody id="bills-list-table" class="bg-white divide-y divide-gray-200">
-                                    </tbody>
-                                    <!-- NOVO: RODAPÉ COM TOTAL -->
-                                    <tfoot class="bg-gray-50 border-t-2 border-gray-200">
-                                        <tr>
-                                            <td colspan="3" class="px-4 py-3 text-right font-bold text-gray-700 text-sm uppercase tracking-wider">Total Filtrado:</td>
-                                            <td colspan="2" id="bills-to-pay-total" class="px-4 py-3 font-bold text-red-600 text-sm sensitive-value">R$ 0,00</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="mt-8">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
-                                <h3 class="text-lg font-medium flex items-center flex-wrap gap-2">
-                                    Contas Pagas
-                                    <span id="bills-paid-period" class="text-sm font-normal text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">Todo o período</span>
-                                </h3>
-                                <button id="btn-print-paid-bills" class="px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
-                                    <i data-lucide="printer" class="w-4 h-4 mr-1"></i> Imprimir Relatório
-                                </button>
-                            </div>
-                            <div class="mt-4 overflow-x-auto border rounded-lg">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th
-                                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Descrição</th>
-                                            <th
-                                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Data Pag.</th>
-                                            <th
-                                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Valor</th>
-                                            <th
-                                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="bills-paid-table" class="bg-white divide-y divide-gray-200">
-                                    </tbody>
-                                    <!-- NOVO: RODAPÉ COM TOTAL PAGO -->
-                                    <tfoot class="bg-gray-50 border-t-2 border-gray-200">
-                                        <tr>
-                                            <td colspan="2" class="px-4 py-3 text-right font-bold text-gray-700 text-sm uppercase tracking-wider">Total Pago:</td>
-                                            <td colspan="2" id="bills-paid-total" class="px-4 py-3 font-bold text-red-600 text-sm sensitive-value">R$ 0,00</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-                </div>
-            </div>
-
-            <!-- Conteúdo da Aba: Todos Lançamentos -->
-            <div id="tab-financeiro-history" class="financeiro-tab-content hidden mt-6">
-                <div class="p-6 bg-white rounded-lg shadow-md space-y-6">
-                    <!-- Cabeçalho e Ações -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 space-y-3 sm:space-y-0">
-                        <h3 class="text-lg font-medium">Extrato Analítico</h3>
-                        <div class="flex space-x-2">
-                            <button id="btn-new-income" class="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center">
-                                <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Nova Entrada Avulsa
-                            </button>
-                            <button id="btn-new-transfer" class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                                <i data-lucide="arrow-right-left" class="w-4 h-4 mr-1"></i> Transferência
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- NOVO: MINI CARDS DE MÉTRICAS -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                        <div class="bg-green-50 border border-green-100 p-4 rounded-lg flex items-center justify-between shadow-sm">
-                            <div>
-                                <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Total Entradas (Filtrado)</p>
-                                <p id="metric-history-in" class="text-xl font-bold text-green-700 sensitive-value">R$ 0,00</p>
-                            </div>
-                            <i data-lucide="trending-up" class="text-green-400 w-8 h-8 opacity-50"></i>
-                        </div>
-                        <div class="bg-red-50 border border-red-100 p-4 rounded-lg flex items-center justify-between shadow-sm">
-                            <div>
-                                <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Total Saídas (Filtrado)</p>
-                                <p id="metric-history-out" class="text-xl font-bold text-red-700 sensitive-value">R$ 0,00</p>
-                            </div>
-                            <i data-lucide="trending-down" class="text-red-400 w-8 h-8 opacity-50"></i>
-                        </div>
-                        <div class="bg-blue-50 border border-blue-100 p-4 rounded-lg flex items-center justify-between shadow-sm">
-                            <div>
-                                <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Saldo do Período</p>
-                                <p id="metric-history-balance" class="text-xl font-bold text-blue-700 sensitive-value">R$ 0,00</p>
-                            </div>
-                            <i data-lucide="scale" class="text-blue-400 w-8 h-8 opacity-50"></i>
-                        </div>
-                    </div>
-
-                    <!-- PAINEL DE FILTROS DO EXTRATO -->
-                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-4 space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
-                                <label for="history-search-input" class="block text-xs font-medium text-gray-600 mb-1">Buscar por Descrição</label>
-                                <div class="relative">
-                                    <i data-lucide="search" class="absolute left-2.5 top-2 w-4 h-4 text-gray-400"></i>
-                                    <input type="search" id="history-search-input" placeholder="Ex: Venda, Aporte..." class="w-full pl-9 pr-3 py-1.5 text-sm border rounded-md bg-white">
-                                </div>
-                            </div>
-                            <div>
-                                <label for="history-filter-type" class="block text-xs font-medium text-gray-600 mb-1">Tipo de Lançamento</label>
-                                <select id="history-filter-type" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
-                                    <option value="Todos">Todos</option>
-                                    <option value="Entrada">Somente Entradas</option>
-                                    <option value="Saída">Somente Saídas</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="history-filter-account" class="block text-xs font-medium text-gray-600 mb-1">Caixa / Conta</label>
-                                <select id="history-filter-account" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
-                                    <option value="Todos">Todos os Caixas</option>
-                                    <option value="Físico">Caixa Físico (Dinheiro)</option>
-                                    <option value="Banco">Conta Bancária (Pix, Cartões...)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="history-sort-order" class="block text-xs font-medium text-gray-600 mb-1">Ordenar por</label>
-                                <select id="history-sort-order" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
-                                    <option value="data_desc">Data (Mais recentes)</option>
-                                    <option value="data_asc">Data (Mais antigos)</option>
-                                    <option value="valor_desc">Valor (Maior para menor)</option>
-                                    <option value="valor_asc">Valor (Menor para maior)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
-                            <div class="flex items-center space-x-2">
-                                <label class="text-xs font-medium text-gray-600 w-8">Data:</label>
-                                <input type="date" id="history-filter-start" class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto">
-                                <span class="text-gray-400 text-sm">até</span>
-                                <input type="date" id="history-filter-end" class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto">
-                            </div>
-                            <button id="history-clear-filters" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center justify-center">
-                                <i data-lucide="x-circle" class="w-3.5 h-3.5 mr-1"></i> Limpar Filtros
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- TABELA COM NOVA COLUNA -->
-                    <div class="overflow-x-auto border rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Data</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Descrição</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Tipo</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Conta / Forma</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Valor Total</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="finance-history-table" class="bg-white divide-y divide-gray-200">
-                                <!-- JS popula -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-            <!-- =========== RODAPÉ =========== -->
-            <footer class="mt-10 pb-2 text-center md:text-right text-xs text-gray-500">
-                Desenvolvido por Alessandro Leonello Ribeiro
-            </footer>
-            </main>
-    </div>
-    </div>
-
-    <!-- =========== MODAL NOVA CONTA (Dedicado) =========== -->
-    <div id="modal-add-bill" class="fixed inset-0 z-[60] flex items-center justify-center p-6 hidden bg-black bg-opacity-50">
-        <div class="w-full max-w-lg p-6 bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh]">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium">Nova Conta/Despesa</h3>
-                <button id="btn-close-modal-add-bill" class="text-gray-500 hover:text-gray-800">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <div class="overflow-y-auto pr-2">
-                <form id="form-add-bill" novalidate class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium">Descrição</label>
-                        <input type="text" id="bill-desc" required class="w-full px-3 py-2 mt-1 border rounded-md">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Plano de Contas</label>
-                        <div class="flex space-x-2">
-                            <select id="bill-plano-contas" class="w-full px-3 py-2 mt-1 border rounded-md">
-                                <option value="Despesas Gerais">Despesas Gerais</option>
-                                <!-- JS popula com planos customizados -->
-                            </select>
-                            <button type="button" id="btn-add-plano" class="px-3 py-2 mt-1 text-white bg-blue-500 rounded-md hover:bg-blue-600" title="Adicionar Plano">
-                                <i data-lucide="plus" class="w-5 h-5"></i>
-                            </button>
-                            <button type="button" id="btn-manage-plano" class="px-3 py-2 mt-1 text-white bg-gray-500 rounded-md hover:bg-gray-600" title="Gerenciar Planos">
-                                <i data-lucide="settings-2" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Valor (R$)</label>
-                        <input type="number" id="bill-value" step="0.01" required class="w-full px-3 py-2 mt-1 border rounded-md">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Data de Vencimento</label>
-                        <input type="date" id="bill-due-date" required class="w-full px-3 py-2 mt-1 border rounded-md">
-                    </div>
-                    <div>
-                        <label for="bill-payment-method-pre" class="block text-sm font-medium">Forma de Pagamento (Prevista)</label>
-                        <select id="bill-payment-method-pre" class="w-full px-3 py-2 mt-1 border rounded-md">
-                            <option value="Não definido">Não definido</option>
-                            <option>Pix</option>
-                            <option>Cartão de Crédito</option>
-                            <option>Boleto</option>
-                            <option>Dinheiro</option>
-                            <option>Débito em Conta</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="bill-is-paid" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
-                        <label for="bill-is-paid" class="block text-sm font-medium">Já está paga?</label>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="bill-is-installment" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                        <label for="bill-is-installment" class="block text-sm font-medium">É parcelado?</label>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="bill-is-fixed" class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
-                        <label for="bill-is-fixed" class="block text-sm font-medium">É despesa fixa mensal?</label>
-                    </div>
-                    <div id="bill-fixed-group" class="hidden space-y-2">
-                        <div>
-                            <label class="block text-sm font-medium">Projetar por quantos meses?</label>
-                            <input type="number" id="bill-fixed-count" value="12" min="1" max="600" class="w-full px-3 py-2 mt-1 border rounded-md">
-                        </div>
-                        <p class="text-xs text-gray-500">O mesmo valor será repetido para os próximos meses escolhidos.</p>
-                    </div>
-                    <div id="bill-installments-group" class="hidden space-y-2">
-                        <div>
-                            <label class="block text-sm font-medium">Número de Parcelas</label>
-                            <input type="number" id="bill-installments-count" value="2" min="2" class="w-full px-3 py-2 mt-1 border rounded-md">
-                        </div>
-                        <div class="mt-2">
-                            <label class="block text-sm font-medium">O valor digitado (R$) é:</label>
-                            <select id="bill-installment-value-type" class="w-full px-3 py-2 mt-1 border rounded-md">
-                                <option value="total">O valor TOTAL da compra</option>
-                                <option value="installment">O valor de CADA parcela</option>
-                            </select>
-                        </div>
-                        <p class="text-xs text-gray-500">A data de vencimento será a da 1ª parcela. As seguintes serão 30 dias após a outra.</p>
-                    </div>
-                    <div class="mt-6 pt-4 border-t border-gray-200 text-right space-x-2">
-                        <button type="button" id="btn-cancel-form-bill" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">Registrar Conta</button>
-                    </div>
-                </form>
+                <div id="clientsList"></div>
             </div>
         </div>
     </div>
 
-    <!-- =========== MODAL GENÉRICO (para pop-ups) =========== -->
-    <div id="modal-container"
-        class="fixed inset-0 z-[70] flex items-center justify-center p-6 hidden bg-black bg-opacity-50">
-        <div id="modal-content" class="w-full max-w-4xl p-6 bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh]">
-            <div class="flex items-center justify-between">
-                <h3 id="modal-title" class="text-xl font-medium">Modal Title</h3>
-                <button id="modal-close" class="text-gray-500 hover:text-gray-800">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <div id="modal-body" class="mt-4 overflow-y-auto">
-                <p>Modal body content goes here.</p>
-            </div>
+    <!-- Modals -->
+    <div id="saleModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSaleModal()">&times;</span>
+            <h2>Registrar Venda</h2>
+            <div id="saleProductInfo"></div>
+            <select id="saleClient" class="input-field" onchange="handleSaleClientChange()">
+                <option value="">Selecione o Cliente</option>
+            </select>
+            <input type="text" id="quickClientName" placeholder="Nome do Novo Cliente" class="input-field" style="display: none;">
+            <button onclick="confirmSale()" class="btn-primary">Confirmar Venda</button>
         </div>
     </div>
 
-    <!-- =========== MODAL TROCAR PRODUTO (MALETA) =========== -->
-    <div id="modal-swap-item" class="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 hidden bg-black bg-opacity-50">
-        <div class="w-full max-w-5xl bg-white rounded-lg shadow-xl flex flex-col max-h-[95vh] h-full">
-            <div class="p-4 sm:p-6 border-b flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-medium">Trocar Produto</h3>
-                    <p class="text-sm text-gray-500 mt-1">Selecione o novo produto no catálogo abaixo para substituir o item atual. A quantidade será mantida.</p>
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePaymentModal()">&times;</span>
+            <h2>Registrar Pagamento</h2>
+            <div id="paymentSaleInfo"></div>
+            <select id="paymentMethod" class="input-field">
+                <option value="">Forma de Pagamento</option>
+                <option value="money">Dinheiro</option>
+                <option value="credit">Cartão de Crédito</option>
+                <option value="debit">Cartão de Débito</option>
+                <option value="pix">PIX</option>
+                <option value="transfer">Transferência</option>
+            </select>
+            <div class="installment-section">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="hasInstallment" onchange="toggleInstallments()">
+                    Pagamento Parcelado
+                </label>
+                <div id="installmentFields" style="display: none;">
+                    <input type="number" id="installmentCount" placeholder="Número de Parcelas" class="input-field" min="2" max="24" oninput="generateInstallmentInputs()">
+                    <div id="dynamicInstallmentsContainer" style="margin-top: 10px; max-height: 200px; overflow-y: auto; padding-right: 5px;"></div>
                 </div>
-                <button id="btn-close-swap-item" class="text-gray-500 hover:text-gray-800">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
             </div>
+            <button onclick="confirmPayment()" class="btn-primary">Confirmar Pagamento</button>
+        </div>
+    </div>
+
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeClientModal()">&times;</span>
+            <h2>Adicionar Cliente</h2>
+            <input type="text" id="clientName" placeholder="Nome Completo" class="input-field">
+            <input type="tel" id="clientPhone" placeholder="Telefone" class="input-field">
+            <input type="email" id="clientEmail" placeholder="E-mail (opcional)" class="input-field">
+            <textarea id="clientNotes" placeholder="Observações (opcional)" class="input-field" rows="3"></textarea>
+            <button onclick="saveClient()" class="btn-primary">Salvar Cliente</button>
+        </div>
+    </div>
+
+    <div id="editClientModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditClientModal()">&times;</span>
+            <h2>Editar Cliente</h2>
+            <input type="text" id="editClientName" placeholder="Nome Completo" class="input-field">
+            <input type="tel" id="editClientPhone" placeholder="Telefone" class="input-field">
+            <input type="email" id="editClientEmail" placeholder="E-mail (opcional)" class="input-field">
+            <textarea id="editClientNotes" placeholder="Observações (opcional)" class="input-field" rows="3"></textarea>
+            <button onclick="saveClientEdit()" class="btn-primary">Salvar Alterações</button>
+        </div>
+    </div>
+
+    <div id="clientHistoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeClientHistoryModal()">&times;</span>
+            <h2 id="historyClientName">Histórico de Compras</h2>
+            <div id="clientHistoryList" class="history-list" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeImportModal()">&times;</span>
+            <h2>Importar Produtos</h2>
+            <p class="import-instructions">Faça upload de um arquivo Excel (.xlsx) ou CSV com as colunas: Nome, Código, Categoria, Quantidade, Preço</p>
+            <input type="file" id="importFile" accept=".xlsx,.xls,.csv" class="input-field">
+            <button onclick="importProducts()" class="btn-primary">Importar</button>
+        </div>
+    </div>
+
+    <div id="addResellerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddResellerModal()">&times;</span>
+            <h2>Adicionar Revendedora</h2>
+            <input type="text" id="newResellerName" placeholder="Nome Completo" class="input-field">
+            <input type="email" id="resellerEmail" placeholder="E-mail" class="input-field">
+            <input type="password" id="resellerPassword" placeholder="Senha" class="input-field">
+            <input type="tel" id="resellerPhone" placeholder="Telefone" class="input-field">
+            <button onclick="saveReseller()" class="btn-primary">Salvar Revendedora</button>
+        </div>
+    </div>
+
+    <div id="editSaleModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditSaleModal()">&times;</span>
+            <h2>Editar Venda</h2>
+            <div id="editSaleInfo" style="margin-bottom: 15px;"></div>
+            <select id="editSaleClient" class="input-field"></select>
+            <button onclick="saveSaleEdit()" class="btn-primary">Salvar Alterações</button>
+        </div>
+    </div>
+
+    <div id="barcodeScannerModal" class="modal">
+        <div class="modal-content scanner-content">
+            <span class="close" onclick="closeBarcodeScanner()">&times;</span>
+            <h2>Escanear Código de Barras</h2>
+            <div id="scannerContainer">
+                <video id="scannerVideo" autoplay></video>
+                <canvas id="scannerCanvas" style="display: none;"></canvas>
+            </div>
+            <p id="scannerResult"></p>
+        </div>
+    </div>
+
+    <div id="resellerSalesModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeResellerSalesModal()">&times;</span>
+            <h2 id="resellerSalesTitle">Vendas da Revendedora</h2>
             
-            <div class="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                <div class="flex items-center">
-                    <span class="text-sm font-medium text-gray-700 mr-2">Substituindo:</span>
-                    <span id="swap-item-current-name" class="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">Carregando...</span>
-                </div>
-                <input type="search" id="swap-catalog-search" placeholder="Filtrar catálogo..." class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-64">
-            </div>
+            <select id="resellerSalesTypeFilter" class="input-field" style="margin-bottom: 15px;" onchange="filterResellerSalesList()">
+                <option value="all">Todos os Registros</option>
+                <option value="product">Apenas Produtos</option>
+                <option value="settlement">Apenas Acertos</option>
+            </select>
 
-            <div class="flex-1 overflow-y-auto p-4 sm:px-6 bg-gray-100">
-                 <div id="swap-catalog-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 content-start">
-                        <!-- JS popula -->
-                 </div>
-            </div>
-
-            <div class="p-4 sm:p-6 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-lg">
-                 <button type="button" id="btn-cancel-swap-item" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">Cancelar</button>
-            </div>
+            <div id="resellerSalesList" class="history-list" style="margin-top: 15px;"></div>
+            <div id="resellerSalesTotal" style="margin-top: 15px; font-weight: bold; text-align: right; font-size: 1.2em; color: #2c1810;"></div>
         </div>
     </div>
 
-    <!-- =========== MODAL ASSISTENTE DE MALETA =========== -->
-    <div id="modal-wizard-maleta" class="fixed inset-0 z-[85] flex items-center justify-center p-4 sm:p-6 hidden bg-black bg-opacity-50">
-        <div class="w-full max-w-6xl bg-white rounded-lg shadow-xl flex flex-col max-h-[95vh] h-full">
-            <div class="p-4 sm:p-6 border-b flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-medium" id="wizard-maleta-title">Gerar Maleta (Passo 1)</h3>
-                    <p class="text-sm text-gray-500 mt-1">Selecione os produtos no catálogo para atingir a média da categoria.</p>
+    <div id="editProductModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditProductModal()">&times;</span>
+            <h2>Editar Produto</h2>
+            <input type="text" id="editProductName" placeholder="Nome do Produto" class="input-field">
+            <input type="text" id="editProductCode" placeholder="Código de Referência" class="input-field">
+            <input type="text" id="editProductCategory" placeholder="Categoria" class="input-field">
+            <input type="number" id="editProductQuantity" placeholder="Quantidade" class="input-field">
+            <input type="number" id="editProductPrice" placeholder="Preço (R$)" step="0.01" class="input-field">
+            <input type="text" id="editProductBarcode" placeholder="Código de Barras" class="input-field">
+            <input type="url" id="editProductImage" placeholder="URL da Imagem (Opcional)" class="input-field">
+            <button onclick="saveProductEdit()" class="btn-primary">Salvar Alterações</button>
+        </div>
+    </div>
+
+    <div id="editResellerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditResellerModal()">&times;</span>
+            <h2>Editar Revendedora</h2>
+            <input type="text" id="editResellerName" placeholder="Nome Completo" class="input-field">
+            <input type="email" id="editResellerEmail" placeholder="E-mail" class="input-field">
+            <input type="tel" id="editResellerPhone" placeholder="Telefone" class="input-field">
+            <button onclick="saveResellerEdit()" class="btn-primary">Salvar Alterações</button>
+        </div>
+    </div>
+
+    <div id="editOrderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditOrderModal()">&times;</span>
+            <h2>Editar Pedido</h2>
+            <select id="editOrderReseller" class="input-field">
+                <option value="">Selecione a Revendedora</option>
+            </select>
+            <div id="editOrderProductsSelection"></div>
+            <button onclick="saveOrderEdit()" class="btn-primary">Salvar Alterações</button>
+        </div>
+    </div>
+
+    <div id="editPaymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditPaymentModal()">&times;</span>
+            <h2>Editar Pagamento</h2>
+            <select id="editPaymentMethod" class="input-field">
+                <option value="">Forma de Pagamento</option>
+                <option value="money">Dinheiro</option>
+                <option value="credit">Cartão de Crédito</option>
+                <option value="debit">Cartão de Débito</option>
+                <option value="pix">PIX</option>
+                <option value="transfer">Transferência</option>
+            </select>
+            <div class="installment-section">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="editHasInstallment" onchange="toggleEditInstallments()">
+                    Pagamento Parcelado
+                </label>
+                <div id="editInstallmentFields" style="display: none;">
+                    <input type="number" id="editInstallmentCount" placeholder="Número de Parcelas" class="input-field" min="2" max="24" oninput="generateEditInstallmentInputs()">
+                    <div id="editDynamicInstallmentsContainer" style="margin-top: 10px; max-height: 200px; overflow-y: auto; padding-right: 5px;"></div>
                 </div>
-                <button id="btn-close-wizard-maleta" class="text-gray-500 hover:text-gray-800">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
             </div>
+            <button onclick="savePaymentEdit()" class="btn-primary">Salvar Alterações</button>
+        </div>
+    </div>
+
+    <div id="installmentDateModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close" onclick="document.getElementById('installmentDateModal').classList.remove('active')">&times;</span>
+            <h3>Confirmar Pagamento</h3>
             
-            <div class="px-4 sm:px-6 pt-4">
-                <div class="flex justify-between items-center mb-1">
-                    <h4 class="font-bold text-indigo-700 text-lg flex items-center" id="wizard-category-name">Categoria</h4>
-                    <span class="text-base font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-full" id="wizard-category-progress">0 / 0</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
-                    <div class="bg-indigo-600 h-3 rounded-full transition-all duration-300" id="wizard-category-progress-bar" style="width: 0%"></div>
-                </div>
-                <div id="wizard-subcats-progress" class="flex flex-wrap gap-2 mb-2"></div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #666;">Data do Pagamento</label>
+                <input type="date" id="installmentDateInput" class="input-field">
             </div>
-
-            <div class="flex flex-col lg:flex-row gap-4 overflow-hidden flex-1 p-4 sm:px-6 pb-0">
-                <!-- Painel Esquerdo: Catálogo -->
-                <div class="flex-1 flex flex-col border border-gray-200 rounded-lg bg-gray-50 overflow-hidden w-full lg:w-1/2">
-                    <div class="p-3 border-b border-gray-200 bg-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                        <h4 class="font-medium text-gray-700 flex items-center"><i data-lucide="layout-grid" class="w-4 h-4 mr-2"></i>Catálogo</h4>
-                        <input type="search" id="wizard-catalog-search" placeholder="Filtrar catálogo..." class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-auto">
-                    </div>
-                    <div id="wizard-catalog-grid" class="flex-1 overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 content-start">
-                        <!-- JS popula -->
-                    </div>
-                </div>
-
-                <!-- Painel Direito: Selecionados -->
-                <div class="flex-1 flex flex-col border border-gray-200 rounded-lg overflow-hidden w-full lg:w-1/2">
-                    <div class="p-3 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                        <h4 class="font-medium text-gray-700 flex items-center"><i data-lucide="check-square" class="w-4 h-4 mr-2"></i>Selecionados</h4>
-                        <div class="flex space-x-2">
-                            <input type="text" id="wizard-item-ref" list="sale-item-datalist" placeholder="Ou use leitor (Ref)" class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-auto">
-                            <button type="button" id="btn-wizard-add-item" class="px-3 py-1.5 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 text-sm">Add</button>
-                        </div>
-                    </div>
-                    <p id="wizard-error" class="text-sm text-red-600 px-3 pt-2 hidden"></p>
-                    <div class="overflow-y-auto flex-1 bg-white">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50 sticky top-0 shadow-sm">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Qtd.</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="wizard-items-list" class="bg-white divide-y divide-gray-200">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #666;">Valor Pago (R$)</label>
+                <input type="number" id="installmentAmountInput" class="input-field" step="0.01">
             </div>
-
-            <div class="p-4 sm:p-6 border-t border-gray-200 mt-4 flex justify-between items-center bg-gray-50 rounded-b-lg">
-                <button type="button" id="btn-wizard-prev" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 flex items-center">
-                    <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Anterior
-                </button>
-                <div class="space-x-2 flex">
-                    <button type="button" id="btn-wizard-skip" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hidden sm:block">Pular Categoria</button>
-                    <button type="button" id="btn-wizard-next" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center shadow-sm">
-                        Próxima <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
-                    </button>
-                </div>
-            </div>
+            <button onclick="confirmInstallmentDate()" class="btn-primary">Confirmar</button>
         </div>
     </div>
 
-    <!-- =========== LIGHTBOX (TELA CHEIA PARA FOTOS) =========== -->
-    <div id="lightbox-container" class="fixed inset-0 z-[1000] flex items-center justify-center hidden bg-black bg-opacity-90 transition-opacity">
-        <button id="lightbox-close" class="absolute top-4 right-4 text-white hover:text-gray-300 focus:outline-none">
-            <i data-lucide="x" class="w-8 h-8"></i>
-        </button>
-        <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain p-4" alt="Tela Cheia">
-    </div>
-
-    <!-- Canvas oculto para gerar códigos de barra -->
-    <canvas id="barcode-canvas" style="display: none;"></canvas>
-    <!-- =========== SCRIPTS =========== -->
-
-    <!-- Firebase SDKs -->
-    <script type="module" src="script.js"></script>
-
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase Config -->
+    <script src="firebase-config.js?v=1.3"></script>
+    
+    <!-- App Script -->
+    <script src="script.js?v=1.3"></script>
 </body>
-
 </html>
