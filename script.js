@@ -100,6 +100,13 @@
                 setValuesHidden(!isHidden);
             });
         }
+        
+        // Verifica o tamanho da tela na inicialização para definir o padrão
+        if (window.innerWidth < 768) {
+            setValuesHidden(false); // Mostra os valores por padrão no celular
+        } else {
+            setValuesHidden(true); // Oculta por padrão no desktop
+        }
 
         // Monitorar estado de autenticação (Login/Logout real)
         onAuthStateChanged(auth, (user) => {
@@ -819,6 +826,10 @@
             people.forEach(person => {
                 const tr = document.createElement('tr');
                 tr.dataset.id = person.id;
+                  let exportBtnHtml = '';
+                if (person.tipo === 'revendedor') {
+                    exportBtnHtml = `<button class="btn-export-revendedor text-green-600 hover:text-green-900" data-id="${person.id}" title="Exportar Acesso (Excel)"><i data-lucide="file-spreadsheet" class="w-5 h-5 pointer-events-none"></i></button>`;
+                }
                 tr.innerHTML = `
             <td class="px-6 py-4"><input type="checkbox" class="rounded person-checkbox" data-id="${person.id}"></td>
             <td class="px-6 py-4 whitespace-nowrap">${person.nome}</td>
@@ -831,7 +842,8 @@
                     ${typeNames[person.tipo] || 'Não definido'}
                 </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 text-right">
+                ${exportBtnHtml}
                 <button class="btn-edit-person text-indigo-600 hover:text-indigo-900" data-id="${person.id}"><i data-lucide="edit-2" class="w-5 h-5 pointer-events-none"></i></button>
                 <button class="btn-delete-person text-red-600 hover:text-red-900" data-id="${person.id}"><i data-lucide="trash-2" class="w-5 h-5 pointer-events-none"></i></button>
             </td>
@@ -2399,6 +2411,13 @@
                 }
                 // --- FIM DO BLOCO ---
 
+                // --- AÇÃO: Exportar Revendedora (Excel) ---
+                const exportRevendedorBtn = e.target.closest('.btn-export-revendedor');
+                if (exportRevendedorBtn && exportRevendedorBtn.dataset.id) {
+                    exportRevendedorToExcel(exportRevendedorBtn.dataset.id);
+                    return; // Encerra
+                }
+
                 // --- AÇÃO: Excluir Produto ---
                 const deleteBtn = e.target.closest('.btn-delete-product');
                 if (deleteBtn && deleteBtn.dataset.id) {
@@ -2663,6 +2682,23 @@
                 return; // Encerra, pois não é um clique em outro botão
             }
             
+            // --- AÇÃO: Imprimir Seleção de Contas (NOVO) ---
+            const batchPrintBillsBtn = e.target.closest('#btn-batch-print-bills');
+            if (batchPrintBillsBtn) {
+                const idsToPrint = getSelectedBillIds();
+                if (idsToPrint.length === 0) {
+                    showModal("Atenção", "Selecione pelo menos uma conta para imprimir.");
+                } else {
+                    const billsToPrint = allFinancialEntries.filter(bill => idsToPrint.includes(bill.id));
+                    billsToPrint.sort((a, b) => {
+                        const dateA = a.vencimento ? new Date(a.vencimento) : new Date(9999, 0, 1);
+                        const dateB = b.vencimento ? new Date(b.vencimento) : new Date(9999, 0, 1);
+                        return dateA - dateB;
+                    });
+                    generatePendingBillsReportPDF(billsToPrint, "Contas Selecionadas");
+                }
+                return;
+            }
             // --- AÇÃO: Excluir Contas em Lote (NOVO) ---
             const batchDeleteBillsBtn = e.target.closest('#btn-batch-delete-bills');
             if (batchDeleteBillsBtn) {
@@ -3072,19 +3108,43 @@
  * Atualiza a visibilidade dos botões de ação em lote das Contas a Pagar
  */
 function updateBillSelectionState() {
-    const selectedCount = document.querySelectorAll('#bills-list-table input.bill-checkbox:checked').length;
+    const allCheckboxes = document.querySelectorAll('#bills-list-table input.bill-checkbox');
+    const selectedCheckboxes = document.querySelectorAll('#bills-list-table input.bill-checkbox:checked');
+    const selectedCount = selectedCheckboxes.length;
     const btnBatchEdit = document.getElementById('btn-batch-edit-bills');
     const btnBatchDelete = document.getElementById('btn-batch-delete-bills');
+    const btnBatchPrint = document.getElementById('btn-batch-print-bills');
     const batchContainer = document.getElementById('bills-batch-actions-container');
+    const totalToPayEl = document.getElementById('bills-to-pay-total');
     
     if (selectedCount > 0) {
         if (btnBatchEdit) btnBatchEdit.classList.remove('hidden');
         if (btnBatchDelete) btnBatchDelete.classList.remove('hidden');
+        if (btnBatchPrint) btnBatchPrint.classList.remove('hidden');
         if (batchContainer) batchContainer.classList.remove('hidden');
+        
+        if (totalToPayEl) {
+            let selectedSum = 0;
+            selectedCheckboxes.forEach(cb => {
+                const bill = allFinancialEntries.find(b => b.id === cb.dataset.id);
+                if (bill) selectedSum += bill.valor;
+            });
+            totalToPayEl.innerHTML = `R$ ${selectedSum.toFixed(2).replace('.', ',')} <span class="text-xs text-gray-500 font-normal ml-1 whitespace-nowrap">(Selecionadas)</span>`;
+        }
     } else {
         if (btnBatchEdit) btnBatchEdit.classList.add('hidden');
         if (btnBatchDelete) btnBatchDelete.classList.add('hidden');
+        if (btnBatchPrint) btnBatchPrint.classList.add('hidden');
         if (batchContainer) batchContainer.classList.add('hidden');
+        
+        if (totalToPayEl) {
+            let allSum = 0;
+            allCheckboxes.forEach(cb => {
+                const bill = allFinancialEntries.find(b => b.id === cb.dataset.id);
+                if (bill) allSum += bill.valor;
+            });
+            totalToPayEl.textContent = `R$ ${allSum.toFixed(2).replace('.', ',')}`;
+        }
     }
 }
 
@@ -5209,6 +5269,20 @@ function showBatchBillEditModal(ids) {
                     // 4. Executar o Batch
                     await batch.commit();
 
+                    // --- NOVO: Calcular os itens recém-adicionados para exportação em planilha ---
+                    const addedItemsToExport = [];
+                    for (const ref of Object.keys(newRefMap)) {
+                        const originalQty = originalRefMap[ref] || 0;
+                        const newQty = newRefMap[ref] || 0;
+                        const diff = newQty - originalQty;
+                        if (diff > 0) {
+                            const itemData = editConsignmentItems.find(i => i.ref === ref);
+                            if (itemData) {
+                                addedItemsToExport.push({ ...itemData, quantity: diff });
+                            }
+                        }
+                    }
+
                     // 5. Sucesso e opções de impressão do novo PDF
                     hideModal();
                     const updatedSaleDataForPDF = {
@@ -5220,7 +5294,7 @@ function showBatchBillEditModal(ids) {
                         total: newSubtotal,
                         createdAt: originalConsignment.createdAt
                     };
-                    showPrintConsignConfirmation(updatedSaleDataForPDF, newDueDate, true);
+                    showPrintConsignConfirmation(updatedSaleDataForPDF, newDueDate, true, addedItemsToExport);
 
                 } catch (error) {
                     console.error("Erro ao atualizar consignação:", error);
@@ -6896,6 +6970,94 @@ function showBatchBillEditModal(ids) {
             // Download
             XLSX.writeFile(wb, filename);
         }
+        
+        /**
+         * Exporta uma lista específica de itens para Excel (.xlsx)
+         */
+        function exportSpecificItemsToExcel(items, clientName) {
+            if (!items || items.length === 0) {
+                showModal("Aviso", "Não há itens para exportar.");
+                return;
+            }
+
+            const processedItems = items.map(item => {
+                let categoria = item.categoria || "";
+                let ref2 = item.ref2 || "";
+                let fotoUrl = item.fotoUrl || "";
+                let fotosExtras = [];
+
+                const productInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
+                if (productInCache) {
+                    if (!categoria) categoria = productInCache.categoria;
+                    if (!ref2) ref2 = productInCache.ref2;
+                    if (!fotoUrl) fotoUrl = productInCache.fotoUrl || "";
+                    if (productInCache.fotosExtras && Array.isArray(productInCache.fotosExtras)) {
+                        fotosExtras = productInCache.fotosExtras;
+                    }
+                }
+                
+                if (!categoria) categoria = "N/D";
+
+                const allUrls = [];
+                if (fotoUrl) allUrls.push(fotoUrl);
+                fotosExtras.forEach(url => {
+                    if (url && !allUrls.includes(url)) allUrls.push(url);
+                });
+
+                return { ...item, _exportCategoria: categoria, _exportRef2: ref2, _allUrls: allUrls };
+            });
+
+            const maxUrls = Math.max(...processedItems.map(item => item._allUrls.length), 0);
+
+            const dataToExport = processedItems.map(item => {
+                const row = {
+                    "Nome Comercial": item.nomeComercial || "", "Nome Técnico": item.nome || "",
+                    "Código": item.ref, "Ref. 2": item._exportRef2 || "", "Categoria": item._exportCategoria,
+                    "Quantidade Adicionada": item.quantity || 1, "Preço": item.venda || 0,
+                };
+                if (maxUrls === 0) row["URL 1"] = ""; 
+                else for (let i = 0; i < maxUrls; i++) row[`URL ${i + 1}`] = item._allUrls[i] || "";
+                return row;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Itens Adicionados");
+            const safeClientName = (clientName || "Cliente").replace(/[^a-z0-9]/gi, '_');
+            const dateStr = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `Itens_Adicionados_${safeClientName}_${dateStr}.xlsx`);
+        }
+
+        /**
+         * Exporta os dados de uma revendedora para Excel (.xlsx)
+         */
+        function exportRevendedorToExcel(personId) {
+            const person = allUserPeople.find(p => p.id === personId);
+            if (!person) {
+                showModal("Erro", "Revendedora não encontrada.");
+                return;
+            }
+
+            const cleanCpf = (person.cpf || '').replace(/\D/g, '');
+            const senha = cleanCpf.substring(0, 6);
+
+            if (!senha) {
+                showModal("Aviso", "Esta revendedora não possui CPF cadastrado. A senha ficará em branco na planilha.");
+            }
+
+            const dataToExport = [{
+                "Nome": person.nome || "",
+                "E-mail": person.email || "",
+                "Telefone": person.telefone || "",
+                "Senha": senha
+            }];
+
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Acesso Revendedora");
+            const safeName = (person.nome || "Revendedora").replace(/[^a-z0-9]/gi, '_');
+            XLSX.writeFile(wb, `Acesso_${safeName}.xlsx`);
+        }
 
         /**
          * Baixa as fotos de todos os itens de uma consignação em um arquivo ZIP
@@ -6995,16 +7157,29 @@ function showBatchBillEditModal(ids) {
         /**
          * Exibe um modal customizado para perguntar se o usuário quer imprimir com ou sem fotos
          */
-        function showPrintConsignConfirmation(saleData, dueDateString, isUpdate = false) {
+        function showPrintConsignConfirmation(saleData, dueDateString, isUpdate = false, addedItemsToExport = null) {
+            let exportBtnHtml = '';
+            let alertAddedHtml = '';
+            
+            if (addedItemsToExport && addedItemsToExport.length > 0) {
+                alertAddedHtml = `<div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-800">
+                    <i data-lucide="check-circle" class="w-4 h-4 inline mr-1"></i>
+                    Foram adicionados <strong>${addedItemsToExport.reduce((acc, i) => acc + i.quantity, 0)} novos itens</strong> a esta consignação. Você pode exportar apenas eles em Excel.
+                </div>`;
+                exportBtnHtml = `<button type="button" id="btn-export-added-excel" class="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 border border-green-200 rounded-md hover:bg-green-200 flex items-center"><i data-lucide="file-spreadsheet" class="w-4 h-4 mr-1 pointer-events-none"></i>Exportar Novos (Excel)</button>`;
+            }
+
             modalTitle.textContent = isUpdate ? 'Consignação Atualizada' : 'Opções de Impressão';
             modalBody.innerHTML = `
                 <p class="text-lg font-medium mb-2 text-gray-800">${isUpdate ? 'A consignação foi atualizada com sucesso!' : 'Gerar Comprovante'}</p>
                 <p class="text-gray-600">Deseja gerar o comprovante de consignação <strong>COM</strong> ou <strong>SEM</strong> as fotos dos produtos?</p>
+                ${alertAddedHtml}
                 <p class="text-sm text-gray-500 mt-3 bg-gray-50 p-3 rounded border border-gray-200">
                     <i data-lucide="info" class="w-4 h-4 inline mr-1 text-indigo-500"></i>
                     A opção <strong>"Com Fotos"</strong> pode demorar alguns segundos a mais para carregar e inserir as imagens no arquivo PDF.
                 </p>
-                <div class="mt-6 text-right space-x-2">
+                <div class="mt-6 flex flex-wrap justify-end gap-2">
+                    ${exportBtnHtml}
                     <button type="button" id="btn-print-cancel" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200">Não Imprimir</button>
                     <button type="button" id="btn-print-without-photos" class="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200">Imprimir SEM Fotos</button>
                     <button type="button" id="btn-print-with-photos" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Imprimir COM Fotos</button>
@@ -7012,6 +7187,13 @@ function showBatchBillEditModal(ids) {
             `;
             modalContainer.style.display = 'flex';
             lucide.createIcons();
+
+            const btnExportAdded = document.getElementById('btn-export-added-excel');
+            if (btnExportAdded) {
+                btnExportAdded.onclick = () => {
+                    exportSpecificItemsToExcel(addedItemsToExport, saleData.clientId || "Cliente");
+                };
+            }
 
             document.getElementById('btn-print-cancel').onclick = hideModal;
 
