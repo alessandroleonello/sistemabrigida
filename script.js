@@ -13220,6 +13220,13 @@ function exportFinancialReportToExcel() {
  * Trata o processo de zerar o caixa do sistema (exclui todos os lançamentos pagos)
  */
 async function handleResetCashRegister() {
+    // Trava de segurança (Desativado temporariamente. Alterar para true para liberar a funcionalidade)
+    const isResetAuthorized = false;
+    if (!isResetAuthorized) {
+        showModal("Acesso Bloqueado", "A funcionalidade de zerar caixa está temporariamente desativada no código por segurança.");
+        return;
+    }
+
     if (!userId) {
         showModal("Erro", "Usuário não autenticado.");
         return;
