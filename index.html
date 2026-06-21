@@ -130,7 +130,7 @@
                         <i data-lucide="package" class="flex-shrink-0"></i>
                         <span class="sidebar-text whitespace-nowrap">Produtos</span>
                     </a>
-                     <a href="#" data-page="page-maletas"
+                    <a href="#" data-page="page-maletas"
                         class="sidebar-link flex items-center px-3 py-2 space-x-2 rounded-md hover:bg-gray-700 group">
                         <i data-lucide="briefcase" class="flex-shrink-0"></i>
                         <span class="sidebar-text whitespace-nowrap">Maletas</span>
@@ -160,7 +160,9 @@
                         <img id="sidebar-favicon"
                             src="https://i.ibb.co/Z6XQpZzQ/Green-and-Brown-Minimalist-Studio-Logo-Design-Template-1.png"
                             alt="Favicon da Empresa" class="max-h-8 w-auto hidden transition-opacity duration-300">
-                        <button id="btn-edit-logo" class="absolute top-0 right-4 p-1.5 bg-gray-700 rounded-md text-gray-300 hover:text-white hidden group-hover:block transition-colors shadow-sm border border-gray-600" title="Alterar Logotipo">
+                        <button id="btn-edit-logo"
+                            class="absolute top-0 right-4 p-1.5 bg-gray-700 rounded-md text-gray-300 hover:text-white hidden group-hover:block transition-colors shadow-sm border border-gray-600"
+                            title="Alterar Logotipo">
                             <i data-lucide="edit-2" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -186,9 +188,12 @@
                         <i data-lucide="menu"></i>
                     </button>
                     <div class="hidden md:block"></div>
-                    <button id="btn-toggle-values" class="p-2 text-gray-600 bg-white rounded-md shadow hover:text-gray-900 flex items-center space-x-2 ml-auto" title="Mostrar/Ocultar Valores">
+                    <button id="btn-toggle-values"
+                        class="p-2 text-gray-600 bg-white rounded-md shadow hover:text-gray-900 flex items-center space-x-2 ml-auto"
+                        title="Mostrar/Ocultar Valores">
                         <i data-lucide="eye-off" id="icon-toggle-values"></i>
-                        <span class="text-sm font-medium hidden sm:inline" id="text-toggle-values">Valores Ocultos</span>
+                        <span class="text-sm font-medium hidden sm:inline" id="text-toggle-values">Valores
+                            Ocultos</span>
                     </button>
                 </div>
 
@@ -221,7 +226,8 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 uppercase">Vendas (Mês)</p>
-                                    <p id="dashboard-sales-value" class="text-3xl font-bold text-green-600 sensitive-value">R$ 0,00</p>
+                                    <p id="dashboard-sales-value"
+                                        class="text-3xl font-bold text-green-600 sensitive-value">R$ 0,00</p>
                                 </div>
                                 <div class="p-3 text-green-600 bg-green-100 rounded-full">
                                     <i data-lucide="trending-up"></i>
@@ -236,13 +242,15 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 uppercase">Caixa (Mês)</p>
-                                    <p id="dashboard-balance-value" class="text-3xl font-bold text-blue-600 sensitive-value">R$ 0,00</p>
+                                    <p id="dashboard-balance-value"
+                                        class="text-3xl font-bold text-blue-600 sensitive-value">R$ 0,00</p>
                                 </div>
                                 <div class="p-3 text-blue-600 bg-blue-100 rounded-full">
                                     <i data-lucide="scale"></i>
                                 </div>
                             </div>
-                            <p id="dashboard-balance-details" class="mt-2 text-sm text-gray-500 sensitive-value">Ent: R$0, Saí: R$0</p>
+                            <p id="dashboard-balance-details" class="mt-2 text-sm text-gray-500 sensitive-value">Ent:
+                                R$0, Saí: R$0</p>
                         </div>
 
                         <!-- Card de Estoque Baixo (Clicável) -->
@@ -379,7 +387,8 @@
                         <div class="space-y-4">
                             <div class="flex justify-end space-x-2">
                                 <button id="btn-batch-report"
-                                    class="px-4 py-2 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Gerar Relatório</button>
+                                    class="px-4 py-2 font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Gerar
+                                    Relatório</button>
                                 <button id="btn-batch-edit"
                                     class="px-4 py-2 font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700">Editar
                                     em Lote</button>
@@ -410,17 +419,22 @@
                                 </div>
                                 <div class="flex items-center space-x-4 pt-2 md:pt-5">
                                     <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" id="product-in-stock-only" class="rounded text-indigo-600 w-4 h-4 mr-2 focus:ring-indigo-500">
-                                        <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Com Estoque</span>
+                                        <input type="checkbox" id="product-in-stock-only"
+                                            class="rounded text-indigo-600 w-4 h-4 mr-2 focus:ring-indigo-500">
+                                        <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Com
+                                            Estoque</span>
                                     </label>
                                     <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" id="product-no-photo-only" class="rounded text-indigo-600 w-4 h-4 mr-2 focus:ring-indigo-500">
-                                        <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Sem Foto</span>
+                                        <input type="checkbox" id="product-no-photo-only"
+                                            class="rounded text-indigo-600 w-4 h-4 mr-2 focus:ring-indigo-500">
+                                        <span class="text-xs font-medium text-gray-700 whitespace-nowrap">Sem
+                                            Foto</span>
                                     </label>
                                 </div>
                                 <div class="pt-2 md:pt-5">
                                     <button id="product-clear-filters"
-                                        class="text-xs text-indigo-600 hover:underline whitespace-nowrap">Limpar filtros</button>
+                                        class="text-xs text-indigo-600 hover:underline whitespace-nowrap">Limpar
+                                        filtros</button>
                                 </div>
                             </div>
 
@@ -494,7 +508,8 @@
                                         class="w-full px-3 py-2 mt-1 border rounded-md">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium">Nome Comercial (Para Vendas e Etiquetas)</label>
+                                    <label class="block text-sm font-medium">Nome Comercial (Para Vendas e
+                                        Etiquetas)</label>
                                     <input type="text" id="prod-nome-comercial"
                                         class="w-full px-3 py-2 mt-1 border rounded-md">
                                 </div>
@@ -534,20 +549,31 @@
                                     <label class="block text-sm font-medium">URL da Imagem Principal (Opcional)</label>
                                     <div class="flex items-start space-x-4 mt-1">
                                         <div class="flex-1">
-                                            <input type="url" id="prod-foto" placeholder="https://exemplo.com/imagem.jpg"
+                                            <input type="url" id="prod-foto"
+                                                placeholder="https://exemplo.com/imagem.jpg"
                                                 class="w-full px-3 py-2 border rounded-md">
                                         </div>
                                         <div class="shrink-0 relative group">
-                                            <img id="prod-foto-preview" src="https://placehold.co/100x100/e2e8f0/adb5bd?text=Preview" alt="Preview da Imagem" class="w-16 h-16 object-cover border rounded-md cursor-pointer fullscreen-trigger" data-full-src="https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview">
-                                            <div class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
-                                                <img id="prod-foto-preview-large" src="https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview" alt="Preview da Imagem" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
+                                            <img id="prod-foto-preview"
+                                                src="https://placehold.co/100x100/e2e8f0/adb5bd?text=Preview"
+                                                alt="Preview da Imagem"
+                                                class="w-16 h-16 object-cover border rounded-md cursor-pointer fullscreen-trigger"
+                                                data-full-src="https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview">
+                                            <div
+                                                class="fixed z-[150] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden group-hover:block bg-white p-1 border border-gray-200 rounded-lg shadow-2xl pointer-events-none w-48 h-48 md:w-64 md:h-64">
+                                                <img id="prod-foto-preview-large"
+                                                    src="https://placehold.co/200x200/e2e8f0/adb5bd?text=Preview"
+                                                    alt="Preview da Imagem"
+                                                    class="w-full h-full object-cover rounded-md"
+                                                    onerror="this.src='https://placehold.co/200x200/e2e8f0/adb5bd?text=Erro'">
                                             </div>
                                         </div>
                                     </div>
                                     <div id="extra-images-container" class="mt-2 space-y-2">
                                         <!-- Imagens extras renderizadas aqui -->
                                     </div>
-                                    <button type="button" id="btn-add-extra-image" class="mt-2 text-sm text-indigo-600 hover:underline flex items-center">
+                                    <button type="button" id="btn-add-extra-image"
+                                        class="mt-2 text-sm text-indigo-600 hover:underline flex items-center">
                                         <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Adicionar imagem extra
                                     </button>
                                 </div>
@@ -815,87 +841,119 @@
                         <div id="import-status" class="mt-4 text-sm"></div>
                     </div>
 
-                <!-- Conteúdo da Aba: Resumo de Estoque -->
-                <div id="tab-produtos-estoque" class="product-tab-content hidden mt-6">
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                        <!-- Estoque Físico -->
-                        <div class="p-6 bg-white rounded-xl shadow-md border border-gray-200">
-                            <div class="flex items-center mb-4">
-                                <div class="p-3 bg-blue-100 text-blue-600 rounded-full mr-4"><i data-lucide="package" class="w-6 h-6"></i></div>
-                                <div>
-                                    <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Estoque Físico</p>
-                                    <p class="text-xs text-gray-400">Comigo no momento</p>
+                    <!-- Conteúdo da Aba: Resumo de Estoque -->
+                    <div id="tab-produtos-estoque" class="product-tab-content hidden mt-6">
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                            <!-- Estoque Físico -->
+                            <div class="p-6 bg-white rounded-xl shadow-md border border-gray-200">
+                                <div class="flex items-center mb-4">
+                                    <div class="p-3 bg-blue-100 text-blue-600 rounded-full mr-4"><i
+                                            data-lucide="package" class="w-6 h-6"></i></div>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Estoque
+                                            Físico</p>
+                                        <p class="text-xs text-gray-400">Comigo no momento</p>
+                                    </div>
+                                </div>
+                                <p id="estoque-fisico-qty"
+                                    class="text-4xl font-extrabold text-gray-800 mb-4 sensitive-value">0 un.</p>
+                                <div class="space-y-2 border-t pt-4">
+                                    <div class="flex justify-between text-sm"><span class="text-gray-500">Custo
+                                            Total:</span><span id="estoque-fisico-cost"
+                                            class="font-bold text-red-600 sensitive-value">R$ 0,00</span></div>
+                                    <div class="flex justify-between text-sm"><span class="text-gray-500">Venda
+                                            Total:</span><span id="estoque-fisico-sale"
+                                            class="font-bold text-green-600 sensitive-value">R$ 0,00</span></div>
                                 </div>
                             </div>
-                            <p id="estoque-fisico-qty" class="text-4xl font-extrabold text-gray-800 mb-4 sensitive-value">0 un.</p>
-                            <div class="space-y-2 border-t pt-4">
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Total:</span><span id="estoque-fisico-cost" class="font-bold text-red-600 sensitive-value">R$ 0,00</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Venda Total:</span><span id="estoque-fisico-sale" class="font-bold text-green-600 sensitive-value">R$ 0,00</span></div>
+
+                            <!-- Na Rua (Consignado) -->
+                            <div class="p-6 bg-white rounded-xl shadow-md border border-purple-200">
+                                <div class="flex items-center mb-4">
+                                    <div class="p-3 bg-purple-100 text-purple-600 rounded-full mr-4"><i
+                                            data-lucide="truck" class="w-6 h-6"></i></div>
+                                    <div>
+                                        <p class="text-sm font-bold text-purple-600 uppercase tracking-wider">Nas Ruas
+                                        </p>
+                                        <p class="text-xs text-gray-400">Em consignações ativas</p>
+                                    </div>
+                                </div>
+                                <p id="estoque-rua-qty"
+                                    class="text-4xl font-extrabold text-gray-800 mb-4 sensitive-value">0 un.</p>
+                                <div class="space-y-2 border-t pt-4">
+                                    <div class="flex justify-between text-sm"><span class="text-gray-500">Custo
+                                            Total:</span><span id="estoque-rua-cost"
+                                            class="font-bold text-red-600 sensitive-value">R$ 0,00</span></div>
+                                    <div class="flex justify-between text-sm"><span class="text-gray-500">Venda
+                                            Total:</span><span id="estoque-rua-sale"
+                                            class="font-bold text-green-600 sensitive-value">R$ 0,00</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Total Geral -->
+                            <div class="p-6 bg-white rounded-xl shadow-md border border-gray-200">
+                                <div class="flex items-center mb-4">
+                                    <div class="p-3 bg-gray-100 text-gray-800 rounded-full mr-4"><i data-lucide="layers"
+                                            class="w-6 h-6"></i></div>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-800 uppercase tracking-wider">Total Geral
+                                        </p>
+                                        <p class="text-xs text-gray-400">Físico + Nas Ruas</p>
+                                    </div>
+                                </div>
+                                <p id="estoque-total-qty"
+                                    class="text-4xl font-extrabold text-gray-800 mb-4 sensitive-value">0 un.</p>
+                                <div class="space-y-2 border-t pt-4">
+                                    <div class="flex justify-between text-sm"><span class="text-gray-500">Custo
+                                            Total:</span><span id="estoque-total-cost"
+                                            class="font-bold text-red-600 sensitive-value">R$ 0,00</span></div>
+                                    <div class="flex justify-between text-sm"><span class="text-gray-500">Venda
+                                            Total:</span><span id="estoque-total-sale"
+                                            class="font-bold text-green-600 sensitive-value">R$ 0,00</span></div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Na Rua (Consignado) -->
-                        <div class="p-6 bg-white rounded-xl shadow-md border border-purple-200">
-                            <div class="flex items-center mb-4">
-                                <div class="p-3 bg-purple-100 text-purple-600 rounded-full mr-4"><i data-lucide="truck" class="w-6 h-6"></i></div>
-                                <div>
-                                    <p class="text-sm font-bold text-purple-600 uppercase tracking-wider">Nas Ruas</p>
-                                    <p class="text-xs text-gray-400">Em consignações ativas</p>
-                                </div>
-                            </div>
-                            <p id="estoque-rua-qty" class="text-4xl font-extrabold text-gray-800 mb-4 sensitive-value">0 un.</p>
-                            <div class="space-y-2 border-t pt-4">
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Total:</span><span id="estoque-rua-cost" class="font-bold text-red-600 sensitive-value">R$ 0,00</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Venda Total:</span><span id="estoque-rua-sale" class="font-bold text-green-600 sensitive-value">R$ 0,00</span></div>
-                            </div>
-                        </div>
-
-                        <!-- Total Geral -->
-                        <div class="p-6 bg-white rounded-xl shadow-md border border-gray-200">
-                            <div class="flex items-center mb-4">
-                                <div class="p-3 bg-gray-100 text-gray-800 rounded-full mr-4"><i data-lucide="layers" class="w-6 h-6"></i></div>
-                                <div>
-                                    <p class="text-sm font-bold text-gray-800 uppercase tracking-wider">Total Geral</p>
-                                    <p class="text-xs text-gray-400">Físico + Nas Ruas</p>
-                                </div>
-                            </div>
-                            <p id="estoque-total-qty" class="text-4xl font-extrabold text-gray-800 mb-4 sensitive-value">0 un.</p>
-                            <div class="space-y-2 border-t pt-4">
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Total:</span><span id="estoque-total-cost" class="font-bold text-red-600 sensitive-value">R$ 0,00</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-gray-500">Venda Total:</span><span id="estoque-total-sale" class="font-bold text-green-600 sensitive-value">R$ 0,00</span></div>
+                        <!-- Detalhamento por Categorias -->
+                        <div class="mt-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i
+                                    data-lucide="pie-chart" class="w-5 h-5 mr-2 text-indigo-600"></i> Distribuição por
+                                Categorias (Detalhado)</h3>
+                            <div id="estoque-categorias-list"
+                                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-start">
+                                <!-- JS via popular -->
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Detalhamento por Categorias -->
-                    <div class="mt-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><i data-lucide="pie-chart" class="w-5 h-5 mr-2 text-indigo-600"></i> Distribuição por Categorias (Detalhado)</h3>
-                        <div id="estoque-categorias-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-start">
-                            <!-- JS via popular -->
-                        </div>
-                    </div>
-                </div>
-                </div>
-            
                 <!-- =========== PÁGINA: MALETAS =========== -->
                 <div id="page-maletas" class="page">
                     <h2 class="text-3xl font-semibold text-gray-800">Gestão de Maletas</h2>
-                    
+
                     <div class="mt-6 p-6 bg-white rounded-lg shadow-md">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-medium">Kits e Maletas</h3>
-                            <button id="btn-new-maleta" class="px-4 py-2 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> Nova Maleta</button>
+                            <button id="btn-new-maleta"
+                                class="px-4 py-2 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center"><i
+                                    data-lucide="plus" class="w-4 h-4 mr-1"></i> Nova Maleta</button>
                         </div>
-                        <p class="text-sm text-gray-600 mb-6">Crie kits pré-configurados de produtos para adicioná-los rapidamente em uma Venda Consignada.</p>
+                        <p class="text-sm text-gray-600 mb-6">Crie kits pré-configurados de produtos para adicioná-los
+                            rapidamente em uma Venda Consignada.</p>
                         <div class="overflow-x-auto border rounded-lg">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="w-12 px-6 py-3 text-left"><input type="checkbox" id="select-all-maletas" class="rounded"></th>
-                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Nome da Maleta</th>
-                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Qtd Itens / Produtos</th>
-                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Valor Total</th>
-                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Ações</th>
+                                        <th class="w-12 px-6 py-3 text-left"><input type="checkbox"
+                                                id="select-all-maletas" class="rounded"></th>
+                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Nome
+                                            da Maleta</th>
+                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Qtd
+                                            Itens / Produtos</th>
+                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">
+                                            Valor Total</th>
+                                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">
+                                            Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="maletas-list-table" class="bg-white divide-y divide-gray-200"></tbody>
@@ -906,12 +964,17 @@
                     <!-- NOVO CARD: MÉDIAS POR CATEGORIA -->
                     <div class="mt-6 p-6 bg-white rounded-lg shadow-md">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
-                            <h3 class="text-lg font-medium flex items-center"><i data-lucide="bar-chart-2" class="w-5 h-5 mr-2 text-indigo-600"></i> Média de Produtos por Categoria</h3>
-                            <button id="btn-create-maleta-from-avg" class="hidden mt-2 sm:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 flex items-center"><i data-lucide="wand-2" class="w-4 h-4 mr-1"></i> Gerar Maleta com esta Média</button>
+                            <h3 class="text-lg font-medium flex items-center"><i data-lucide="bar-chart-2"
+                                    class="w-5 h-5 mr-2 text-indigo-600"></i> Média de Produtos por Categoria</h3>
+                            <button id="btn-create-maleta-from-avg"
+                                class="hidden mt-2 sm:mt-0 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 flex items-center"><i
+                                    data-lucide="wand-2" class="w-4 h-4 mr-1"></i> Gerar Maleta com esta Média</button>
                         </div>
-                        <p class="text-sm text-gray-600 mb-6">Média de peças por categoria com base nas maletas selecionadas.</p>
-                        
-                        <div id="maletas-averages-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">
+                        <p class="text-sm text-gray-600 mb-6">Média de peças por categoria com base nas maletas
+                            selecionadas.</p>
+
+                        <div id="maletas-averages-list"
+                            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-start">
                             <!-- JS popula aqui -->
                         </div>
                     </div>
@@ -955,13 +1018,16 @@
                                         <input type="text" id="sale-item-ref" autocomplete="off"
                                             placeholder="Digitar Nome ou Código de Ref. (ou usar leitor)"
                                             class="w-full px-3 py-2 border rounded-md">
-                                        <div id="sale-item-dropdown" class="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl z-50 hidden max-h-64 overflow-y-auto divide-y divide-gray-100"></div>
+                                        <div id="sale-item-dropdown"
+                                            class="absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl z-50 hidden max-h-64 overflow-y-auto divide-y divide-gray-100">
+                                        </div>
                                     </div>
                                     <datalist id="sale-item-datalist"></datalist>
                                     <button type="button" id="btn-add-sale-item"
                                         class="px-4 py-2 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600">Adicionar</button>
                                     <button type="button" id="btn-add-maleta-sale"
-                                        class="px-3 py-2 font-medium text-purple-700 bg-purple-100 rounded-md hover:bg-purple-200" title="Adicionar Maleta">
+                                        class="px-3 py-2 font-medium text-purple-700 bg-purple-100 rounded-md hover:bg-purple-200"
+                                        title="Adicionar Maleta">
                                         <i data-lucide="briefcase"></i>
                                     </button>
                                 </div>
@@ -1035,16 +1101,17 @@
                                             <input type="number" id="sale-discount" value="0"
                                                 class="w-full px-3 py-2 mt-1 border rounded-md">
                                         </div>
-                                    
-                                    <!-- NOVA: Divisão de Pagamento (Fica oculta se for Consignação) -->
-                                    <div class="mt-4 border-t pt-4">
-                                        <label class="block text-sm font-medium mb-2">Formas de Pagamento</label>
-                                        <div id="sale-payment-splits-container" class="space-y-2"></div>
-                                        <button type="button" id="btn-add-sale-payment-split" class="mt-2 text-sm text-indigo-600 hover:underline font-medium flex items-center">
-                                            <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Adicionar outra forma
-                                        </button>
-                                        <p id="sale-split-error" class="text-xs text-red-600 mt-1 hidden"></p>
-                                    </div>
+
+                                        <!-- NOVA: Divisão de Pagamento (Fica oculta se for Consignação) -->
+                                        <div class="mt-4 border-t pt-4">
+                                            <label class="block text-sm font-medium mb-2">Formas de Pagamento</label>
+                                            <div id="sale-payment-splits-container" class="space-y-2"></div>
+                                            <button type="button" id="btn-add-sale-payment-split"
+                                                class="mt-2 text-sm text-indigo-600 hover:underline font-medium flex items-center">
+                                                <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Adicionar outra forma
+                                            </button>
+                                            <p id="sale-split-error" class="text-xs text-red-600 mt-1 hidden"></p>
+                                        </div>
                                     </div>
 
                                     <!-- Campos Consignação (Agora dentro do space-y-4) -->
@@ -1321,7 +1388,8 @@
                         class="financeiro-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500">Visão
                         Geral</button>
                     <button id="btn-tab-contas-a-pagar" data-tab="tab-financeiro-bills"
-                        class="financeiro-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Gestão de Despesas e Entradas</button>
+                        class="financeiro-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Gestão
+                        de Despesas e Entradas</button>
                     <button data-tab="tab-financeiro-history"
                         class="financeiro-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300">Extrato
                         Financeiro</button>
@@ -1331,7 +1399,8 @@
             <!-- Conteúdo da Aba: Resumo do Caixa -->
             <div id="tab-financeiro-summary" class="financeiro-tab-content mt-6">
                 <!-- Cabeçalho e Filtro -->
-                <div class="mb-6 flex flex-col lg:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-100 gap-4">
+                <div
+                    class="mb-6 flex flex-col lg:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-100 gap-4">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800">Painel Geral</h3>
                         <p class="text-sm text-gray-500">Acompanhe seus indicadores financeiros</p>
@@ -1339,13 +1408,20 @@
                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
                         <div class="flex items-center space-x-2">
                             <label class="text-xs font-medium text-gray-600 whitespace-nowrap">Período:</label>
-                            <input type="date" id="summary-filter-start" class="px-2 py-1.5 text-sm border rounded-md bg-white w-full sm:w-auto" title="Data Inicial">
+                            <input type="date" id="summary-filter-start"
+                                class="px-2 py-1.5 text-sm border rounded-md bg-white w-full sm:w-auto"
+                                title="Data Inicial">
                             <span class="text-gray-400 text-sm">até</span>
-                            <input type="date" id="summary-filter-end" class="px-2 py-1.5 text-sm border rounded-md bg-white w-full sm:w-auto" title="Data Final">
+                            <input type="date" id="summary-filter-end"
+                                class="px-2 py-1.5 text-sm border rounded-md bg-white w-full sm:w-auto"
+                                title="Data Final">
                         </div>
                         <div class="flex space-x-2">
-                            <button id="summary-btn-filter-month" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-md hover:bg-indigo-100 transition-colors">Este Mês</button>
-                            <button id="summary-clear-filters" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200 rounded-md hover:bg-gray-200 transition-colors">Tudo</button>
+                            <button id="summary-btn-filter-month"
+                                class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-md hover:bg-indigo-100 transition-colors">Este
+                                Mês</button>
+                            <button id="summary-clear-filters"
+                                class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200 rounded-md hover:bg-gray-200 transition-colors">Tudo</button>
                         </div>
                     </div>
                 </div>
@@ -1353,16 +1429,25 @@
                 <!-- Bloco 1: Resultado Realizado -->
                 <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Resultado Realizado</h4>
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
-                    <div id="card-summary-revenue" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-center" title="Clique para ver os detalhes">
-                        <p id="summary-revenue-title" class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Receita</p>
+                    <div id="card-summary-revenue"
+                        class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-center"
+                        title="Clique para ver os detalhes">
+                        <p id="summary-revenue-title"
+                            class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Receita</p>
                         <p id="summary-revenue" class="text-3xl font-bold text-green-600 sensitive-value">R$ 0,00</p>
                     </div>
-                    <div id="card-summary-expenses" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-center" title="Clique para ver os detalhes">
-                        <p id="summary-expenses-title" class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Despesas</p>
+                    <div id="card-summary-expenses"
+                        class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-center"
+                        title="Clique para ver os detalhes">
+                        <p id="summary-expenses-title"
+                            class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Despesas</p>
                         <p id="summary-expenses" class="text-3xl font-bold text-red-600 sensitive-value">- R$ 0,00</p>
                     </div>
-                    <div id="card-summary-balance" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-center" title="Ir para o Extrato Analítico">
-                        <p id="summary-balance-title" class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Saldo Líquido</p>
+                    <div id="card-summary-balance"
+                        class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-center"
+                        title="Ir para o Extrato Analítico">
+                        <p id="summary-balance-title"
+                            class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Saldo Líquido</p>
                         <p id="summary-balance" class="text-3xl font-bold text-blue-600 sensitive-value">R$ 0,00</p>
                     </div>
                 </div>
@@ -1370,19 +1455,27 @@
                 <!-- Bloco 2: Liquidez e Caixas -->
                 <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Saldos em Conta</h4>
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mb-8">
-                    <div id="card-summary-caixa-fisico" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow" title="Clique para ver os detalhes do Caixa Físico">
+                    <div id="card-summary-caixa-fisico"
+                        class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+                        title="Clique para ver os detalhes do Caixa Físico">
                         <div>
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Caixa Físico (Dinheiro)</p>
-                            <p id="summary-caixa-fisico" class="text-2xl font-bold text-gray-800 sensitive-value">R$ 0,00</p>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Caixa Físico
+                                (Dinheiro)</p>
+                            <p id="summary-caixa-fisico" class="text-2xl font-bold text-gray-800 sensitive-value">R$
+                                0,00</p>
                         </div>
                         <div class="p-3 bg-green-50 rounded-full">
                             <i data-lucide="wallet" class="text-green-600 w-6 h-6"></i>
                         </div>
                     </div>
-                    <div id="card-summary-caixa-banco" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow" title="Clique para ver os detalhes da Conta Bancária">
+                    <div id="card-summary-caixa-banco"
+                        class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+                        title="Clique para ver os detalhes da Conta Bancária">
                         <div>
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Conta Bancária (Pix, Cartões...)</p>
-                            <p id="summary-caixa-banco" class="text-2xl font-bold text-gray-800 sensitive-value">R$ 0,00</p>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Conta Bancária
+                                (Pix, Cartões...)</p>
+                            <p id="summary-caixa-banco" class="text-2xl font-bold text-gray-800 sensitive-value">R$ 0,00
+                            </p>
                         </div>
                         <div class="p-3 bg-blue-50 rounded-full">
                             <i data-lucide="landmark" class="text-blue-600 w-6 h-6"></i>
@@ -1391,29 +1484,44 @@
                 </div>
 
                 <!-- Bloco 3: Projeções -->
-                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Projeções e Pendências (do Período)</h4>
+                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Projeções e Pendências (do
+                    Período)</h4>
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
-                    <div id="card-summary-pending-bills" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow" title="Ir para Contas a Pagar">
+                    <div id="card-summary-pending-bills"
+                        class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+                        title="Ir para Contas a Pagar">
                         <div>
                             <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">A Pagar</p>
-                            <p id="summary-pending-bills" class="text-2xl font-bold text-orange-500 sensitive-value">R$ 0,00</p>
+                            <p id="summary-pending-bills" class="text-2xl font-bold text-orange-500 sensitive-value">R$
+                                0,00</p>
                         </div>
-                        <div class="p-3 bg-orange-50 rounded-full"><i data-lucide="calendar-clock" class="text-orange-500 w-6 h-6"></i></div>
+                        <div class="p-3 bg-orange-50 rounded-full"><i data-lucide="calendar-clock"
+                                class="text-orange-500 w-6 h-6"></i></div>
                     </div>
-                    <div id="card-summary-late-bills" class="p-5 bg-white rounded-xl shadow-sm border border-red-200 flex items-center justify-between relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow" title="Ir para Contas Atrasadas">
+                    <div id="card-summary-late-bills"
+                        class="p-5 bg-white rounded-xl shadow-sm border border-red-200 flex items-center justify-between relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                        title="Ir para Contas Atrasadas">
                         <div class="absolute top-0 left-0 w-1.5 h-full bg-red-500"></div>
                         <div class="pl-2">
-                            <p class="text-[11px] font-bold text-red-600 uppercase tracking-wider mb-1">Contas Atrasadas</p>
-                            <p id="summary-late-bills" class="text-2xl font-bold text-red-600 sensitive-value">R$ 0,00</p>
+                            <p class="text-[11px] font-bold text-red-600 uppercase tracking-wider mb-1">Contas Atrasadas
+                            </p>
+                            <p id="summary-late-bills" class="text-2xl font-bold text-red-600 sensitive-value">R$ 0,00
+                            </p>
                         </div>
-                        <div class="p-3 bg-red-50 rounded-full"><i data-lucide="alert-triangle" class="text-red-600 w-6 h-6"></i></div>
+                        <div class="p-3 bg-red-50 rounded-full"><i data-lucide="alert-triangle"
+                                class="text-red-600 w-6 h-6"></i></div>
                     </div>
-                    <div id="card-summary-expected-consign" class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow" title="Ir para Consignações Ativas">
+                    <div id="card-summary-expected-consign"
+                        class="p-5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+                        title="Ir para Consignações Ativas">
                         <div>
-                            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">A Receber (Consig. e Pendentes)</p>
-                            <p id="summary-expected-consign" class="text-2xl font-bold text-purple-600 sensitive-value">R$ 0,00</p>
+                            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">A Receber
+                                (Consig. e Pendentes)</p>
+                            <p id="summary-expected-consign" class="text-2xl font-bold text-purple-600 sensitive-value">
+                                R$ 0,00</p>
                         </div>
-                        <div class="p-3 bg-purple-50 rounded-full"><i data-lucide="package-open" class="text-purple-600 w-6 h-6"></i></div>
+                        <div class="p-3 bg-purple-50 rounded-full"><i data-lucide="package-open"
+                                class="text-purple-600 w-6 h-6"></i></div>
                     </div>
                 </div>
 
@@ -1430,7 +1538,8 @@
                     </div>
                     <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-base font-semibold text-gray-800">Despesas por Categoria <span id="summary-pie-title-suffix" class="text-xs font-normal text-gray-500"></span></h3>
+                            <h3 class="text-base font-semibold text-gray-800">Despesas por Categoria <span
+                                    id="summary-pie-title-suffix" class="text-xs font-normal text-gray-500"></span></h3>
                             <i data-lucide="pie-chart" class="text-gray-400 w-5 h-5"></i>
                         </div>
                         <div class="w-full h-64 relative flex justify-center">
@@ -1444,189 +1553,251 @@
             <div id="tab-financeiro-bills" class="financeiro-tab-content hidden mt-6">
                 <div class="p-6 bg-white rounded-lg shadow-md space-y-6">
 
-                        <div>
-                            <!-- CABEÇALHO E AÇÕES EM LOTE -->
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
-                                <h3 class="text-lg font-medium flex items-center flex-wrap gap-2">
-                                    Contas Pendentes (Pagar e Receber)
-                                    <span id="bills-to-pay-period" class="text-sm font-normal text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">Todo o período</span>
-                                </h3>
-                                <div class="flex flex-wrap gap-2 justify-end">
-                                    <button id="btn-print-pending-bills" class="px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
-                                        <i data-lucide="printer" class="w-4 h-4 mr-1"></i> <span class="hidden lg:inline">Imprimir Relatório</span>
+                    <div>
+                        <!-- CABEÇALHO E AÇÕES EM LOTE -->
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
+                            <h3 class="text-lg font-medium flex items-center flex-wrap gap-2">
+                                Contas Pendentes (Pagar e Receber)
+                                <span id="bills-to-pay-period"
+                                    class="text-sm font-normal text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">Todo
+                                    o período</span>
+                            </h3>
+                            <div class="flex flex-wrap gap-2 justify-end">
+                                <button id="btn-print-pending-bills"
+                                    class="px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
+                                    <i data-lucide="printer" class="w-4 h-4 mr-1"></i> <span
+                                        class="hidden lg:inline">Imprimir Relatório</span>
+                                </button>
+                                <div class="relative inline-block text-left">
+                                    <button id="btn-open-new-transaction"
+                                        class="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                        <i data-lucide="plus" class="w-4 h-4 mr-1"></i> <span
+                                            class="hidden sm:inline">Novo</span>
                                     </button>
-                                    <div class="relative inline-block text-left">
-                                        <button id="btn-open-new-transaction" class="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center">
-                                            <i data-lucide="plus" class="w-4 h-4 mr-1"></i> <span class="hidden sm:inline">Novo</span>
-                                        </button>
-                                        <div id="dropdown-new-transaction" class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 hidden">
-                                            <div class="py-1">
-                                                <button id="btn-open-add-bill-drop" class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    <i data-lucide="receipt" class="mr-2 w-4 h-4 text-red-500"></i> Nova Despesa
-                                                </button>
-                                                <button id="btn-open-add-income-drop" class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    <i data-lucide="arrow-up-circle" class="mr-2 w-4 h-4 text-green-500"></i> Nova Entrada
-                                                </button>
-                                            </div>
+                                    <div id="dropdown-new-transaction"
+                                        class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 hidden">
+                                        <div class="py-1">
+                                            <button id="btn-open-add-bill-drop"
+                                                class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <i data-lucide="receipt" class="mr-2 w-4 h-4 text-red-500"></i> Nova
+                                                Despesa
+                                            </button>
+                                            <button id="btn-open-add-income-drop"
+                                                class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                <i data-lucide="arrow-up-circle"
+                                                    class="mr-2 w-4 h-4 text-green-500"></i> Nova Entrada
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <!-- PAINEL DE FILTROS ORGANIZADO -->
-                            <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-4 space-y-4">
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <!-- Busca -->
-                                    <div>
-                                        <label for="bills-search-input" class="block text-xs font-medium text-gray-600 mb-1">Buscar conta</label>
-                                        <div class="relative">
-                                            <i data-lucide="search" class="absolute left-2.5 top-2 w-4 h-4 text-gray-400"></i>
-                                            <input type="search" id="bills-search-input" placeholder="Ex: Fornecedor X..." class="w-full pl-9 pr-3 py-1.5 text-sm border rounded-md bg-white">
-                                        </div>
+                        </div>
+
+                        <!-- PAINEL DE FILTROS ORGANIZADO -->
+                        <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-4 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Busca -->
+                                <div>
+                                    <label for="bills-search-input"
+                                        class="block text-xs font-medium text-gray-600 mb-1">Buscar conta</label>
+                                    <div class="relative">
+                                        <i data-lucide="search"
+                                            class="absolute left-2.5 top-2 w-4 h-4 text-gray-400"></i>
+                                        <input type="search" id="bills-search-input" placeholder="Ex: Fornecedor X..."
+                                            class="w-full pl-9 pr-3 py-1.5 text-sm border rounded-md bg-white">
                                     </div>
-                                    <!-- Plano -->
-                                    <div>
-                                        <label for="bills-filter-plano" class="block text-xs font-medium text-gray-600 mb-1">Plano de Contas</label>
+                                </div>
+                                <!-- Plano -->
+                                <div>
+                                    <label for="bills-filter-plano"
+                                        class="block text-xs font-medium text-gray-600 mb-1">Plano de Contas</label>
                                     <div class="flex space-x-1">
-                                        <select id="bills-filter-plano" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
+                                        <select id="bills-filter-plano"
+                                            class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
                                             <option value="Todos">Todos os Planos</option>
                                             <option value="Despesas Gerais">Despesas Gerais</option>
                                             <!-- JS popula customizados -->
                                         </select>
-                                        <button type="button" id="btn-add-plano-filter" class="px-2 py-1.5 text-white bg-blue-500 rounded-md hover:bg-blue-600" title="Criar Novo Plano">
+                                        <button type="button" id="btn-add-plano-filter"
+                                            class="px-2 py-1.5 text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                                            title="Criar Novo Plano">
                                             <i data-lucide="plus" class="w-4 h-4"></i>
                                         </button>
-                                        <button type="button" id="btn-manage-plano-filter" class="px-2 py-1.5 text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-100" title="Gerenciar Planos">
+                                        <button type="button" id="btn-manage-plano-filter"
+                                            class="px-2 py-1.5 text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-100"
+                                            title="Gerenciar Planos">
                                             <i data-lucide="settings-2" class="w-4 h-4"></i>
                                         </button>
                                     </div>
-                                    </div>
-                                    <!-- Ordenação -->
-                                    <div>
-                                        <label for="bills-sort-order" class="block text-xs font-medium text-gray-600 mb-1">Ordenar por</label>
-                                        <select id="bills-sort-order" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
-                                            <option value="vencimento">Vencimento (Mais próximo)</option>
-                                            <option value="valor_desc">Valor (Maior para o Menor)</option>
-                                            <option value="valor_asc">Valor (Menor para o Maior)</option>
-                                        </select>
-                                    </div>
                                 </div>
-                                
-                                <!-- Período -->
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
-                                    <div class="flex items-center space-x-2">
-                                        <label class="text-xs font-medium text-gray-600 w-8">Data:</label>
-                                        <input type="date" id="bills-filter-start" class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto" title="A partir de (Deixe vazio para ver tudo desde o início)">
-                                        <span class="text-gray-400 text-sm">até</span>
-                                        <input type="date" id="bills-filter-end" class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto" title="Até (Deixe vazio para não ter limite final)">
-                                    </div>
-                                    <button id="bills-clear-date-filter" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center justify-center">
-                                        <i data-lucide="x-circle" class="w-3.5 h-3.5 mr-1"></i> Limpar Filtros
-                                    </button>
+                                <!-- Ordenação -->
+                                <div>
+                                    <label for="bills-sort-order"
+                                        class="block text-xs font-medium text-gray-600 mb-1">Ordenar por</label>
+                                    <select id="bills-sort-order"
+                                        class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
+                                        <option value="vencimento">Vencimento (Mais próximo)</option>
+                                        <option value="valor_desc">Valor (Maior para o Menor)</option>
+                                        <option value="valor_asc">Valor (Menor para o Maior)</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <!-- NOVO: MINI CARDS DE MÉTRICAS -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                                <div id="card-filter-topay" class="bg-red-50 border border-red-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1" title="Filtrar contas a pagar">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider">A Pagar</p>
-                                        <p id="metric-bills-topay" class="text-xl font-bold text-red-700 sensitive-value">R$ 0,00</p>
-                                    </div>
-                                    <i data-lucide="calendar-clock" class="text-red-400 w-8 h-8 opacity-50"></i>
+                            <!-- Período -->
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-xs font-medium text-gray-600 w-8">Data:</label>
+                                    <input type="date" id="bills-filter-start"
+                                        class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto"
+                                        title="A partir de (Deixe vazio para ver tudo desde o início)">
+                                    <span class="text-gray-400 text-sm">até</span>
+                                    <input type="date" id="bills-filter-end"
+                                        class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto"
+                                        title="Até (Deixe vazio para não ter limite final)">
                                 </div>
-                                <div id="card-filter-soon" class="bg-yellow-50 border border-yellow-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1" title="Filtrar contas que vencem em até 10 dias">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-yellow-600 uppercase tracking-wider">Vencem em breve</p>
-                                        <p id="metric-bills-soon" class="text-xl font-bold text-yellow-700 sensitive-value">R$ 0,00</p>
-                                    </div>
-                                    <i data-lucide="clock" class="text-yellow-400 w-8 h-8 opacity-50"></i>
-                                </div>
-                                <div id="card-filter-receivable" class="bg-green-50 border border-green-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1" title="Filtrar valores a receber">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">A Receber</p>
-                                        <p id="metric-bills-receivable" class="text-xl font-bold text-green-700 sensitive-value">R$ 0,00</p>
-                                    </div>
-                                    <i data-lucide="arrow-down-to-line" class="text-green-400 w-8 h-8 opacity-50"></i>
-                                </div>
-                                <div id="card-filter-all" class="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1" title="Remover filtros de métrica">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Total Filtrado</p>
-                                        <p id="metric-bills-total" class="text-xl font-bold text-blue-700 sensitive-value">R$ 0,00</p>
-                                    </div>
-                                    <i data-lucide="calculator" class="text-blue-400 w-8 h-8 opacity-50"></i>
-                                </div>
-                            </div>
-
-                            <div id="bills-batch-actions-container" class="hidden flex justify-end gap-2 mb-2">
-                                <button id="btn-batch-print-bills" class="hidden px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
-                                    <i data-lucide="printer" class="w-4 h-4 mr-1"></i> <span class="hidden sm:inline">Imprimir Seleção</span>
+                                <button id="bills-clear-date-filter"
+                                    class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center justify-center">
+                                    <i data-lucide="x-circle" class="w-3.5 h-3.5 mr-1"></i> Limpar Filtros
                                 </button>
-                                <button id="btn-batch-edit-bills" class="hidden px-3 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition-colors flex items-center">
-                                    <i data-lucide="edit" class="w-4 h-4 mr-1"></i> <span class="hidden sm:inline">Editar Seleção</span>
-                                </button>
-                                <button id="btn-batch-delete-bills" class="hidden px-3 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors flex items-center">
-                                    <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> <span class="hidden sm:inline">Excluir Seleção</span>
-                                </button>
-                            </div>
-
-                            <div class="mt-4 overflow-x-auto border rounded-lg">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                    </thead>
-                                    <tbody id="bills-list-table" class="bg-white divide-y divide-gray-200">
-                                    </tbody>
-                                    <!-- NOVO: RODAPÉ COM TOTAL -->
-                                    <tfoot class="bg-gray-50 border-t-2 border-gray-200">
-                                        <tr>
-                                            <td colspan="3" class="px-4 py-3 text-right font-bold text-gray-700 text-sm uppercase tracking-wider">Total Filtrado:</td>
-                                            <td colspan="2" id="bills-to-pay-total" class="px-4 py-3 font-bold text-red-600 text-sm sensitive-value">R$ 0,00</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
                             </div>
                         </div>
 
-                        <div class="mt-8">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
-                                <h3 class="text-lg font-medium flex items-center flex-wrap gap-2">
-                                    Contas Pagas
-                                    <span id="bills-paid-period" class="text-sm font-normal text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">Todo o período</span>
-                                </h3>
-                                <button id="btn-print-paid-bills" class="px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
-                                    <i data-lucide="printer" class="w-4 h-4 mr-1"></i> Imprimir Relatório
-                                </button>
+                        <!-- NOVO: MINI CARDS DE MÉTRICAS -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                            <div id="card-filter-topay"
+                                class="bg-red-50 border border-red-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1"
+                                title="Filtrar contas a pagar">
+                                <div>
+                                    <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider">A Pagar</p>
+                                    <p id="metric-bills-topay" class="text-xl font-bold text-red-700 sensitive-value">R$
+                                        0,00</p>
+                                </div>
+                                <i data-lucide="calendar-clock" class="text-red-400 w-8 h-8 opacity-50"></i>
                             </div>
-                            <div class="mt-4 overflow-x-auto border rounded-lg">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th
-                                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Descrição</th>
-                                            <th
-                                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Data Pag.</th>
-                                            <th
-                                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Valor</th>
-                                            <th
-                                                class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                                Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="bills-paid-table" class="bg-white divide-y divide-gray-200">
-                                    </tbody>
-                                    <!-- NOVO: RODAPÉ COM TOTAL PAGO -->
-                                    <tfoot class="bg-gray-50 border-t-2 border-gray-200">
-                                        <tr>
-                                            <td colspan="2" class="px-4 py-3 text-right font-bold text-gray-700 text-sm uppercase tracking-wider">Total Pago:</td>
-                                            <td colspan="2" id="bills-paid-total" class="px-4 py-3 font-bold text-red-600 text-sm sensitive-value">R$ 0,00</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                            <div id="card-filter-soon"
+                                class="bg-yellow-50 border border-yellow-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1"
+                                title="Filtrar contas que vencem em até 10 dias">
+                                <div>
+                                    <p class="text-[10px] font-bold text-yellow-600 uppercase tracking-wider">Vencem em
+                                        breve</p>
+                                    <p id="metric-bills-soon" class="text-xl font-bold text-yellow-700 sensitive-value">
+                                        R$ 0,00</p>
+                                </div>
+                                <i data-lucide="clock" class="text-yellow-400 w-8 h-8 opacity-50"></i>
+                            </div>
+                            <div id="card-filter-receivable"
+                                class="bg-green-50 border border-green-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1"
+                                title="Filtrar valores a receber">
+                                <div>
+                                    <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">A Receber
+                                    </p>
+                                    <p id="metric-bills-receivable"
+                                        class="text-xl font-bold text-green-700 sensitive-value">R$ 0,00</p>
+                                </div>
+                                <i data-lucide="arrow-down-to-line" class="text-green-400 w-8 h-8 opacity-50"></i>
+                            </div>
+                            <div id="card-filter-all"
+                                class="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition-all transform ring-offset-1"
+                                title="Remover filtros de métrica">
+                                <div>
+                                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Total
+                                        Filtrado</p>
+                                    <p id="metric-bills-total" class="text-xl font-bold text-blue-700 sensitive-value">
+                                        R$ 0,00</p>
+                                </div>
+                                <i data-lucide="calculator" class="text-blue-400 w-8 h-8 opacity-50"></i>
                             </div>
                         </div>
+
+                        <div id="bills-batch-actions-container" class="hidden flex justify-end gap-2 mb-2">
+                            <button id="btn-batch-print-bills"
+                                class="hidden px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
+                                <i data-lucide="printer" class="w-4 h-4 mr-1"></i> <span
+                                    class="hidden sm:inline">Imprimir Seleção</span>
+                            </button>
+                            <button id="btn-batch-edit-bills"
+                                class="hidden px-3 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition-colors flex items-center">
+                                <i data-lucide="edit" class="w-4 h-4 mr-1"></i> <span class="hidden sm:inline">Editar
+                                    Seleção</span>
+                            </button>
+                            <button id="btn-batch-delete-bills"
+                                class="hidden px-3 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors flex items-center">
+                                <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> <span
+                                    class="hidden sm:inline">Excluir Seleção</span>
+                            </button>
+                        </div>
+
+                        <div class="mt-4 overflow-x-auto border rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                </thead>
+                                <tbody id="bills-list-table" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                                <!-- NOVO: RODAPÉ COM TOTAL -->
+                                <tfoot class="bg-gray-50 border-t-2 border-gray-200">
+                                    <tr>
+                                        <td colspan="3"
+                                            class="px-4 py-3 text-right font-bold text-gray-700 text-sm uppercase tracking-wider">
+                                            Total Filtrado:</td>
+                                        <td colspan="2" id="bills-to-pay-total"
+                                            class="px-4 py-3 font-bold text-red-600 text-sm sensitive-value">R$ 0,00
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
+                            <h3 class="text-lg font-medium flex items-center flex-wrap gap-2">
+                                Contas Pagas
+                                <span id="bills-paid-period"
+                                    class="text-sm font-normal text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">Todo
+                                    o período</span>
+                            </h3>
+                            <button id="btn-print-paid-bills"
+                                class="px-3 py-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors flex items-center">
+                                <i data-lucide="printer" class="w-4 h-4 mr-1"></i> Imprimir Relatório
+                            </button>
+                        </div>
+                        <div class="mt-4 overflow-x-auto border rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                            Descrição</th>
+                                        <th
+                                            class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                            Data Pag.</th>
+                                        <th
+                                            class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                            Valor</th>
+                                        <th
+                                            class="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                            Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bills-paid-table" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                                <!-- NOVO: RODAPÉ COM TOTAL PAGO -->
+                                <tfoot class="bg-gray-50 border-t-2 border-gray-200">
+                                    <tr>
+                                        <td colspan="2"
+                                            class="px-4 py-3 text-right font-bold text-gray-700 text-sm uppercase tracking-wider">
+                                            Total Pago:</td>
+                                        <td colspan="2" id="bills-paid-total"
+                                            class="px-4 py-3 font-bold text-red-600 text-sm sensitive-value">R$ 0,00
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1637,41 +1808,55 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 space-y-3 sm:space-y-0">
                         <h3 class="text-lg font-medium">Extrato Analítico</h3>
                         <div class="flex space-x-2">
-                            <button id="btn-generate-finance-report" class="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                            <button id="btn-generate-finance-report"
+                                class="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
                                 <i data-lucide="download" class="w-4 h-4 mr-1"></i> Gerar Relatório
                             </button>
-                            <button id="btn-reset-cash-register" class="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center" title="Começar o caixa do zero">
+                            <button id="btn-reset-cash-register"
+                                class="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center"
+                                title="Começar o caixa do zero">
                                 <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Zerar Caixa
                             </button>
-                            <button id="btn-new-income" class="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                            <button id="btn-new-income"
+                                class="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center">
                                 <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Nova Entrada Avulsa
                             </button>
-                            <button id="btn-new-transfer" class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                            <button id="btn-new-transfer"
+                                class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
                                 <i data-lucide="arrow-right-left" class="w-4 h-4 mr-1"></i> Transferência
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- NOVO: MINI CARDS DE MÉTRICAS -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                        <div class="bg-green-50 border border-green-100 p-4 rounded-lg flex items-center justify-between shadow-sm">
+                        <div
+                            class="bg-green-50 border border-green-100 p-4 rounded-lg flex items-center justify-between shadow-sm">
                             <div>
-                                <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Total Entradas (Filtrado)</p>
-                                <p id="metric-history-in" class="text-xl font-bold text-green-700 sensitive-value">R$ 0,00</p>
+                                <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Total Entradas
+                                    (Filtrado)</p>
+                                <p id="metric-history-in" class="text-xl font-bold text-green-700 sensitive-value">R$
+                                    0,00</p>
                             </div>
                             <i data-lucide="trending-up" class="text-green-400 w-8 h-8 opacity-50"></i>
                         </div>
-                        <div class="bg-red-50 border border-red-100 p-4 rounded-lg flex items-center justify-between shadow-sm">
+                        <div
+                            class="bg-red-50 border border-red-100 p-4 rounded-lg flex items-center justify-between shadow-sm">
                             <div>
-                                <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Total Saídas (Filtrado)</p>
-                                <p id="metric-history-out" class="text-xl font-bold text-red-700 sensitive-value">R$ 0,00</p>
+                                <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Total Saídas
+                                    (Filtrado)</p>
+                                <p id="metric-history-out" class="text-xl font-bold text-red-700 sensitive-value">R$
+                                    0,00</p>
                             </div>
                             <i data-lucide="trending-down" class="text-red-400 w-8 h-8 opacity-50"></i>
                         </div>
-                        <div class="bg-blue-50 border border-blue-100 p-4 rounded-lg flex items-center justify-between shadow-sm">
+                        <div
+                            class="bg-blue-50 border border-blue-100 p-4 rounded-lg flex items-center justify-between shadow-sm">
                             <div>
-                                <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Saldo do Período</p>
-                                <p id="metric-history-balance" class="text-xl font-bold text-blue-700 sensitive-value">R$ 0,00</p>
+                                <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Saldo do Período
+                                </p>
+                                <p id="metric-history-balance" class="text-xl font-bold text-blue-700 sensitive-value">
+                                    R$ 0,00</p>
                             </div>
                             <i data-lucide="scale" class="text-blue-400 w-8 h-8 opacity-50"></i>
                         </div>
@@ -1681,31 +1866,39 @@
                     <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-4 space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
-                                <label for="history-search-input" class="block text-xs font-medium text-gray-600 mb-1">Buscar por Descrição</label>
+                                <label for="history-search-input"
+                                    class="block text-xs font-medium text-gray-600 mb-1">Buscar por Descrição</label>
                                 <div class="relative">
                                     <i data-lucide="search" class="absolute left-2.5 top-2 w-4 h-4 text-gray-400"></i>
-                                    <input type="search" id="history-search-input" placeholder="Ex: Venda, Aporte..." class="w-full pl-9 pr-3 py-1.5 text-sm border rounded-md bg-white">
+                                    <input type="search" id="history-search-input" placeholder="Ex: Venda, Aporte..."
+                                        class="w-full pl-9 pr-3 py-1.5 text-sm border rounded-md bg-white">
                                 </div>
                             </div>
                             <div>
-                                <label for="history-filter-type" class="block text-xs font-medium text-gray-600 mb-1">Tipo de Lançamento</label>
-                                <select id="history-filter-type" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
+                                <label for="history-filter-type"
+                                    class="block text-xs font-medium text-gray-600 mb-1">Tipo de Lançamento</label>
+                                <select id="history-filter-type"
+                                    class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
                                     <option value="Todos">Todos</option>
                                     <option value="Entrada">Somente Entradas</option>
                                     <option value="Saída">Somente Saídas</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="history-filter-account" class="block text-xs font-medium text-gray-600 mb-1">Caixa / Conta</label>
-                                <select id="history-filter-account" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
+                                <label for="history-filter-account"
+                                    class="block text-xs font-medium text-gray-600 mb-1">Caixa / Conta</label>
+                                <select id="history-filter-account"
+                                    class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
                                     <option value="Todos">Todos os Caixas</option>
                                     <option value="Físico">Caixa Físico (Dinheiro)</option>
                                     <option value="Banco">Conta Bancária (Pix, Cartões...)</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="history-sort-order" class="block text-xs font-medium text-gray-600 mb-1">Ordenar por</label>
-                                <select id="history-sort-order" class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
+                                <label for="history-sort-order"
+                                    class="block text-xs font-medium text-gray-600 mb-1">Ordenar por</label>
+                                <select id="history-sort-order"
+                                    class="w-full px-3 py-1.5 text-sm border rounded-md bg-white">
                                     <option value="data_desc">Data (Mais recentes)</option>
                                     <option value="data_asc">Data (Mais antigos)</option>
                                     <option value="valor_desc">Valor (Maior para menor)</option>
@@ -1713,30 +1906,46 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
                             <div class="flex items-center space-x-2">
                                 <label class="text-xs font-medium text-gray-600 w-8">Data:</label>
-                                <input type="date" id="history-filter-start" class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto">
+                                <input type="date" id="history-filter-start"
+                                    class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto">
                                 <span class="text-gray-400 text-sm">até</span>
-                                <input type="date" id="history-filter-end" class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto">
+                                <input type="date" id="history-filter-end"
+                                    class="px-2 py-1 text-sm border rounded-md bg-white w-full sm:w-auto">
                             </div>
-                            <button id="history-clear-filters" class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center justify-center">
+                            <button id="history-clear-filters"
+                                class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center justify-center">
                                 <i data-lucide="x-circle" class="w-3.5 h-3.5 mr-1"></i> Limpar Filtros
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- TABELA COM NOVA COLUNA -->
                     <div class="overflow-x-auto border rounded-lg">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Data</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Descrição</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Tipo</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Conta / Forma</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Valor Total</th>
-                                    <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Ação</th>
+                                    <th
+                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                        Data</th>
+                                    <th
+                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                        Descrição</th>
+                                    <th
+                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                        Tipo</th>
+                                    <th
+                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                        Conta / Forma</th>
+                                    <th
+                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                        Valor Total</th>
+                                    <th
+                                        class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                        Ação</th>
                                 </tr>
                             </thead>
                             <tbody id="finance-history-table" class="bg-white divide-y divide-gray-200">
@@ -1749,16 +1958,17 @@
 
         </div>
 
-            <!-- =========== RODAPÉ =========== -->
-            <footer class="mt-10 pb-2 text-center md:text-right text-xs text-gray-500">
-                Desenvolvido por Alessandro Leonello Ribeiro
-            </footer>
-            </main>
+        <!-- =========== RODAPÉ =========== -->
+        <footer class="mt-10 pb-2 text-center md:text-right text-xs text-gray-500">
+            Desenvolvido por Alessandro Leonello Ribeiro
+        </footer>
+        </main>
     </div>
     </div>
 
     <!-- =========== MODAL NOVA CONTA (Dedicado) =========== -->
-    <div id="modal-add-bill" class="fixed inset-0 z-[60] flex items-center justify-center p-6 hidden bg-black bg-opacity-50">
+    <div id="modal-add-bill"
+        class="fixed inset-0 z-[60] flex items-center justify-center p-6 hidden bg-black bg-opacity-50">
         <div class="w-full max-w-lg p-6 bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh]">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-medium">Nova Conta/Despesa</h3>
@@ -1779,24 +1989,30 @@
                                 <option value="Despesas Gerais">Despesas Gerais</option>
                                 <!-- JS popula com planos customizados -->
                             </select>
-                            <button type="button" id="btn-add-plano" class="px-3 py-2 mt-1 text-white bg-blue-500 rounded-md hover:bg-blue-600" title="Adicionar Plano">
+                            <button type="button" id="btn-add-plano"
+                                class="px-3 py-2 mt-1 text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                                title="Adicionar Plano">
                                 <i data-lucide="plus" class="w-5 h-5"></i>
                             </button>
-                            <button type="button" id="btn-manage-plano" class="px-3 py-2 mt-1 text-white bg-gray-500 rounded-md hover:bg-gray-600" title="Gerenciar Planos">
+                            <button type="button" id="btn-manage-plano"
+                                class="px-3 py-2 mt-1 text-white bg-gray-500 rounded-md hover:bg-gray-600"
+                                title="Gerenciar Planos">
                                 <i data-lucide="settings-2" class="w-5 h-5"></i>
                             </button>
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Valor (R$)</label>
-                        <input type="number" id="bill-value" step="0.01" required class="w-full px-3 py-2 mt-1 border rounded-md">
+                        <input type="number" id="bill-value" step="0.01" required
+                            class="w-full px-3 py-2 mt-1 border rounded-md">
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Data de Vencimento</label>
                         <input type="date" id="bill-due-date" required class="w-full px-3 py-2 mt-1 border rounded-md">
                     </div>
                     <div>
-                        <label for="bill-payment-method-pre" class="block text-sm font-medium">Forma de Pagamento (Prevista)</label>
+                        <label for="bill-payment-method-pre" class="block text-sm font-medium">Forma de Pagamento
+                            (Prevista)</label>
                         <select id="bill-payment-method-pre" class="w-full px-3 py-2 mt-1 border rounded-md">
                             <option value="Não definido">Não definido</option>
                             <option>Pix</option>
@@ -1807,28 +2023,34 @@
                         </select>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="bill-is-paid" class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                        <input type="checkbox" id="bill-is-paid"
+                            class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
                         <label for="bill-is-paid" class="block text-sm font-medium">Já está paga?</label>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="bill-is-installment" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <input type="checkbox" id="bill-is-installment"
+                            class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                         <label for="bill-is-installment" class="block text-sm font-medium">É parcelado?</label>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="bill-is-fixed" class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                        <input type="checkbox" id="bill-is-fixed"
+                            class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
                         <label for="bill-is-fixed" class="block text-sm font-medium">É despesa fixa mensal?</label>
                     </div>
                     <div id="bill-fixed-group" class="hidden space-y-2">
                         <div>
                             <label class="block text-sm font-medium">Projetar por quantos meses?</label>
-                            <input type="number" id="bill-fixed-count" value="12" min="1" max="600" class="w-full px-3 py-2 mt-1 border rounded-md">
+                            <input type="number" id="bill-fixed-count" value="12" min="1" max="600"
+                                class="w-full px-3 py-2 mt-1 border rounded-md">
                         </div>
-                        <p class="text-xs text-gray-500">O mesmo valor será repetido para os próximos meses escolhidos.</p>
+                        <p class="text-xs text-gray-500">O mesmo valor será repetido para os próximos meses escolhidos.
+                        </p>
                     </div>
                     <div id="bill-installments-group" class="hidden space-y-2">
                         <div>
                             <label class="block text-sm font-medium">Número de Parcelas</label>
-                            <input type="number" id="bill-installments-count" value="2" min="2" class="w-full px-3 py-2 mt-1 border rounded-md">
+                            <input type="number" id="bill-installments-count" value="2" min="2"
+                                class="w-full px-3 py-2 mt-1 border rounded-md">
                         </div>
                         <div class="mt-2">
                             <label class="block text-sm font-medium">O valor digitado (R$) é:</label>
@@ -1837,11 +2059,15 @@
                                 <option value="installment">O valor de CADA parcela</option>
                             </select>
                         </div>
-                        <p class="text-xs text-gray-500">A data de vencimento será a da 1ª parcela. As seguintes serão 30 dias após a outra.</p>
+                        <p class="text-xs text-gray-500">A data de vencimento será a da 1ª parcela. As seguintes serão
+                            30 dias após a outra.</p>
                     </div>
                     <div class="mt-6 pt-4 border-t border-gray-200 text-right space-x-2">
-                        <button type="button" id="btn-cancel-form-bill" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">Registrar Conta</button>
+                        <button type="button" id="btn-cancel-form-bill"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
+                        <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">Registrar
+                            Conta</button>
                     </div>
                 </form>
             </div>
@@ -1865,81 +2091,103 @@
     </div>
 
     <!-- =========== MODAL TROCAR PRODUTO (MALETA) =========== -->
-    <div id="modal-swap-item" class="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 hidden bg-black bg-opacity-50">
+    <div id="modal-swap-item"
+        class="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 hidden bg-black bg-opacity-50">
         <div class="w-full max-w-5xl bg-white rounded-lg shadow-xl flex flex-col max-h-[95vh] h-full">
             <div class="p-4 sm:p-6 border-b flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-medium">Trocar Produto</h3>
-                    <p class="text-sm text-gray-500 mt-1">Selecione o novo produto no catálogo abaixo para substituir o item atual. A quantidade será mantida.</p>
+                    <p class="text-sm text-gray-500 mt-1">Selecione o novo produto no catálogo abaixo para substituir o
+                        item atual. A quantidade será mantida.</p>
                 </div>
                 <button id="btn-close-swap-item" class="text-gray-500 hover:text-gray-800">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            
-            <div class="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+
+            <div
+                class="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                 <div class="flex items-center">
                     <span class="text-sm font-medium text-gray-700 mr-2">Substituindo:</span>
-                    <span id="swap-item-current-name" class="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">Carregando...</span>
+                    <span id="swap-item-current-name"
+                        class="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">Carregando...</span>
                 </div>
-                <input type="search" id="swap-catalog-search" placeholder="Filtrar catálogo..." class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-64">
+                <input type="search" id="swap-catalog-search" placeholder="Filtrar catálogo..."
+                    class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-64">
             </div>
 
             <div class="flex-1 overflow-y-auto p-4 sm:px-6 bg-gray-100">
-                 <div id="swap-catalog-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 content-start">
-                        <!-- JS popula -->
-                 </div>
+                <div id="swap-catalog-grid"
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 content-start">
+                    <!-- JS popula -->
+                </div>
             </div>
 
             <div class="p-4 sm:p-6 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-lg">
-                 <button type="button" id="btn-cancel-swap-item" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">Cancelar</button>
+                <button type="button" id="btn-cancel-swap-item"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">Cancelar</button>
             </div>
         </div>
     </div>
 
     <!-- =========== MODAL ASSISTENTE DE MALETA =========== -->
-    <div id="modal-wizard-maleta" class="fixed inset-0 z-[85] flex items-center justify-center p-4 sm:p-6 hidden bg-black bg-opacity-50">
+    <div id="modal-wizard-maleta"
+        class="fixed inset-0 z-[85] flex items-center justify-center p-4 sm:p-6 hidden bg-black bg-opacity-50">
         <div class="w-full max-w-6xl bg-white rounded-lg shadow-xl flex flex-col max-h-[95vh] h-full">
             <div class="p-4 sm:p-6 border-b flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-medium" id="wizard-maleta-title">Gerar Maleta (Passo 1)</h3>
-                    <p class="text-sm text-gray-500 mt-1">Selecione os produtos no catálogo para atingir a média da categoria.</p>
+                    <p class="text-sm text-gray-500 mt-1">Selecione os produtos no catálogo para atingir a média da
+                        categoria.</p>
                 </div>
                 <button id="btn-close-wizard-maleta" class="text-gray-500 hover:text-gray-800">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            
+
             <div class="px-4 sm:px-6 pt-4">
                 <div class="flex justify-between items-center mb-1">
-                    <h4 class="font-bold text-indigo-700 text-lg flex items-center" id="wizard-category-name">Categoria</h4>
-                    <span class="text-base font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-full" id="wizard-category-progress">0 / 0</span>
+                    <h4 class="font-bold text-indigo-700 text-lg flex items-center" id="wizard-category-name">Categoria
+                    </h4>
+                    <span class="text-base font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-full"
+                        id="wizard-category-progress">0 / 0</span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
-                    <div class="bg-indigo-600 h-3 rounded-full transition-all duration-300" id="wizard-category-progress-bar" style="width: 0%"></div>
+                    <div class="bg-indigo-600 h-3 rounded-full transition-all duration-300"
+                        id="wizard-category-progress-bar" style="width: 0%"></div>
                 </div>
                 <div id="wizard-subcats-progress" class="flex flex-wrap gap-2 mb-2"></div>
             </div>
 
             <div class="flex flex-col lg:flex-row gap-4 overflow-hidden flex-1 p-4 sm:px-6 pb-0">
                 <!-- Painel Esquerdo: Catálogo -->
-                <div class="flex-1 flex flex-col border border-gray-200 rounded-lg bg-gray-50 overflow-hidden w-full lg:w-1/2">
-                    <div class="p-3 border-b border-gray-200 bg-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                        <h4 class="font-medium text-gray-700 flex items-center"><i data-lucide="layout-grid" class="w-4 h-4 mr-2"></i>Catálogo</h4>
-                        <input type="search" id="wizard-catalog-search" placeholder="Filtrar catálogo..." class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-auto">
+                <div
+                    class="flex-1 flex flex-col border border-gray-200 rounded-lg bg-gray-50 overflow-hidden w-full lg:w-1/2">
+                    <div
+                        class="p-3 border-b border-gray-200 bg-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <h4 class="font-medium text-gray-700 flex items-center"><i data-lucide="layout-grid"
+                                class="w-4 h-4 mr-2"></i>Catálogo</h4>
+                        <input type="search" id="wizard-catalog-search" placeholder="Filtrar catálogo..."
+                            class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-auto">
                     </div>
-                    <div id="wizard-catalog-grid" class="flex-1 overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 content-start">
+                    <div id="wizard-catalog-grid"
+                        class="flex-1 overflow-y-auto p-3 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 content-start">
                         <!-- JS popula -->
                     </div>
                 </div>
 
                 <!-- Painel Direito: Selecionados -->
                 <div class="flex-1 flex flex-col border border-gray-200 rounded-lg overflow-hidden w-full lg:w-1/2">
-                    <div class="p-3 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                        <h4 class="font-medium text-gray-700 flex items-center"><i data-lucide="check-square" class="w-4 h-4 mr-2"></i>Selecionados</h4>
+                    <div
+                        class="p-3 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <h4 class="font-medium text-gray-700 flex items-center"><i data-lucide="check-square"
+                                class="w-4 h-4 mr-2"></i>Selecionados</h4>
                         <div class="flex space-x-2">
-                            <input type="text" id="wizard-item-ref" list="sale-item-datalist" placeholder="Ou use leitor (Ref)" class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-auto">
-                            <button type="button" id="btn-wizard-add-item" class="px-3 py-1.5 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 text-sm">Add</button>
+                            <input type="text" id="wizard-item-ref" list="sale-item-datalist"
+                                placeholder="Ou use leitor (Ref)"
+                                class="px-3 py-1.5 text-sm border rounded-md w-full sm:w-auto">
+                            <button type="button" id="btn-wizard-add-item"
+                                class="px-3 py-1.5 font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 text-sm">Add</button>
                         </div>
                     </div>
                     <p id="wizard-error" class="text-sm text-red-600 px-3 pt-2 hidden"></p>
@@ -1947,9 +2195,15 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50 sticky top-0 shadow-sm">
                                 <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Qtd.</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Ação</th>
+                                    <th
+                                        class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Produto</th>
+                                    <th
+                                        class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                                        Qtd.</th>
+                                    <th
+                                        class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                        Ação</th>
                                 </tr>
                             </thead>
                             <tbody id="wizard-items-list" class="bg-white divide-y divide-gray-200">
@@ -1959,13 +2213,18 @@
                 </div>
             </div>
 
-            <div class="p-4 sm:p-6 border-t border-gray-200 mt-4 flex justify-between items-center bg-gray-50 rounded-b-lg">
-                <button type="button" id="btn-wizard-prev" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 flex items-center">
+            <div
+                class="p-4 sm:p-6 border-t border-gray-200 mt-4 flex justify-between items-center bg-gray-50 rounded-b-lg">
+                <button type="button" id="btn-wizard-prev"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 flex items-center">
                     <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Anterior
                 </button>
                 <div class="space-x-2 flex">
-                    <button type="button" id="btn-wizard-skip" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hidden sm:block">Pular Categoria</button>
-                    <button type="button" id="btn-wizard-next" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center shadow-sm">
+                    <button type="button" id="btn-wizard-skip"
+                        class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hidden sm:block">Pular
+                        Categoria</button>
+                    <button type="button" id="btn-wizard-next"
+                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center shadow-sm">
                         Próxima <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
                     </button>
                 </div>
@@ -1974,7 +2233,8 @@
     </div>
 
     <!-- =========== LIGHTBOX (TELA CHEIA PARA FOTOS) =========== -->
-    <div id="lightbox-container" class="fixed inset-0 z-[1000] flex items-center justify-center hidden bg-black bg-opacity-90 transition-opacity">
+    <div id="lightbox-container"
+        class="fixed inset-0 z-[1000] flex items-center justify-center hidden bg-black bg-opacity-90 transition-opacity">
         <button id="lightbox-close" class="absolute top-4 right-4 text-white hover:text-gray-300 focus:outline-none">
             <i data-lucide="x" class="w-8 h-8"></i>
         </button>
