@@ -72,7 +72,6 @@ const authError = document.getElementById('auth-error');
 
 // --- LÓGICA DE OCULTAR VALORES ---
 const btnToggleValues = document.getElementById('btn-toggle-values');
-let hideValuesTimeout = null;
 
 function setValuesHidden(hidden) {
     const iconToggleValues = document.getElementById('icon-toggle-values');
@@ -82,14 +81,10 @@ function setValuesHidden(hidden) {
         document.body.classList.add('hide-values');
         if (iconToggleValues) iconToggleValues.setAttribute('data-lucide', 'eye-off');
         if (textToggleValues) textToggleValues.textContent = 'Valores Ocultos';
-        if (hideValuesTimeout) { clearTimeout(hideValuesTimeout); hideValuesTimeout = null; }
     } else {
         document.body.classList.remove('hide-values');
         if (iconToggleValues) iconToggleValues.setAttribute('data-lucide', 'eye');
         if (textToggleValues) textToggleValues.textContent = 'Valores Visíveis';
-
-        if (hideValuesTimeout) clearTimeout(hideValuesTimeout);
-        hideValuesTimeout = setTimeout(() => { setValuesHidden(true); }, 300000); // 5 minutos
     }
     lucide.createIcons();
 }
@@ -101,12 +96,8 @@ if (btnToggleValues) {
     });
 }
 
-// Verifica o tamanho da tela na inicialização para definir o padrão
-if (window.innerWidth < 768) {
-    setValuesHidden(false); // Mostra os valores por padrão no celular
-} else {
-    setValuesHidden(true); // Oculta por padrão no desktop
-}
+// Por padrão, mostra os valores ao carregar o sistema
+setValuesHidden(false);
 
 // Monitorar estado de autenticação (Login/Logout real)
 onAuthStateChanged(auth, (user) => {
