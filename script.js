@@ -6847,7 +6847,7 @@ function showBatchBillEditModal(ids) {
 
                     // Trunca o nome do produto para não ficar muito longo
                     const maxNameChars = isSmallLabel ? 12 : 20;
-                    const nomeExibicao = product.nomeComercial || product.nome;
+                    const nomeExibicao = product.nome;
                     const nomeTruncado = nomeExibicao.length > maxNameChars ? nomeExibicao.substring(0, maxNameChars) + '...' : nomeExibicao;
                     
                     let displayRef = product.ref;
@@ -6855,7 +6855,7 @@ function showBatchBillEditModal(ids) {
                         displayRef += ` / ${product.ref2}`;
                     }
 
-                    const refText = `Ref: ${displayRef} | ${nomeTruncado}`;
+                    const refText = ` ${displayRef} | ${nomeTruncado}`;
 
                     doc.text(refText, x + labelW / 2, yPos_BottomText, { align: 'center', maxWidth: labelW - (padding * 2) });
 
