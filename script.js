@@ -166,6 +166,7 @@
         let currentMaletaAverages = {}; // Armazena a média atual de cada categoria
         let personCadastroRedirect = 'page-vendas'; // NOVO: Para onde voltar após salvar pessoa
         let selectedLabelsState = {}; // Armazena os produtos e quantidades selecionados para etiquetas
+        let currentFilteredFinancialEntries = []; // Cache global do extrato financeiro filtrado
 
 
         /**
@@ -8299,6 +8300,7 @@ async function checkAndExtendFixedBills() {
                 metricBalance.className = `text-xl font-bold sensitive-value ${balance >= 0 ? 'text-blue-700' : 'text-red-700'}`;
             }
 
+            currentFilteredFinancialEntries = filtered;
             renderFinancialHistoryList(filtered);
         }
         /**
@@ -11070,6 +11072,18 @@ function renderBillsTab(entries) {
         }
         // --- FIM DO ATALHO FORNECEDOR ---
 
+        // --- "LIGA" O BOTÃO DE GERAR RELATÓRIO DO EXTRATO FINANCEIRO ---
+        const btnGenerateFinanceReport = document.getElementById('btn-generate-finance-report');
+        if (btnGenerateFinanceReport) {
+            btnGenerateFinanceReport.addEventListener('click', showFinancialReportChoiceModal);
+        }
+
+        // --- "LIGA" O BOTÃO DE ZERAR CAIXA ---
+        const btnResetCashRegister = document.getElementById('btn-reset-cash-register');
+        if (btnResetCashRegister) {
+            btnResetCashRegister.addEventListener('click', handleResetCashRegister);
+        }
+
         // --- "LIGA" O BOTÃO DE NOVA ENTRADA AVULSA ---
         const btnNewIncome = document.getElementById('btn-new-income');
         if (btnNewIncome) {
@@ -12952,6 +12966,340 @@ async function drawTotalReportPDF(reportData, options) {
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
     window.open(pdfUrl, '_blank');
+}
+
+/**
+ * Gera um PDF do Extrato Financeiro Analítico filtrado atual
+ */
+function generateFinancialReportPDF(entriesToPrint = currentFilteredFinancialEntries) {
+    if (!entriesToPrint || entriesToPrint.length === 0) {
+        showModal("Aviso", "Não há lançamentos no extrato para gerar o relatório.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const formatCurrency = (val) => `R$ ${val.toFixed(2).replace('.', ',')}`;
+    const leftMargin = 15;
+    let currentY = 20;
+
+    // --- TÍTULO ---
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('Sistema Brígida - Extrato Financeiro', 105, currentY, { align: 'center' });
+    currentY += 8;
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Relatório gerado em: ${new Date().toLocaleString('pt-BR')}`, 105, currentY, { align: 'center' });
+    currentY += 12;
+
+    // --- DETALHES DOS FILTROS APLICADOS ---
+    const searchVal = document.getElementById('history-search-input')?.value.trim() || 'Nenhum';
+    const typeVal = document.getElementById('history-filter-type')?.value || 'Todos';
+    let accountVal = document.getElementById('history-filter-account')?.value || 'Todos';
+    if (accountVal === 'Físico') accountVal = 'Caixa Físico (Dinheiro)';
+    if (accountVal === 'Banco') accountVal = 'Conta Bancária (Pix, Cartões...)';
+    
+    const startVal = document.getElementById('history-filter-start')?.value;
+    const endVal = document.getElementById('history-filter-end')?.value;
+    
+    const formatDateBR = (dateStr) => {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        return dateStr;
+    };
+    
+    const periodText = (startVal || endVal) 
+        ? `${startVal ? formatDateBR(startVal) : 'Início'} até ${endVal ? formatDateBR(endVal) : 'Fim'}`
+        : 'Todo o período';
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.text('Filtros Aplicados:', leftMargin, currentY);
+    currentY += 5;
+    
+    doc.setFont(undefined, 'normal');
+    doc.text(`• Busca: ${searchVal}`, leftMargin + 3, currentY);
+    currentY += 5;
+    doc.text(`• Tipo: ${typeVal}`, leftMargin + 3, currentY);
+    currentY += 5;
+    doc.text(`• Conta/Caixa: ${accountVal}`, leftMargin + 3, currentY);
+    currentY += 5;
+    doc.text(`• Período: ${periodText}`, leftMargin + 3, currentY);
+    currentY += 10;
+
+    // --- MINI CARDS DE MÉTRICAS (Resumo Financeiro) ---
+    let totalIn = 0;
+    let totalOut = 0;
+    entriesToPrint.forEach(entry => {
+        if (entry.tipo === 'Entrada') totalIn += entry.valor;
+        if (entry.tipo === 'Saída') totalOut += entry.valor;
+    });
+    const balance = totalIn - totalOut;
+
+    // Desenha uma caixa cinza claro para o resumo
+    doc.setFillColor(243, 244, 246); // bg-gray-100
+    doc.rect(leftMargin, currentY, 180, 20, 'F');
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(22, 101, 52); // green-800
+    doc.text(`Entradas (+): ${formatCurrency(totalIn)}`, leftMargin + 5, currentY + 12);
+    
+    doc.setTextColor(153, 27, 27); // red-800
+    doc.text(`Saídas (-): ${formatCurrency(totalOut)}`, leftMargin + 65, currentY + 12);
+    
+    if (balance >= 0) {
+        doc.setTextColor(30, 58, 138); // blue-900
+    } else {
+        doc.setTextColor(153, 27, 27); // red-800
+    }
+    doc.text(`Saldo Líquido: ${formatCurrency(balance)}`, leftMargin + 125, currentY + 12);
+    
+    // Reseta cor de texto
+    doc.setTextColor(0, 0, 0);
+    currentY += 27;
+
+    // --- TABELA DE LANÇAMENTOS ---
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('Lançamentos', leftMargin, currentY);
+    currentY += 5;
+
+    const head = [['Data', 'Descrição', 'Tipo', 'Caixa / Forma', 'Valor']];
+    const body = entriesToPrint.map(entry => {
+        const entryDate = entry.data ? entry.data.toDate().toLocaleDateString('pt-BR') : '';
+        const splits = (entry.paymentSplits && entry.paymentSplits.length > 0) 
+            ? entry.paymentSplits 
+            : [{ method: entry.paymentMethod || 'Dinheiro', value: entry.valor }];
+        
+        const paymentText = splits.map(s => `${s.method}: R$ ${s.value.toFixed(2).replace('.', ',')}`).join('\n');
+        const valuePrefix = entry.tipo === 'Entrada' ? '+' : '-';
+        const formattedValue = `${valuePrefix} R$ ${entry.valor.toFixed(2).replace('.', ',')}`;
+
+        return [
+            entryDate,
+            entry.descricao || '',
+            entry.tipo || '',
+            paymentText,
+            formattedValue
+        ];
+    });
+
+    doc.autoTable({
+        startY: currentY,
+        head: head,
+        body: body,
+        theme: 'striped',
+        headStyles: { fillColor: [79, 70, 229] }, // Indigo
+        columnStyles: {
+            0: { cellWidth: 25 },
+            1: { cellWidth: 55 },
+            2: { cellWidth: 22 },
+            3: { cellWidth: 50 },
+            4: { cellWidth: 28 }
+        },
+        styles: {
+            fontSize: 9,
+            valign: 'middle'
+        },
+        didParseCell: function(data) {
+            // Estilizar coluna de Valor de acordo com o sinal (Entrada/Saída)
+            if (data.column.index === 4 && data.cell.section === 'body') {
+                const text = data.cell.text[0];
+                if (text && text.startsWith('+')) {
+                    data.cell.styles.textColor = [22, 101, 52]; // verde escuro
+                    data.cell.styles.fontStyle = 'bold';
+                } else if (text && text.startsWith('-')) {
+                    data.cell.styles.textColor = [153, 27, 27]; // vermelho escuro
+                    data.cell.styles.fontStyle = 'bold';
+                }
+            }
+            // Estilizar coluna de Tipo
+            if (data.column.index === 2 && data.cell.section === 'body') {
+                const type = data.cell.text[0];
+                if (type === 'Entrada') {
+                    data.cell.styles.textColor = [22, 101, 52];
+                } else if (type === 'Saída') {
+                    data.cell.styles.textColor = [153, 27, 27];
+                }
+            }
+        }
+    });
+
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
+}
+
+/**
+ * Exibe o modal para o usuário escolher o formato do relatório financeiro (PDF ou Excel)
+ */
+function showFinancialReportChoiceModal() {
+    if (!currentFilteredFinancialEntries || currentFilteredFinancialEntries.length === 0) {
+        showModal("Aviso", "Não há lançamentos no extrato para gerar o relatório.");
+        return;
+    }
+
+    modalTitle.textContent = "Gerar Relatório Financeiro";
+    modalBody.innerHTML = `
+        <div class="p-4 text-center space-y-4">
+            <p class="text-gray-600 text-sm">Escolha o formato desejado para exportar o Extrato Financeiro atual:</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4 pt-2">
+                <button id="btn-export-pdf" class="flex items-center justify-center px-6 py-3 font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-md text-sm">
+                    <i data-lucide="file-text" class="w-5 h-5 mr-2"></i> Relatório em PDF
+                </button>
+                <button id="btn-export-excel" class="flex items-center justify-center px-6 py-3 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-md text-sm">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i> Planilha Excel (.xlsx)
+                </button>
+            </div>
+        </div>
+    `;
+    
+    modalContainer.style.display = 'flex';
+    lucide.createIcons();
+
+    // Vincula ações aos botões do modal
+    const btnPdf = document.getElementById('btn-export-pdf');
+    const btnExcel = document.getElementById('btn-export-excel');
+
+    if (btnPdf) {
+        btnPdf.onclick = () => {
+            hideModal();
+            generateFinancialReportPDF();
+        };
+    }
+
+    if (btnExcel) {
+        btnExcel.onclick = () => {
+            hideModal();
+            exportFinancialReportToExcel();
+        };
+    }
+}
+
+/**
+ * Exporta o extrato financeiro filtrado atual para Excel (.xlsx)
+ */
+function exportFinancialReportToExcel() {
+    if (!currentFilteredFinancialEntries || currentFilteredFinancialEntries.length === 0) {
+        showModal("Aviso", "Não há lançamentos no extrato para exportar.");
+        return;
+    }
+
+    const dataToExport = currentFilteredFinancialEntries.map(entry => {
+        const entryDate = entry.data ? entry.data.toDate().toLocaleDateString('pt-BR') : '';
+        const splits = (entry.paymentSplits && entry.paymentSplits.length > 0) 
+            ? entry.paymentSplits 
+            : [{ method: entry.paymentMethod || 'Dinheiro', value: entry.valor }];
+        
+        const paymentStr = splits.map(s => `${s.method}: R$ ${s.value.toFixed(2).replace('.', ',')}`).join(', ');
+
+        return {
+            "Data": entryDate,
+            "Descrição": entry.descricao || '',
+            "Tipo": entry.tipo || '',
+            "Caixa / Forma de Pagamento": paymentStr,
+            "Valor (R$)": (entry.tipo === 'Entrada' ? 1 : -1) * entry.valor
+        };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Extrato Financeiro");
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `Extrato_Financeiro_${dateStr}.xlsx`;
+
+    XLSX.writeFile(wb, filename);
+}
+
+/**
+ * Trata o processo de zerar o caixa do sistema (exclui todos os lançamentos pagos)
+ */
+async function handleResetCashRegister() {
+    if (!userId) {
+        showModal("Erro", "Usuário não autenticado.");
+        return;
+    }
+
+    // Filtra apenas os lançamentos efetivamente pagos/recebidos (entradas e saídas pagas)
+    const allPaidEntries = allFinancialEntries.filter(entry => {
+        // Se a propriedade 'pago' for explicitamente false, mantém (não deleta)
+        if (entry.pago === false) return false;
+        
+        // Se for uma Saída, só deleta se pago for true
+        if (entry.tipo === 'Saída' && entry.pago === true) return true;
+        
+        // Se for uma Entrada, deleta se pago for true ou se não tiver vencimento (entrada direta realizada)
+        if (entry.tipo === 'Entrada') {
+            if (entry.pago === true) return true;
+            if (!entry.vencimento) return true; // entrada direta sem pendência
+        }
+        
+        return false;
+    });
+
+    if (allPaidEntries.length === 0) {
+        showModal("Aviso", "Não há lançamentos de entradas ou saídas pagas para zerar.");
+        return;
+    }
+
+    // 1. Gera o PDF de backup automaticamente com todos os registros
+    try {
+        await generateFinancialReportPDF(allPaidEntries);
+    } catch (e) {
+        console.error("Erro ao gerar PDF de backup:", e);
+        showModal("Erro", "Não foi possível gerar o PDF de backup obrigatório. O caixa não foi zerado por segurança.");
+        return;
+    }
+
+    // 2. Solicita confirmação escrita para segurança contra cliques acidentais
+    const confirmation = window.prompt(
+        "ATENÇÃO: O PDF de backup com todos os lançamentos do seu caixa foi gerado para download.\n\n" +
+        "Esta ação apagará de forma PERMANENTE todas as entradas e saídas pagas, mantendo apenas as contas a pagar que ainda NÃO foram pagas (incluindo parcelas pendentes).\n\n" +
+        "Para confirmar que deseja zerar o caixa do sistema, digite ZERAR no campo abaixo:"
+    );
+
+    if (confirmation !== "ZERAR") {
+        showModal("Cancelado", "Operação cancelada. O caixa não foi alterado.");
+        return;
+    }
+
+    // 3. Executa a deleção em lote (batch) no Firestore
+    showModal("Zerando Caixa...", "Apagando lançamentos pagos do banco de dados. Por favor, aguarde.");
+
+    try {
+        const collectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
+        let batch = writeBatch(db);
+        let count = 0;
+
+        for (const entry of allPaidEntries) {
+            const docRef = doc(db, collectionPath, entry.id);
+            batch.delete(docRef);
+            count++;
+
+            // Commit a cada 400 documentos para respeitar limites do Firestore
+            if (count === 400) {
+                await batch.commit();
+                batch = writeBatch(db);
+                count = 0;
+            }
+        }
+
+        if (count > 0) {
+            await batch.commit();
+        }
+
+        hideModal();
+        showModal("Sucesso!", "Caixa zerado com sucesso! Lançamentos antigos foram apagados e o saldo atual foi redefinido.");
+
+    } catch (error) {
+        console.error("Erro ao zerar caixa:", error);
+        showModal("Erro", "Houve um erro ao tentar zerar o caixa: " + error.message);
+    }
 }
 
         // --- DETALHES DA RECEITA (CARD CLICÁVEL) ---
