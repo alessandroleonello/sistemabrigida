@@ -25,7 +25,8 @@ import {
     writeBatch,
     getDocs,
     increment,
-    Timestamp
+    Timestamp,
+    deleteField
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
@@ -343,6 +344,7 @@ function renderProductList(products) {
                     <div class="flex-1 min-w-0">
                         <div class="font-medium truncate" title="${prod.nomeComercial || prod.nome}">${prod.nomeComercial || prod.nome}</div>
                         <div class="text-sm text-gray-500">${prod.ref}${prod.ref2 ? ' / ' + prod.ref2 : ''} | Téc: ${prod.nome}</div>
+                        ${prod.variacoes && prod.variacoes.length > 0 ? `<div class="mt-1 flex flex-wrap gap-1">${prod.variacoes.map(v => `<span class="inline-block px-1.5 py-0.5 text-[9px] font-medium bg-gray-100 text-gray-800 border border-gray-200 rounded sensitive-value" title="${v.ref}">${formatAtributos(v.atributos)}: ${v.estoque} un.</span>`).join('')}</div>` : ''}
                         ${consignmentsHtml}
                     </div>
                 </div>
@@ -661,37 +663,75 @@ function renderLabelList(productsToRender) {
     }
 
     productsToRender.forEach(prod => {
-        // Verifica no estado se este produto está selecionado
-        const isSelected = selectedLabelsState.hasOwnProperty(prod.id);
-        // Se não estiver selecionado, usa o estoque (mínimo 1 para evitar campos zerados na geração)
-        const defaultQty = Math.max(1, prod.estoque || 0);
-        const savedQty = isSelected ? selectedLabelsState[prod.id] : defaultQty;
+        if (prod.variacoes && Array.isArray(prod.variacoes) && prod.variacoes.length > 0) {
+            // Renderiza cada variação individualmente
+            prod.variacoes.forEach(v => {
+                const compositeId = `${prod.id}:${v.ref}`;
+                const isSelected = selectedLabelsState.hasOwnProperty(compositeId);
+                const defaultQty = Math.max(1, v.estoque || 0);
+                const savedQty = isSelected ? selectedLabelsState[compositeId] : defaultQty;
 
-        const labelItem = document.createElement('div');
-        labelItem.className = 'flex items-center justify-between space-x-2 p-1 hover:bg-gray-50 rounded-md';
-        labelItem.innerHTML = `
-            <label class="flex items-center space-x-2 cursor-pointer flex-grow overflow-hidden">
+                const labelItem = document.createElement('div');
+                labelItem.className = 'flex items-center justify-between space-x-2 p-1 hover:bg-gray-50 rounded-md';
+                const desc = formatAtributos(v.atributos);
+                const displayTitle = `${prod.nomeComercial || prod.nome} (${desc})`;
+
+                labelItem.innerHTML = `
+                    <label class="flex items-center space-x-2 cursor-pointer flex-grow overflow-hidden">
+                        <input 
+                            type="checkbox" 
+                            class="rounded label-product-checkbox" 
+                            data-id="${compositeId}"
+                            ${isSelected ? 'checked' : ''}
+                        >
+                        <span class="text-sm truncate sensitive-value" title="${v.ref} - ${displayTitle} (Estoque: ${v.estoque || 0})">
+                            ${v.ref} - ${displayTitle} <span class="text-gray-500 font-medium ml-1">(${v.estoque || 0} no estoque)</span>
+                        </span>
+                    </label>
+                    <input 
+                        type="number" 
+                        value="${savedQty}" 
+                        min="1" 
+                        class="label-product-qty w-16 px-2 py-1 text-sm border rounded-md ${isSelected ? '' : 'bg-gray-100'}" 
+                        data-id="${compositeId}" 
+                        data-estoque="${defaultQty}"
+                        ${isSelected ? '' : 'disabled'}
+                    >
+                `;
+                labelProductList.appendChild(labelItem);
+            });
+        } else {
+            // Produto sem variações
+            const isSelected = selectedLabelsState.hasOwnProperty(prod.id);
+            const defaultQty = Math.max(1, prod.estoque || 0);
+            const savedQty = isSelected ? selectedLabelsState[prod.id] : defaultQty;
+
+            const labelItem = document.createElement('div');
+            labelItem.className = 'flex items-center justify-between space-x-2 p-1 hover:bg-gray-50 rounded-md';
+            labelItem.innerHTML = `
+                <label class="flex items-center space-x-2 cursor-pointer flex-grow overflow-hidden">
+                    <input 
+                        type="checkbox" 
+                        class="rounded label-product-checkbox" 
+                        data-id="${prod.id}"
+                        ${isSelected ? 'checked' : ''}
+                    >
+                    <span class="text-sm truncate sensitive-value" title="${prod.ref} - ${prod.nomeComercial || prod.nome} (Estoque: ${prod.estoque || 0})">
+                        ${prod.ref} - ${prod.nomeComercial || prod.nome} <span class="text-gray-500 font-medium ml-1">(${prod.estoque || 0} no estoque)</span>
+                    </span>
+                </label>
                 <input 
-                    type="checkbox" 
-                    class="rounded label-product-checkbox" 
-                    data-id="${prod.id}"
-                    ${isSelected ? 'checked' : ''}
+                    type="number" 
+                    value="${savedQty}" 
+                    min="1" 
+                    class="label-product-qty w-16 px-2 py-1 text-sm border rounded-md ${isSelected ? '' : 'bg-gray-100'}" 
+                    data-id="${prod.id}" 
+                    data-estoque="${defaultQty}"
+                    ${isSelected ? '' : 'disabled'}
                 >
-                <span class="text-sm truncate sensitive-value" title="${prod.ref} - ${prod.nomeComercial || prod.nome} (Estoque: ${prod.estoque || 0})">
-                    ${prod.ref} - ${prod.nomeComercial || prod.nome} <span class="text-gray-500 font-medium ml-1">(${prod.estoque || 0} no estoque)</span>
-                </span>
-            </label>
-            <input 
-                type="number" 
-                value="${savedQty}" 
-                min="1" 
-                class="label-product-qty w-16 px-2 py-1 text-sm border rounded-md ${isSelected ? '' : 'bg-gray-100'}" 
-                data-id="${prod.id}" 
-                data-estoque="${defaultQty}"
-                ${isSelected ? '' : 'disabled'}
-            >
-        `;
-        labelProductList.appendChild(labelItem);
+            `;
+            labelProductList.appendChild(labelItem);
+        }
     });
 }
 
@@ -703,10 +743,19 @@ function updateSaleItemDatalist() {
     if (!datalist) return;
     datalist.innerHTML = '';
     allUserProducts.forEach(prod => {
-        const option = document.createElement('option');
-        option.value = prod.ref;
-        option.textContent = prod.nomeComercial || prod.nome;
-        datalist.appendChild(option);
+        if (prod.variacoes && prod.variacoes.length > 0) {
+            prod.variacoes.forEach(v => {
+                const option = document.createElement('option');
+                option.value = v.ref;
+                option.textContent = `${prod.nomeComercial || prod.nome} (${formatAtributos(v.atributos)})`;
+                datalist.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.value = prod.ref;
+            option.textContent = prod.nomeComercial || prod.nome;
+            datalist.appendChild(option);
+        }
     });
 }
 /**
@@ -1652,6 +1701,216 @@ if (btnAddExtraImage) {
     });
 }
 
+// --- LÓGICA DE GERENCIAMENTO DE VARIAÇÕES E ATRIBUTOS (CADASTRO) (NOVO) ---
+let activeAttributeTypes = [];
+
+const checkboxHasVariations = document.getElementById('prod-has-variations');
+const variationsSection = document.getElementById('prod-variations-section');
+const inputAttrType = document.getElementById('variation-attribute-type');
+const btnAddAttrType = document.getElementById('btn-add-attribute-type');
+const attrTypesList = document.getElementById('attribute-types-list');
+const btnAddVariationRow = document.getElementById('btn-add-variation-row');
+const variationsTableHeader = document.getElementById('variations-table-header');
+const variationsTableBody = document.getElementById('variations-table-body');
+const inputProdEstoque = document.getElementById('prod-estoque');
+const inputProdRef = document.getElementById('prod-ref');
+
+if (checkboxHasVariations) {
+    checkboxHasVariations.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            variationsSection.classList.remove('hidden');
+            inputProdEstoque.disabled = true;
+            inputProdEstoque.value = 0;
+            if (activeAttributeTypes.length === 0) {
+                defineAttributeType("Cor");
+            }
+            if (variationsTableBody.children.length === 0) {
+                addVariationRow();
+            }
+        } else {
+            variationsSection.classList.add('hidden');
+            inputProdEstoque.disabled = false;
+        }
+    });
+}
+
+function defineAttributeType(type) {
+    const sanitizedType = type.trim();
+    if (!sanitizedType) return;
+    if (activeAttributeTypes.includes(sanitizedType)) {
+        showModal("Aviso", `O atributo "${sanitizedType}" já foi definido.`);
+        return;
+    }
+
+    activeAttributeTypes.push(sanitizedType);
+    renderAttributeBadges();
+    updateVariationsTableHeader();
+    updateVariationsTableRowsNewAttr(sanitizedType);
+}
+
+if (btnAddAttrType) {
+    btnAddAttrType.onclick = () => {
+        const value = inputAttrType.value.trim();
+        if (value) {
+            defineAttributeType(value);
+            inputAttrType.value = '';
+        }
+    };
+    inputAttrType.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            btnAddAttrType.click();
+        }
+    };
+}
+
+function renderAttributeBadges() {
+    attrTypesList.innerHTML = '';
+    activeAttributeTypes.forEach(type => {
+        const badge = document.createElement('span');
+        badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200 mr-1 mb-1";
+        badge.innerHTML = `
+            ${type}
+            <button type="button" class="ml-1.5 inline-flex items-center justify-center text-indigo-400 hover:text-indigo-600 focus:outline-none" data-type="${type}">
+                <i data-lucide="x" class="w-3.5 h-3.5 border-none bg-transparent p-0 cursor-pointer"></i>
+            </button>
+        `;
+        attrTypesList.appendChild(badge);
+        badge.querySelector('button').onclick = (e) => {
+            const typeToRemove = e.currentTarget.dataset.type;
+            removeAttributeType(typeToRemove);
+        };
+    });
+    lucide.createIcons();
+}
+
+function removeAttributeType(type) {
+    activeAttributeTypes = activeAttributeTypes.filter(t => t !== type);
+    renderAttributeBadges();
+    updateVariationsTableHeader();
+    
+    const rows = variationsTableBody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const cell = row.querySelector(`td[data-attr-cell="${type}"]`);
+        if (cell) cell.remove();
+    });
+}
+
+function updateVariationsTableHeader() {
+    variationsTableHeader.innerHTML = '';
+    activeAttributeTypes.forEach(type => {
+        const th = document.createElement('th');
+        th.className = "px-3 py-2 text-left font-medium text-gray-500 capitalize";
+        th.dataset.attrHeader = type;
+        th.textContent = type;
+        variationsTableHeader.appendChild(th);
+    });
+    
+    const thRef = document.createElement('th');
+    thRef.className = "px-3 py-2 text-left font-medium text-gray-500";
+    thRef.textContent = "Código de Referência";
+    variationsTableHeader.appendChild(thRef);
+    
+    const thStock = document.createElement('th');
+    thStock.className = "px-3 py-2 text-left font-medium text-gray-500";
+    thStock.textContent = "Estoque";
+    variationsTableHeader.appendChild(thStock);
+    
+    const thActions = document.createElement('th');
+    thActions.className = "px-3 py-2 text-left font-medium text-gray-500 w-24";
+    thActions.textContent = "Ações";
+    variationsTableHeader.appendChild(thActions);
+}
+
+function updateVariationsTableRowsNewAttr(newType) {
+    const rows = variationsTableBody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const td = document.createElement('td');
+        td.className = "px-3 py-2";
+        td.dataset.attrCell = newType;
+        td.innerHTML = `<input type="text" class="w-full px-2 py-1 text-sm border rounded-md variation-attr-input" data-attr-type="${newType}" placeholder="Valor para ${newType}">`;
+        const refCell = row.querySelector('.ref-cell');
+        row.insertBefore(td, refCell);
+        td.querySelector('input').addEventListener('input', () => suggestVariationRef(row));
+    });
+}
+
+function addVariationRow(data = null) {
+    const tr = document.createElement('tr');
+    tr.className = "border-b";
+    
+    let attrCellsHtml = '';
+    activeAttributeTypes.forEach(type => {
+        const val = (data && data.atributos && data.atributos[type]) ? data.atributos[type] : '';
+        attrCellsHtml += `
+            <td class="px-3 py-2" data-attr-cell="${type}">
+                <input type="text" class="w-full px-2 py-1 text-sm border rounded-md variation-attr-input" data-attr-type="${type}" placeholder="Valor para ${type}" value="${val}">
+            </td>
+        `;
+    });
+    
+    const refVal = data ? data.ref : '';
+    const stockVal = data ? data.estoque : 0;
+    
+    tr.innerHTML = `
+        ${attrCellsHtml}
+        <td class="px-3 py-2 ref-cell">
+            <input type="text" class="w-full px-2 py-1 text-sm border rounded-md variation-ref-input" placeholder="Referência da Variação" value="${refVal}">
+        </td>
+        <td class="px-3 py-2">
+            <input type="number" min="0" class="w-24 px-2 py-1 text-sm border rounded-md variation-stock-input" value="${stockVal}">
+        </td>
+        <td class="px-3 py-2">
+            <button type="button" class="btn-remove-variation-row text-red-500 hover:text-red-700 px-2 bg-transparent border-none cursor-pointer">
+                <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
+            </button>
+        </td>
+    `;
+    
+    variationsTableBody.appendChild(tr);
+    lucide.createIcons();
+    
+    tr.querySelector('.btn-remove-variation-row').onclick = () => {
+        tr.remove();
+    };
+    
+    tr.querySelectorAll('.variation-attr-input').forEach(input => {
+        input.addEventListener('input', () => suggestVariationRef(tr));
+    });
+    
+    if (!data && inputProdRef) {
+        inputProdRef.addEventListener('input', () => suggestVariationRef(tr));
+    }
+}
+
+if (btnAddVariationRow) {
+    btnAddVariationRow.onclick = () => addVariationRow();
+}
+
+function suggestVariationRef(row) {
+    const parentRef = inputProdRef ? inputProdRef.value.trim() : '';
+    if (!parentRef) return;
+    
+    const attrInputs = row.querySelectorAll('.variation-attr-input');
+    const values = [];
+    attrInputs.forEach(input => {
+        const val = input.value.trim();
+        if (val) {
+            const sanitized = val.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+            if (sanitized) values.push(sanitized);
+        }
+    });
+    
+    const refInput = row.querySelector('.variation-ref-input');
+    if (refInput) {
+        if (values.length > 0) {
+            refInput.value = `${parentRef}-${values.join('-')}`;
+        } else {
+            refInput.value = parentRef;
+        }
+    }
+}
+
 // Salvar produto (Versão simplificada, sem foto)
 document.getElementById('form-add-product').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1697,7 +1956,79 @@ document.getElementById('form-add-product').addEventListener('submit', async (e)
             if (url) extraFotos.push(formatImageUrl(url));
         });
 
-        // ---- Salvar dados no Firestore (sem foto) ----
+        // --- Cache de referências existentes no sistema ---
+        const allExistingRefs = new Set();
+        allUserProducts.forEach(p => {
+            if (p.ref) allExistingRefs.add(p.ref.toLowerCase());
+            if (p.ref2) allExistingRefs.add(p.ref2.toLowerCase());
+            if (p.variacoes && Array.isArray(p.variacoes)) {
+                p.variacoes.forEach(v => {
+                    if (v.ref) allExistingRefs.add(v.ref.toLowerCase());
+                });
+            }
+        });
+
+        let variacoes = [];
+        let totalEstoque = parseInt(document.getElementById('prod-estoque').value) || 0;
+        const hasVariations = checkboxHasVariations && checkboxHasVariations.checked;
+
+        if (hasVariations) {
+            const rows = variationsTableBody.querySelectorAll('tr');
+            if (rows.length === 0) {
+                throw new Error("Adicione pelo menos uma variação.");
+            }
+
+            const varRefs = new Set();
+            totalEstoque = 0;
+
+            for (const row of rows) {
+                const attrInputs = row.querySelectorAll('.variation-attr-input');
+                const atributosObj = {};
+                let hasAnyAttr = false;
+
+                attrInputs.forEach(input => {
+                    const type = input.dataset.attrType;
+                    const val = input.value.trim();
+                    if (val) {
+                        atributosObj[type] = val;
+                        hasAnyAttr = true;
+                    }
+                });
+
+                if (!hasAnyAttr) {
+                    throw new Error("Preencha pelo menos um atributo para cada variação.");
+                }
+
+                const refVal = row.querySelector('.variation-ref-input').value.trim();
+                const stockVal = parseInt(row.querySelector('.variation-stock-input').value) || 0;
+
+                if (!refVal) {
+                    throw new Error("O Código de Referência de cada variação é obrigatório.");
+                }
+
+                if (refVal.toLowerCase() === newRef.toLowerCase()) {
+                    throw new Error(`O código de variação "${refVal}" não pode ser idêntico ao código de referência principal.`);
+                }
+
+                if (varRefs.has(refVal.toLowerCase())) {
+                    throw new Error(`Referência duplicada nas variações: "${refVal}".`);
+                }
+                varRefs.add(refVal.toLowerCase());
+
+                if (allExistingRefs.has(refVal.toLowerCase())) {
+                    throw new Error(`A referência de variação "${refVal}" já está sendo usada no sistema.`);
+                }
+
+                totalEstoque += stockVal;
+                variacoes.push({
+                    ref: refVal,
+                    estoque: stockVal,
+                    atributos: atributosObj
+                });
+            }
+        }
+
+        // ---- Salvar dados no Firestore ----
         const produto = {
             nome: document.getElementById('prod-nome').value,
             nomeComercial: document.getElementById('prod-nome-comercial').value.trim() || null,
@@ -1708,9 +2039,9 @@ document.getElementById('form-add-product').addEventListener('submit', async (e)
             fornecedor: document.getElementById('prod-fornecedor').value,
             ref: prodRef.value,
             ref2: document.getElementById('prod-ref2').value.trim(),
-            estoque: parseInt(document.getElementById('prod-estoque').value) || 0,
+            estoque: totalEstoque,
+            variacoes: hasVariations ? variacoes : null,
             descricao: document.getElementById('prod-desc').value,
-            // fotoUrl: null, // Não precisamos mais deste campo
             fotoUrl: formatImageUrl(document.getElementById('prod-foto').value.trim()),
             fotosExtras: extraFotos,
             createdAt: serverTimestamp(),
@@ -1731,6 +2062,15 @@ document.getElementById('form-add-product').addEventListener('submit', async (e)
 
         const extraImagesContainer = document.getElementById('extra-images-container');
         if (extraImagesContainer) extraImagesContainer.innerHTML = ''; // Limpa as imagens extras
+
+        // Reseta variações na interface
+        if (checkboxHasVariations) {
+            checkboxHasVariations.checked = false;
+            checkboxHasVariations.dispatchEvent(new Event('change'));
+        }
+        activeAttributeTypes = [];
+        if (attrTypesList) attrTypesList.innerHTML = '';
+        if (variationsTableBody) variationsTableBody.innerHTML = '';
 
     } catch (error) {
         console.error("Erro ao salvar produto: ", error);
@@ -2636,6 +2976,15 @@ if (mainAppContainer) {
             const saleId = deleteSaleBtn.dataset.id;
             console.log("Solicitando exclusão da venda:", saleId);
             showSaleDeleteConfirmation(saleId);
+            return; // Encerra
+        }
+
+        // --- AÇÃO: Desfazer Acerto de Consignação (NOVO) ---
+        const undoSettlementBtn = e.target.closest('.btn-undo-settlement');
+        if (undoSettlementBtn && undoSettlementBtn.dataset.id) {
+            const consignmentId = undoSettlementBtn.dataset.id;
+            console.log("Solicitando desfazer o acerto da consignação:", consignmentId);
+            showUndoSettlementConfirmation(consignmentId);
             return; // Encerra
         }
 
@@ -3729,15 +4078,15 @@ async function showEditPersonModal(personId) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Email</label>
-                        <input type="email" id="edit-person-email" name="edit-person-email" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${person.email || ''}">
+                        <input type="email" id="edit-person-email" name="edit-person-email" class="w-full px-3 py-2 mt-1 border rounded-md" value="${person.email || ''}">
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Telefone</label>
-                        <input type="tel" id="edit-person-phone" name="edit-person-phone" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${person.telefone || ''}">
+                        <input type="tel" id="edit-person-phone" name="edit-person-phone" class="w-full px-3 py-2 mt-1 border rounded-md" value="${person.telefone || ''}">
                     </div>
                     <div class="md:col-span-3">
                         <label class="block text-sm font-medium">Endereço</label>
-                        <input type="text" id="edit-person-address" name="edit-person-address" required class="w-full px-3 py-2 mt-1 border rounded-md" value="${person.endereco || ''}">
+                        <input type="text" id="edit-person-address" name="edit-person-address" class="w-full px-3 py-2 mt-1 border rounded-md" value="${person.endereco || ''}">
                     </div>
                     
                     <!-- Campos Opcionais -->
@@ -3794,8 +4143,8 @@ async function showEditPersonModal(personId) {
                 };
 
                 // Validação
-                if (!updatedPerson.nome || !updatedPerson.email || !updatedPerson.telefone || !updatedPerson.endereco) {
-                    throw new Error("Campos obrigatórios (Nome, Email, Tel, Endereço) não podem estar vazios.");
+                if (!updatedPerson.nome) {
+                    throw new Error("O campo Nome não pode estar vazio.");
                 }
 
                 // Envia a atualização (usando o docRef original)
@@ -3946,6 +4295,185 @@ async function handleDeleteSale(sale) {
     await batch.commit();
     console.log("Venda e operações associadas excluídas com sucesso:", sale.id);
 }
+// --- FIM EXCLUIR VENDA (Ação Principal) ---
+
+// --- LÓGICA PARA DESFAZER ACERTO DE CONSIGNAÇÃO (NOVO) ---
+function showUndoSettlementConfirmation(consignmentId) {
+    if (!userId) {
+        showModal("Erro", "Usuário não logado.");
+        return;
+    }
+
+    // Busca a venda/consignação na cache global 'allSales'
+    const sale = allSales.find(s => s.id === consignmentId);
+    if (!sale) {
+        showModal("Erro", "Consignação não encontrada.");
+        return;
+    }
+
+    // Se o acerto foi feito antes e não tem os dados de itens devolvidos, avisa o usuário
+    if (!sale.settlement || !sale.settlement.itemsReturned) {
+        modalTitle.textContent = 'Não é possível desfazer o acerto';
+        modalBody.innerHTML = `
+            <p class="text-sm text-gray-700">Este acerto foi realizado antes da atualização do sistema ou não contém o registro dos itens devolvidos originais no banco de dados.</p>
+            <p class="text-sm text-gray-500 mt-2">Por esse motivo, não é possível reverter automaticamente o estoque físico e os itens. Caso precise alterar os dados, você deve excluir este acerto e recriar a consignação manualmente.</p>
+            <div class="mt-6 text-right">
+                <button type="button" id="btn-undo-cancel" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Fechar</button>
+            </div>
+        `;
+        modalContainer.style.display = 'flex';
+        document.getElementById('btn-undo-cancel').onclick = hideModal;
+        return;
+    }
+
+    modalTitle.textContent = 'Confirmar Reversão do Acerto';
+    modalBody.innerHTML = `
+        <p>Você tem certeza de que deseja desfazer o acerto da consignação para "${sale.clientId || 'Cliente'}"?</p>
+        <p class="font-medium text-amber-600 mt-2">Esta ação irá:</p>
+        <ul class="list-disc list-inside text-sm text-gray-700 space-y-1 mt-1">
+            <li>Alterar o status da consignação de volta para <span class="font-semibold text-indigo-600">Ativa</span>.</li>
+            <li>Reverter os itens devolvidos (eles voltarão a constar como consignados e sairão do estoque físico da loja).</li>
+            <li>Excluir os lançamentos financeiros gerados pelo acerto no financeiro.</li>
+        </ul>
+        <p class="text-xs text-red-500 font-semibold mt-3">Atenção: Certifique-se de que os itens devolvidos ainda estejam em estoque físico na loja para evitar estoque negativo após a reversão.</p>
+        <div class="mt-6 text-right space-x-2">
+            <button type="button" id="btn-undo-cancel" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Cancelar</button>
+            <button type="button" id="btn-undo-confirm" class="px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-md hover:bg-amber-600">Sim, Desfazer Acerto</button>
+        </div>
+    `;
+
+    modalContainer.style.display = 'flex';
+    document.getElementById('btn-undo-cancel').onclick = hideModal;
+
+    document.getElementById('btn-undo-confirm').onclick = async () => {
+        const confirmBtn = document.getElementById('btn-undo-confirm');
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `<i class="animate-spin mr-1"></i>Revertendo...`;
+
+        try {
+            await handleUndoSettlement(sale);
+            hideModal();
+            showModal("Sucesso!", "Acerto desfeito com sucesso. A consignação está ativa novamente e os valores foram removidos do financeiro.");
+        } catch (error) {
+            console.error("Erro ao desfazer acerto:", error);
+            showModal("Erro", "Não foi possível desfazer o acerto: " + error.message);
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = 'Sim, Desfazer Acerto';
+        }
+    };
+}
+
+async function handleUndoSettlement(sale) {
+    if (!userId || !sale || !sale.id || !sale.settlement || !sale.settlement.itemsReturned) {
+        throw new Error("Dados de consignação insuficientes.");
+    }
+
+    const batch = writeBatch(db);
+    const productCollectionPath = `artifacts/${appId}/users/${userId}/produtos`;
+    const saleCollectionPath = `artifacts/${appId}/users/${userId}/vendas`;
+    const financeCollectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
+
+    // 1. Reverter estoque dos itens devolvidos (tirar do estoque da loja)
+    const returnedItems = sale.settlement.itemsReturned;
+    const returnedItemsGrouped = {};
+    returnedItems.forEach(item => {
+        if (!returnedItemsGrouped[item.id]) {
+            returnedItemsGrouped[item.id] = [];
+        }
+        returnedItemsGrouped[item.id].push(item);
+    });
+
+    for (const itemId in returnedItemsGrouped) {
+        const productRef = doc(db, productCollectionPath, itemId);
+        const itemsList = returnedItemsGrouped[itemId];
+        
+        try {
+            const productSnap = await getDoc(productRef);
+            if (productSnap.exists()) {
+                const productData = productSnap.data();
+                if (productData.variacoes && Array.isArray(productData.variacoes)) {
+                    // Produto com variações
+                    const updatedVariacoes = productData.variacoes.map(v => {
+                        const returnedCount = itemsList.filter(item => item.ref === v.ref).length;
+                        if (returnedCount > 0) {
+                            return { ...v, estoque: Math.max(0, (v.estoque || 0) - returnedCount) };
+                        }
+                        return v;
+                    });
+                    const newTotalEstoque = updatedVariacoes.reduce((sum, v) => sum + (v.estoque || 0), 0);
+                    batch.update(productRef, {
+                        variacoes: updatedVariacoes,
+                        estoque: newTotalEstoque
+                    });
+                } else {
+                    // Produto simples
+                    batch.update(productRef, {
+                        estoque: increment(-1 * itemsList.length)
+                    });
+                }
+            } else {
+                console.warn(`Produto ${itemId} não existe mais. Estoque não será revertido.`);
+            }
+        } catch (readError) {
+            console.error(`Erro ao verificar/atualizar produto ${itemId}:`, readError);
+        }
+    }
+
+    // 2. Reconstruir a lista original de itens (Vendidos + Devolvidos)
+    const restoredItemsMap = {};
+    
+    // Adiciona os itens que estavam na venda finalizada (os vendidos)
+    if (sale.items) {
+        sale.items.forEach(item => {
+            restoredItemsMap[item.id] = { ...item, quantity: item.quantity || 1 };
+        });
+    }
+    
+    // Adiciona os itens que foram devolvidos
+    returnedItems.forEach(item => {
+        if (restoredItemsMap[item.id]) {
+            restoredItemsMap[item.id].quantity += 1;
+        } else {
+            restoredItemsMap[item.id] = { ...item, quantity: 1 };
+        }
+    });
+    
+    const restoredItems = Object.values(restoredItemsMap);
+    
+    // Calcula o total original da consignação
+    const restoredTotal = restoredItems.reduce((sum, item) => sum + (item.venda * (item.quantity || 1)), 0);
+
+    // 3. Atualizar o documento da Consignação no Firestore
+    const saleRef = doc(db, saleCollectionPath, sale.id);
+    batch.update(saleRef, {
+        status: 'Ativa',
+        items: restoredItems,
+        total: restoredTotal,
+        subtotal: restoredTotal,
+        paymentMethod: deleteField(),
+        paymentSplits: deleteField(),
+        settlement: deleteField()
+    });
+
+    // 4. Deletar os lançamentos financeiros gerados pelo acerto desta consignação
+    const financeQuery = query(
+        collection(db, financeCollectionPath),
+        where("saleId", "==", sale.id),
+        where("ownerId", "==", userId)
+    );
+
+    const financeSnapshot = await getDocs(financeQuery);
+    if (!financeSnapshot.empty) {
+        financeSnapshot.forEach(financeDoc => {
+            console.log("Removendo lançamento financeiro associado ao acerto:", financeDoc.id);
+            batch.delete(financeDoc.ref);
+        });
+    }
+
+    // 5. Commit no Firestore
+    await batch.commit();
+}
+
 // --- FIM EXCLUIR VENDA (Ação Principal) ---
 // --- LÓGICA DE MARCAR CONTA COMO PAGA (COM MODAL) ---
 function showPaymentMethodModal(billId) {
@@ -5764,16 +6292,44 @@ async function showConsignmentSettlementModal(consignmentId) {
             const financeCollectionPath = `artifacts/${appId}/users/${userId}/lancamentos`;
 
             // --- 2a. Atualizar Estoque (Devolver itens) ---
-            // Agrupar itemsReturned para não sobrescrever o incremento no mesmo doc no batch
-            const returnedStockMap = {};
+            const returnedItemsGrouped = {};
             for (const item of itemsReturned) {
-                returnedStockMap[item.id] = (returnedStockMap[item.id] || 0) + 1;
+                if (!returnedItemsGrouped[item.id]) {
+                    returnedItemsGrouped[item.id] = [];
+                }
+                returnedItemsGrouped[item.id].push(item);
             }
-            for (const itemId in returnedStockMap) {
+            
+            for (const itemId in returnedItemsGrouped) {
                 const productRef = doc(db, productCollectionPath, itemId);
-                batch.update(productRef, {
-                    estoque: increment(returnedStockMap[itemId])
-                });
+                const itemsList = returnedItemsGrouped[itemId];
+                
+                const productSnap = await getDoc(productRef);
+                if (productSnap.exists()) {
+                    const productData = productSnap.data();
+                    if (productData.variacoes && Array.isArray(productData.variacoes)) {
+                        const updatedVariacoes = productData.variacoes.map(v => {
+                            const returnedCount = itemsList.filter(item => item.ref === v.ref).length;
+                            if (returnedCount > 0) {
+                                return { ...v, estoque: (v.estoque || 0) + returnedCount };
+                            }
+                            return v;
+                        });
+                        const newTotalEstoque = updatedVariacoes.reduce((sum, v) => sum + (v.estoque || 0), 0);
+                        batch.update(productRef, {
+                            variacoes: updatedVariacoes,
+                            estoque: newTotalEstoque
+                        });
+                    } else {
+                        batch.update(productRef, {
+                            estoque: increment(itemsList.length)
+                        });
+                    }
+                } else {
+                    batch.update(productRef, {
+                        estoque: increment(itemsList.length)
+                    });
+                }
             }
 
             // --- 2b. Atualizar a Venda (Consignação) Original ---
@@ -5792,7 +6348,8 @@ async function showConsignmentSettlementModal(consignmentId) {
                     discountAmount: discountAmountValue,
                     discountReason: discountReasonValue,
                     finalAmountPaid: finalAmountPaid,
-                    settledAt: serverTimestamp()
+                    settledAt: serverTimestamp(),
+                    itemsReturned: itemsReturned // <-- Salva os itens devolvidos para permitir desfazer o acerto
                 }
             });
 
@@ -6703,27 +7260,65 @@ async function fetchProductsByIds(productsToFetch) {
 
     const collectionPath = `artifacts/${appId}/users/${userId}/produtos`;
 
-    // Mapeia ID -> Quantidade, para sabermos depois
+    // Mapeia Chave (id ou id:ref) -> Quantidade, para sabermos depois
     const qtyMap = new Map();
     productsToFetch.forEach(p => qtyMap.set(p.id, p.qty));
 
-    // Busca os documentos (em paralelo)
-    const readPromises = [];
+    // Busca os documentos (em paralelo), mas garantindo que ids únicos do Firestore sejam carregados sem repetição no getDoc
+    const uniqueFirestoreIds = new Set();
     productsToFetch.forEach(p => {
-        const docRef = doc(db, collectionPath, p.id);
+        const idParts = p.id.split(':');
+        uniqueFirestoreIds.add(idParts[0]);
+    });
+
+    const readPromises = [];
+    const idList = Array.from(uniqueFirestoreIds);
+    idList.forEach(id => {
+        const docRef = doc(db, collectionPath, id);
         readPromises.push(getDoc(docRef));
     });
 
     const docSnapshots = await Promise.all(readPromises);
+    const snapMap = new Map();
+    docSnapshots.forEach(snap => {
+        if (snap.exists()) {
+            snapMap.set(snap.id, snap);
+        }
+    });
 
-    // Anexa os dados do Firestore à quantidade solicitada
-    docSnapshots.forEach(docSnap => {
-        if (docSnap.exists()) {
-            productsWithData.push({
-                id: docSnap.id,
-                ...docSnap.data(),
-                qtyToPrint: qtyMap.get(docSnap.id) // <-- Anexa a quantidade!
-            });
+    // Agora, para cada item pedido em productsToFetch, nós associamos os dados correspondentes
+    productsToFetch.forEach(p => {
+        const idParts = p.id.split(':');
+        const parentId = idParts[0];
+        const variationRef = idParts[1]; // Pode ser undefined para produtos convencionais
+
+        const docSnap = snapMap.get(parentId);
+        if (docSnap) {
+            const productData = docSnap.data();
+            
+            if (variationRef && productData.variacoes) {
+                // É uma variação. Modifica as propriedades do produto para a etiqueta
+                const v = productData.variacoes.find(varItem => varItem.ref === variationRef);
+                if (v) {
+                    productsWithData.push({
+                        id: p.id, // Mantém a chave composta
+                        ...productData,
+                        ref: v.ref,
+                        estoque: v.estoque,
+                        nomeComercial: productData.nomeComercial 
+                            ? `${productData.nomeComercial} (${formatAtributos(v.atributos)})` 
+                            : `${productData.nome} (${formatAtributos(v.atributos)})`,
+                        qtyToPrint: qtyMap.get(p.id)
+                    });
+                }
+            } else {
+                // É um produto comum
+                productsWithData.push({
+                    id: p.id,
+                    ...productData,
+                    qtyToPrint: qtyMap.get(p.id)
+                });
+            }
         }
     });
 
@@ -6923,6 +7518,22 @@ function exportConsignmentToExcel(consignmentId) {
     // Encontra qual produto tem o maior número de URLs
     const maxUrls = Math.max(...processedItems.map(item => item._allUrls.length), 0);
 
+    // Coleta todas as chaves de atributos presentes em todos os itens
+    const allAttributeKeys = new Set();
+    processedItems.forEach(item => {
+        if (item.atributos) {
+            Object.keys(item.atributos).forEach(key => allAttributeKeys.add(key));
+        } else {
+            const productInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
+            if (productInCache && productInCache.variacoes) {
+                const v = productInCache.variacoes.find(varItem => varItem.ref === item.ref);
+                if (v && v.atributos) {
+                    Object.keys(v.atributos).forEach(key => allAttributeKeys.add(key));
+                }
+            }
+        }
+    });
+
     // Prepara os dados finais
     const dataToExport = processedItems.map(item => {
         const row = {
@@ -6934,6 +7545,23 @@ function exportConsignmentToExcel(consignmentId) {
             "Quantidade": item.quantity || 1,
             "Preço": item.venda || 0,
         };
+
+        // Adiciona as colunas de atributos dinamicamente
+        allAttributeKeys.forEach(key => {
+            let attrVal = "";
+            if (item.atributos && item.atributos[key]) {
+                attrVal = item.atributos[key];
+            } else {
+                const productInCache = allUserProducts.find(p => p.id === item.id || p.ref === item.ref);
+                if (productInCache && productInCache.variacoes) {
+                    const v = productInCache.variacoes.find(varItem => varItem.ref === item.ref);
+                    if (v && v.atributos && v.atributos[key]) {
+                        attrVal = v.atributos[key];
+                    }
+                }
+            }
+            row[key] = attrVal;
+        });
 
         // Cria as colunas dinamicamente (URL 1, URL 2...)
         if (maxUrls === 0) {
@@ -8185,15 +8813,21 @@ function renderSalesHistoryList(sales) {
             : 'text-blue-800 bg-blue-100';
         const typeName = s.type === 'direta' ? 'Venda Direta' : 'Consignação';
 
+        const isConsignSettle = s.type === 'consignacao' && s.status === 'Finalizada';
+        const undoSettleHtml = isConsignSettle 
+            ? `<button class="btn-undo-settlement px-3 py-1 text-sm font-medium text-white bg-amber-500 rounded-md hover:bg-amber-600" data-id="${s.id}" title="Desfazer Acerto"><i data-lucide="rotate-ccw" class="w-4 h-4 inline mr-1 pointer-events-none"></i>Desfazer Acerto</button>`
+            : '';
+
         tr.innerHTML = `
             <td class="px-6 py-4">${s.createdAt.toDate().toLocaleDateString('pt-BR')}</td>
             <td class="px-6 py-4">${s.clientId || 'Consumidor Final'}</td>
             <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-medium ${typeBadge} rounded-full">${typeName}</span></td>
             <td class="px-6 py-4 sensitive-value">R$ ${s.total.toFixed(2).replace('.', ',')}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-    <button class="btn-view-sale-report px-3 py-1 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200" data-id="${s.id}"><i data-lucide="file-text" class="w-4 h-4 inline mr-1 pointer-events-none"></i>Ver</button>
-    <button class="btn-delete-sale text-red-600 hover:text-red-900" data-id="${s.id}"><i data-lucide="trash-2" class="w-5 h-5 pointer-events-none"></i></button>
-</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 font-inter">
+                <button class="btn-view-sale-report px-3 py-1 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200" data-id="${s.id}"><i data-lucide="file-text" class="w-4 h-4 inline mr-1 pointer-events-none"></i>Ver</button>
+                ${undoSettleHtml}
+                <button class="btn-delete-sale text-red-600 hover:text-red-900" data-id="${s.id}"><i data-lucide="trash-2" class="w-5 h-5 pointer-events-none"></i></button>
+            </td>
         `;
         tableBody.appendChild(tr);
     });
@@ -9022,37 +9656,35 @@ async function handleAddSaleItem(e) {
             const audio = new Audio('erro.mp3');
             audio.play().catch(err => console.log("Erro ao reproduzir o som:", err));
             showModal("Erro", `Produto com referência "${refCode}" não foi encontrado.`);
-        } // Bloco NOVO com verificação de estoque
+        } 
+        else if (product.variacoes && product.variacoes.length > 0 && !product.variacaoSelecionada) {
+            // Abre o modal de seleção de variação
+            showVariationSelectionModal(product);
+            saleItemRefInput.value = '';
+        }
         else {
             // --- LÓGICA DE VERIFICAÇÃO DE ESTOQUE E AGRUPAMENTO ---
-            const existingItem = currentSaleItems.find(item => item.id === product.id);
+            const existingItem = currentSaleItems.find(item => item.ref === product.ref);
             const currentQtyInCart = existingItem ? existingItem.quantity : 0;
 
-            // Verifica se a (quantidade no carrinho + 1) é maior que o estoque
-            // O estoque do produto é (product.estoque)
             if ((currentQtyInCart + 1) > product.estoque) {
-                // Erro: Sem estoque
                 showModal("Estoque Insuficiente",
                     `Você não pode adicionar este item.<br><br>
-<strong>Produto:</strong> "${product.nomeComercial || product.nome}" (Ref: ${product.ref})<br>
- <strong>Estoque disponível:</strong> ${product.estoque} un.<br>
-<strong>Você já tem:</strong> ${currentQtyInCart} un. no carrinho.`);
-
+                     <strong>Produto:</strong> "${product.nomeComercial || product.nome}" (Ref: ${product.ref})<br>
+                     <strong>Estoque disponível:</strong> ${product.estoque} un.<br>
+                     <strong>Você já tem:</strong> ${currentQtyInCart} un. no carrinho.`);
                 saleItemRefInput.value = ''; // Limpa o input mesmo se der erro
 
             } else {
-                // Estoque OK, pode adicionar/incrementar
                 if (existingItem) {
                     existingItem.quantity += 1;
                 } else {
                     currentSaleItems.push({ ...product, quantity: 1 });
                 }
-                // Atualiza a UI (só se for bem sucedido)
                 renderSaleItems();
                 updateSaleTotals();
                 saleItemRefInput.value = '';
             }
-            // --- FIM DA LÓGICA ---
         }
     } catch (error) {
         console.error("Erro ao buscar produto:", error);
@@ -9064,11 +9696,107 @@ async function handleAddSaleItem(e) {
     btnAddSaleItem.disabled = false;
     saleItemRefInput.focus();
 }
+
+function formatAtributos(atributos) {
+    if (!atributos) return '';
+    return Object.entries(atributos).map(([k, v]) => `${k}: ${v}`).join(', ');
+}
+
+function showVariationSelectionModal(product) {
+    modalTitle.textContent = 'Selecionar Variação';
+    let variationsHtml = '<div class="space-y-2 max-h-96 overflow-y-auto mt-2">';
+    
+    product.variacoes.forEach(v => {
+        const desc = formatAtributos(v.atributos);
+        const disabled = v.estoque <= 0;
+        variationsHtml += `
+            <div class="flex items-center justify-between p-3 border rounded-lg ${disabled ? 'bg-gray-50 opacity-60' : 'hover:bg-indigo-50 cursor-pointer'} transition-colors btn-select-variation" data-ref="${v.ref}">
+                <div>
+                    <span class="font-medium text-gray-800">${desc}</span>
+                    <span class="text-xs text-gray-500 block">Referência: ${v.ref}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-semibold ${disabled ? 'text-red-600' : 'text-green-600'}">${disabled ? 'Sem Estoque' : `${v.estoque} un. disponíveis`}</span>
+                </div>
+            </div>
+        `;
+    });
+    variationsHtml += '</div>';
+    
+    modalBody.innerHTML = `
+        <p class="text-sm text-gray-600">O produto "${product.nomeComercial || product.nome}" possui variações. Escolha uma abaixo para adicionar ao carrinho:</p>
+        ${variationsHtml}
+        <div class="mt-6 text-right">
+            <button type="button" id="btn-close-variation-modal" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Cancelar</button>
+        </div>
+    `;
+    
+    modalContainer.style.display = 'flex';
+    document.getElementById('btn-close-variation-modal').onclick = hideModal;
+    
+    const variationBtns = modalBody.querySelectorAll('.btn-select-variation');
+    variationBtns.forEach(btn => {
+        btn.onclick = () => {
+            const ref = btn.dataset.ref;
+            const selectedVar = product.variacoes.find(v => v.ref === ref);
+            if (selectedVar && selectedVar.estoque > 0) {
+                hideModal();
+                
+                const productWithVar = {
+                    ...product,
+                    ref: selectedVar.ref,
+                    estoque: selectedVar.estoque,
+                    variacaoSelecionada: selectedVar,
+                    nomeComercial: product.nomeComercial 
+                        ? `${product.nomeComercial} (${formatAtributos(selectedVar.atributos)})` 
+                        : `${product.nome} (${formatAtributos(selectedVar.atributos)})`
+                };
+                
+                const existingItem = currentSaleItems.find(item => item.ref === productWithVar.ref);
+                const currentQtyInCart = existingItem ? existingItem.quantity : 0;
+                
+                if ((currentQtyInCart + 1) > productWithVar.estoque) {
+                    showModal("Estoque Insuficiente", `Você não pode adicionar esta variação pois o estoque máximo é de ${productWithVar.estoque} un.`);
+                } else {
+                    if (existingItem) {
+                        existingItem.quantity += 1;
+                    } else {
+                        currentSaleItems.push({ ...productWithVar, quantity: 1 });
+                    }
+                    renderSaleItems();
+                    updateSaleTotals();
+                }
+            } else {
+                showModal("Aviso", "Esta variação não tem estoque disponível.");
+            }
+        };
+    });
+}
+
 async function findProductByRef(refCode) {
     if (!userId || !refCode) return null;
 
-    // Busca ignorando maiúsculas/minúsculas no cache local de produtos
-    const lowerTerm = refCode.toLowerCase();
+    const lowerTerm = refCode.toLowerCase().trim();
+
+    // 1. Tenta buscar primeiro por referência exata de variação (mais específica)
+    for (const p of allUserProducts) {
+        if (p.variacoes && Array.isArray(p.variacoes)) {
+            const v = p.variacoes.find(varItem => varItem.ref && varItem.ref.toLowerCase() === lowerTerm);
+            if (v) {
+                return {
+                    ...p,
+                    ref: v.ref,
+                    estoque: v.estoque,
+                    variacaoSelecionada: v,
+                    nomeComercial: p.nomeComercial 
+                        ? `${p.nomeComercial} (${formatAtributos(v.atributos)})` 
+                        : `${p.nome} (${formatAtributos(v.atributos)})`
+                };
+            }
+        }
+    }
+
+    // 2. Busca convencional no produto principal
     const product = allUserProducts.find(p =>
         (p.ref && p.ref.toLowerCase() === lowerTerm) ||
         (p.ref2 && p.ref2.toLowerCase() === lowerTerm) ||
@@ -10802,7 +11530,8 @@ async function handleFinalizeSale(e) {
             venda: p.venda,
             custo: p.custo, // Mantém o custo para referência futura, se necessário
             quantity: p.quantity,
-            fotoUrl: p.fotoUrl || null
+            fotoUrl: p.fotoUrl || null,
+            atributos: p.variacaoSelecionada ? p.variacaoSelecionada.atributos : null
         }));
 
         // --- 2. Preparar o Pacote (Batch) ---
@@ -10833,9 +11562,31 @@ async function handleFinalizeSale(e) {
         // --- 2b. Atualizar o estoque (COM QTD) ---
         for (const item of currentSaleItems) {
             const productRef = doc(db, productCollectionPath, item.id);
-            batch.update(productRef, {
-                estoque: increment(item.quantity * -1) // Subtrai a quantidade vendida
-            });
+            const productSnap = await getDoc(productRef);
+            if (productSnap.exists()) {
+                const productData = productSnap.data();
+                if (productData.variacoes && Array.isArray(productData.variacoes)) {
+                    const updatedVariacoes = productData.variacoes.map(v => {
+                        if (v.ref === item.ref) {
+                            return { ...v, estoque: Math.max(0, (v.estoque || 0) - item.quantity) };
+                        }
+                        return v;
+                    });
+                    const newTotalEstoque = updatedVariacoes.reduce((sum, v) => sum + (v.estoque || 0), 0);
+                    batch.update(productRef, {
+                        variacoes: updatedVariacoes,
+                        estoque: newTotalEstoque
+                    });
+                } else {
+                    batch.update(productRef, {
+                        estoque: increment(item.quantity * -1)
+                    });
+                }
+            } else {
+                batch.update(productRef, {
+                    estoque: increment(item.quantity * -1)
+                });
+            }
         }
 
         // --- 2c. Criar o Lançamento Financeiro (Apenas para Venda Direta) ---
@@ -10944,8 +11695,8 @@ async function handleSavePerson(saveButton, formAddPerson) {
         };
 
         // 2. Validar campos obrigatórios
-        if (!personData.nome || !personData.email || !personData.telefone || !personData.endereco) {
-            throw new Error("Campos obrigatórios (Nome, Email, Tel, Endereço) não podem estar vazios.");
+        if (!personData.nome) {
+            throw new Error("O campo Nome não pode estar vazio.");
         }
 
         // 3. Salvar no Firestore
@@ -12068,6 +12819,52 @@ async function showEditProductModal(productId) {
                         <svg id="edit-barcode-preview" class="w-full h-auto mt-2"></svg>
                     </div>
                 </div>
+
+                <!-- Seção de Variações na Edição (NOVO) -->
+                <div class="md:col-span-3 border-t pt-6 mt-4">
+                    <label class="flex items-center cursor-pointer mb-4">
+                        <input type="checkbox" id="edit-prod-has-variations" class="rounded text-indigo-600 w-4 h-4 mr-2" ${product.variacoes && product.variacoes.length > 0 ? 'checked' : ''}>
+                        <span class="text-sm font-semibold text-gray-800">Este produto possui variações (Cor, Tamanho, etc.)</span>
+                    </label>
+                    
+                    <div id="edit-prod-variations-section" class="${product.variacoes && product.variacoes.length > 0 ? '' : 'hidden'} space-y-4">
+                        <div class="p-4 bg-gray-50 rounded-lg border">
+                            <h4 class="font-medium text-sm text-gray-700">1. Tipos de Atributos</h4>
+                            <p class="text-xs text-gray-500 mb-2">Defina quais tipos de atributos este produto possui (ex: Cor, Tamanho).</p>
+                            <div class="flex gap-2 max-w-md">
+                                <input type="text" id="edit-variation-attribute-type" placeholder="Ex: Cor" class="flex-grow px-3 py-1.5 text-sm border rounded-md">
+                                <button type="button" id="edit-btn-add-attribute-type" class="px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Definir Atributo</button>
+                            </div>
+                            <div id="edit-attribute-types-list" class="flex flex-wrap gap-1.5 mt-2">
+                                <!-- Badges dos atributos criados -->
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-white rounded-lg border">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-sm text-gray-700">2. Tabela de Variações</h4>
+                                <button type="button" id="edit-btn-add-variation-row" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 flex items-center">
+                                    <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Adicionar Variação
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                                    <thead class="bg-gray-50">
+                                        <tr id="edit-variations-table-header">
+                                            <th class="px-3 py-2 text-left font-medium text-gray-500">Código de Referência</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-500">Estoque</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-500 w-24">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="edit-variations-table-body">
+                                        <!-- Linhas de variação -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Ações -->
                 <div class="md:col-span-3 text-right space-x-2">
                     <button type="button" id="btn-cancel-edit" class="px-6 py-2 font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
@@ -12132,7 +12929,7 @@ async function showEditProductModal(productId) {
         function gerarEditBarcodePreview() {
             const ref = editRef.value;
             if (ref) {
-                JsBarcode("#edit-barcode-preview", ref, {
+JsBarcode("#edit-barcode-preview", ref, {
                     format: "CODE128", displayValue: true, fontSize: 14, margin: 10, height: 50
                 });
             } else {
@@ -12145,7 +12942,6 @@ async function showEditProductModal(productId) {
             if (e.key === 'Enter') e.preventDefault();
         });
 
-        // Preview da Imagem na Edição
         const editProdFoto = document.getElementById('edit-prod-foto');
         const editProdFotoPreview = document.getElementById('edit-prod-foto-preview');
         const editProdFotoPreviewLarge = document.getElementById('edit-prod-foto-preview-large');
@@ -12185,6 +12981,232 @@ async function showEditProductModal(productId) {
                 btn.innerHTML = originalHtml;
             }
         };
+
+        // --- LÓGICA DE VARIAÇÕES NA EDIÇÃO (LOCAL AO MODAL) (NOVO) ---
+        let editActiveAttributeTypes = [];
+        
+        const editCheckboxHasVariations = document.getElementById('edit-prod-has-variations');
+        const editVariationsSection = document.getElementById('edit-prod-variations-section');
+        const editInputAttrType = document.getElementById('edit-variation-attribute-type');
+        const editBtnAddAttrType = document.getElementById('edit-btn-add-attribute-type');
+        const editAttrTypesList = document.getElementById('edit-attribute-types-list');
+        const editBtnAddVariationRow = document.getElementById('edit-btn-add-variation-row');
+        const editVariationsTableHeader = document.getElementById('edit-variations-table-header');
+        const editVariationsTableBody = document.getElementById('edit-variations-table-body');
+        const editInputProdEstoque = document.getElementById('edit-prod-estoque');
+        const editInputProdRef = document.getElementById('edit-prod-ref');
+        
+        if (editCheckboxHasVariations) {
+            editCheckboxHasVariations.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    editVariationsSection.classList.remove('hidden');
+                    editInputProdEstoque.disabled = true;
+                    editInputProdEstoque.value = 0;
+                    if (editActiveAttributeTypes.length === 0) {
+                        editDefineAttributeType("Cor");
+                    }
+                    if (editVariationsTableBody.children.length === 0) {
+                        editAddVariationRow();
+                    }
+                } else {
+                    editVariationsSection.classList.add('hidden');
+                    editInputProdEstoque.disabled = false;
+                }
+            });
+        }
+        
+        function editDefineAttributeType(type) {
+            const sanitizedType = type.trim();
+            if (!sanitizedType) return;
+            if (editActiveAttributeTypes.includes(sanitizedType)) {
+                return;
+            }
+            editActiveAttributeTypes.push(sanitizedType);
+            editRenderAttributeBadges();
+            editUpdateVariationsTableHeader();
+            editUpdateVariationsTableRowsNewAttr(sanitizedType);
+        }
+        
+        if (editBtnAddAttrType) {
+            editBtnAddAttrType.onclick = () => {
+                const value = editInputAttrType.value.trim();
+                if (value) {
+                    editDefineAttributeType(value);
+                    editInputAttrType.value = '';
+                }
+            };
+            editInputAttrType.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    editBtnAddAttrType.click();
+                }
+            };
+        }
+        
+        function editRenderAttributeBadges() {
+            editAttrTypesList.innerHTML = '';
+            editActiveAttributeTypes.forEach(type => {
+                const badge = document.createElement('span');
+                badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200 mr-1 mb-1";
+                badge.innerHTML = `
+                    ${type}
+                    <button type="button" class="ml-1.5 inline-flex items-center justify-center text-indigo-400 hover:text-indigo-600 focus:outline-none bg-transparent border-none p-0 cursor-pointer" data-type="${type}">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                `;
+                editAttrTypesList.appendChild(badge);
+                badge.querySelector('button').onclick = (e) => {
+                    const typeToRemove = e.currentTarget.dataset.type;
+                    editRemoveAttributeType(typeToRemove);
+                };
+            });
+            lucide.createIcons();
+        }
+        
+        function editRemoveAttributeType(type) {
+            editActiveAttributeTypes = editActiveAttributeTypes.filter(t => t !== type);
+            editRenderAttributeBadges();
+            editUpdateVariationsTableHeader();
+            
+            const rows = editVariationsTableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const cell = row.querySelector(`td[data-attr-cell="${type}"]`);
+                if (cell) cell.remove();
+            });
+        }
+        
+        function editUpdateVariationsTableHeader() {
+            editVariationsTableHeader.innerHTML = '';
+            editActiveAttributeTypes.forEach(type => {
+                const th = document.createElement('th');
+                th.className = "px-3 py-2 text-left font-medium text-gray-500 capitalize";
+                th.dataset.attrHeader = type;
+                th.textContent = type;
+                editVariationsTableHeader.appendChild(th);
+            });
+            
+            const thRef = document.createElement('th');
+            thRef.className = "px-3 py-2 text-left font-medium text-gray-500";
+            thRef.textContent = "Código de Referência";
+            editVariationsTableHeader.appendChild(thRef);
+            
+            const thStock = document.createElement('th');
+            thStock.className = "px-3 py-2 text-left font-medium text-gray-500";
+            thStock.textContent = "Estoque";
+            editVariationsTableHeader.appendChild(thStock);
+            
+            const thActions = document.createElement('th');
+            thActions.className = "px-3 py-2 text-left font-medium text-gray-500 w-24";
+            thActions.textContent = "Ações";
+            editVariationsTableHeader.appendChild(thActions);
+        }
+        
+        function editUpdateVariationsTableRowsNewAttr(newType) {
+            const rows = editVariationsTableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const td = document.createElement('td');
+                td.className = "px-3 py-2";
+                td.dataset.attrCell = newType;
+                td.innerHTML = `<input type="text" class="w-full px-2 py-1 text-sm border rounded-md variation-attr-input" data-attr-type="${newType}" placeholder="Valor para ${newType}">`;
+                const refCell = row.querySelector('.ref-cell');
+                row.insertBefore(td, refCell);
+                td.querySelector('input').addEventListener('input', () => editSuggestVariationRef(row));
+            });
+        }
+        
+        function editAddVariationRow(data = null) {
+            const tr = document.createElement('tr');
+            tr.className = "border-b";
+            
+            let attrCellsHtml = '';
+            editActiveAttributeTypes.forEach(type => {
+                const val = (data && data.atributos && data.atributos[type]) ? data.atributos[type] : '';
+                attrCellsHtml += `
+                    <td class="px-3 py-2" data-attr-cell="${type}">
+                        <input type="text" class="w-full px-2 py-1 text-sm border rounded-md variation-attr-input" data-attr-type="${type}" placeholder="Valor para ${type}" value="${val}">
+                    </td>
+                `;
+            });
+            
+            const refVal = data ? data.ref : '';
+            const stockVal = data ? data.estoque : 0;
+            
+            tr.innerHTML = `
+                ${attrCellsHtml}
+                <td class="px-3 py-2 ref-cell">
+                    <input type="text" class="w-full px-2 py-1 text-sm border rounded-md variation-ref-input" placeholder="Referência da Variação" value="${refVal}">
+                </td>
+                <td class="px-3 py-2">
+                    <input type="number" min="0" class="w-24 px-2 py-1 text-sm border rounded-md variation-stock-input" value="${stockVal}">
+                </td>
+                <td class="px-3 py-2">
+                    <button type="button" class="btn-remove-variation-row text-red-500 hover:text-red-700 px-2 bg-transparent border-none cursor-pointer">
+                        <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
+                    </button>
+                </td>
+            `;
+            
+            editVariationsTableBody.appendChild(tr);
+            lucide.createIcons();
+            
+            tr.querySelector('.btn-remove-variation-row').onclick = () => {
+                tr.remove();
+            };
+            
+            tr.querySelectorAll('.variation-attr-input').forEach(input => {
+                input.addEventListener('input', () => editSuggestVariationRef(tr));
+            });
+            
+            if (!data && editInputProdRef) {
+                editInputProdRef.addEventListener('input', () => editSuggestVariationRef(tr));
+            }
+        }
+        
+        function editSuggestVariationRef(row) {
+            const parentRef = editInputProdRef ? editInputProdRef.value.trim() : '';
+            if (!parentRef) return;
+            
+            const attrInputs = row.querySelectorAll('.variation-attr-input');
+            const values = [];
+            attrInputs.forEach(input => {
+                const val = input.value.trim();
+                if (val) {
+                    const sanitized = val.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+                    if (sanitized) values.push(sanitized);
+                }
+            });
+            
+            const refInput = row.querySelector('.variation-ref-input');
+            if (refInput) {
+                if (values.length > 0) {
+                    refInput.value = `${parentRef}-${values.join('-')}`;
+                } else {
+                    refInput.value = parentRef;
+                }
+            }
+        }
+        
+        if (editBtnAddVariationRow) {
+            editBtnAddVariationRow.onclick = () => editAddVariationRow();
+        }
+        
+        // --- Pré-carregar variações existentes ---
+        if (product.variacoes && Array.isArray(product.variacoes) && product.variacoes.length > 0) {
+            editInputProdEstoque.disabled = true;
+            
+            const loadedAttrTypes = new Set();
+            product.variacoes.forEach(v => {
+                if (v.atributos) {
+                    Object.keys(v.atributos).forEach(k => loadedAttrTypes.add(k));
+                }
+            });
+            
+            loadedAttrTypes.forEach(t => editDefineAttributeType(t));
+            
+            product.variacoes.forEach(v => {
+                editAddVariationRow(v);
+            });
+        }
 
         gerarEditBarcodePreview(); // Gera o barcode inicial
 
@@ -12228,6 +13250,79 @@ async function showEditProductModal(productId) {
                     if (url) extraFotos.push(formatImageUrl(url));
                 });
 
+                let editVariacoes = [];
+                let editTotalEstoque = parseInt(editInputProdEstoque.value) || 0;
+                const editHasVariations = editCheckboxHasVariations && editCheckboxHasVariations.checked;
+
+                // Cache de referências para verificar duplicidades
+                const editAllExistingRefs = new Set();
+                allUserProducts.forEach(p => {
+                    if (p.id === product.id) return; // Ignora o próprio produto editado
+                    if (p.ref) editAllExistingRefs.add(p.ref.toLowerCase());
+                    if (p.ref2) editAllExistingRefs.add(p.ref2.toLowerCase());
+                    if (p.variacoes && Array.isArray(p.variacoes)) {
+                        p.variacoes.forEach(v => {
+                            if (v.ref) editAllExistingRefs.add(v.ref.toLowerCase());
+                        });
+                    }
+                });
+
+                if (editHasVariations) {
+                    const rows = editVariationsTableBody.querySelectorAll('tr');
+                    if (rows.length === 0) {
+                        throw new Error("Adicione pelo menos uma variação ou desmarque o uso de variações.");
+                    }
+
+                    const varRefs = new Set();
+                    editTotalEstoque = 0;
+
+                    for (const row of rows) {
+                        const attrInputs = row.querySelectorAll('.variation-attr-input');
+                        const atributosObj = {};
+                        let hasAnyAttr = false;
+
+                        attrInputs.forEach(input => {
+                            const type = input.dataset.attrType;
+                            const val = input.value.trim();
+                            if (val) {
+                                atributosObj[type] = val;
+                                hasAnyAttr = true;
+                            }
+                        });
+
+                        if (!hasAnyAttr) {
+                            throw new Error("Preencha pelo menos um atributo para cada variação.");
+                        }
+
+                        const refVal = row.querySelector('.variation-ref-input').value.trim();
+                        const stockVal = parseInt(row.querySelector('.variation-stock-input').value) || 0;
+
+                        if (!refVal) {
+                            throw new Error("O Código de Referência de cada variação é obrigatório.");
+                        }
+
+                        if (refVal.toLowerCase() === newRef.toLowerCase()) {
+                            throw new Error(`O código de variação "${refVal}" não pode ser idêntico ao código de referência principal.`);
+                        }
+
+                        if (varRefs.has(refVal.toLowerCase())) {
+                            throw new Error(`Referência duplicada nas variações: "${refVal}".`);
+                        }
+                        varRefs.add(refVal.toLowerCase());
+
+                        if (editAllExistingRefs.has(refVal.toLowerCase())) {
+                            throw new Error(`A referência de variação "${refVal}" já está sendo usada no sistema.`);
+                        }
+
+                        editTotalEstoque += stockVal;
+                        editVariacoes.push({
+                            ref: refVal,
+                            estoque: stockVal,
+                            atributos: atributosObj
+                        });
+                    }
+                }
+
                 // Monta o objeto atualizado
                 const updatedProduct = {
                     nome: document.getElementById('edit-prod-nome').value,
@@ -12239,9 +13334,9 @@ async function showEditProductModal(productId) {
                     fornecedor: document.getElementById('edit-prod-fornecedor').value,
                     ref: document.getElementById('edit-prod-ref').value,
                     ref2: document.getElementById('edit-prod-ref2').value.trim(),
-                    estoque: parseInt(document.getElementById('edit-prod-estoque').value) || 0,
+                    estoque: editTotalEstoque,
+                    variacoes: editHasVariations ? editVariacoes : null,
                     descricao: document.getElementById('edit-prod-desc').value,
-                    // Não mexemos na fotoUrl aqui, ela permanece a mesma
                     fotoUrl: formatImageUrl(document.getElementById('edit-prod-foto').value.trim()),
                     fotosExtras: extraFotos
                 };

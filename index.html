@@ -636,6 +636,52 @@
                                     <svg id="barcode-preview" class="w-full h-auto mt-2"></svg>
                                 </div>
                             </div>
+
+                            <!-- Seção de Variações de Atributos (NOVO) -->
+                            <div class="md:col-span-3 border-t pt-6 mt-4">
+                                <label class="flex items-center cursor-pointer mb-4">
+                                    <input type="checkbox" id="prod-has-variations" class="rounded text-indigo-600 w-4 h-4 mr-2">
+                                    <span class="text-sm font-semibold text-gray-800">Este produto possui variações (Cor, Tamanho, etc.)</span>
+                                </label>
+                                
+                                <div id="prod-variations-section" class="hidden space-y-4">
+                                    <div class="p-4 bg-gray-50 rounded-lg border">
+                                        <h4 class="font-medium text-sm text-gray-700">1. Tipos de Atributos</h4>
+                                        <p class="text-xs text-gray-500 mb-2">Defina quais tipos de atributos este produto possui (ex: Cor, Tamanho).</p>
+                                        <div class="flex gap-2 max-w-md">
+                                            <input type="text" id="variation-attribute-type" placeholder="Ex: Cor" class="flex-grow px-3 py-1.5 text-sm border rounded-md">
+                                            <button type="button" id="btn-add-attribute-type" class="px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Definir Atributo</button>
+                                        </div>
+                                        <div id="attribute-types-list" class="flex flex-wrap gap-1.5 mt-2">
+                                            <!-- Badges dos atributos criados -->
+                                        </div>
+                                    </div>
+
+                                    <div class="p-4 bg-white rounded-lg border">
+                                        <div class="flex justify-between items-center mb-3">
+                                            <h4 class="font-medium text-sm text-gray-700">2. Tabela de Variações</h4>
+                                            <button type="button" id="btn-add-variation-row" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 flex items-center">
+                                                <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Adicionar Variação
+                                            </button>
+                                        </div>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                                                <thead class="bg-gray-50">
+                                                    <tr id="variations-table-header">
+                                                        <th class="px-3 py-2 text-left font-medium text-gray-500">Código de Referência</th>
+                                                        <th class="px-3 py-2 text-left font-medium text-gray-500">Estoque</th>
+                                                        <th class="px-3 py-2 text-left font-medium text-gray-500 w-24">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="variations-table-body">
+                                                    <!-- Linhas de variação -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Ações -->
                             <div class="md:col-span-3 text-right">
                                 <button type="submit"
@@ -1340,17 +1386,17 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Email</label>
-                            <input type="email" id="person-email" name="person-email" required
+                            <input type="email" id="person-email" name="person-email"
                                 class="w-full px-3 py-2 mt-1 border rounded-md">
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Telefone</label>
-                            <input type="tel" id="person-phone" name="person-phone" required
+                            <input type="tel" id="person-phone" name="person-phone"
                                 class="w-full px-3 py-2 mt-1 border rounded-md">
                         </div>
                         <div class="md:col-span-3">
                             <label class="block text-sm font-medium">Endereço</label>
-                            <input type="text" id="person-address" name="person-address" required
+                            <input type="text" id="person-address" name="person-address"
                                 class="w-full px-3 py-2 mt-1 border rounded-md">
                         </div>
 
