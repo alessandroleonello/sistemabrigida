@@ -7536,10 +7536,23 @@ function exportConsignmentToExcel(consignmentId) {
 
     // Prepara os dados finais
     const dataToExport = processedItems.map(item => {
+        // Determinar o código principal (referência do produto pai) para agrupamento
+        let codigoPrincipal = "";
+        if (item.refPai) {
+            codigoPrincipal = item.refPai;
+        } else {
+            // Fallback: buscar o produto pai no cache pelo ID
+            const productInCache = allUserProducts.find(p => p.id === item.id);
+            if (productInCache && productInCache.variacoes && productInCache.variacoes.length > 0) {
+                codigoPrincipal = productInCache.ref || "";
+            }
+        }
+
         const row = {
             "Nome Comercial": item.nomeComercial || "",
             "Nome Técnico": item.nome || "",
             "Código": item.ref,
+            "Código Principal": codigoPrincipal,
             "Ref. 2": item._exportRef2 || "",
             "Categoria": item._exportCategoria,
             "Quantidade": item.quantity || 1,
@@ -9744,6 +9757,7 @@ function showVariationSelectionModal(product) {
                 
                 const productWithVar = {
                     ...product,
+                    refPai: product.ref,
                     ref: selectedVar.ref,
                     estoque: selectedVar.estoque,
                     variacaoSelecionada: selectedVar,
@@ -11527,6 +11541,7 @@ async function handleFinalizeSale(e) {
             nome: p.nome,
             nomeComercial: p.nomeComercial || null,
             ref: p.ref,
+            refPai: p.refPai || null,
             venda: p.venda,
             custo: p.custo, // Mantém o custo para referência futura, se necessário
             quantity: p.quantity,
